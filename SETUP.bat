@@ -10,7 +10,7 @@ echo     WARFRAME-RELIC - 首次运行环境配置
 echo ============================================================
 echo.
 echo  本脚本将自动完成:
-echo    1. 检测/安装 Python 3.10+
+echo    1. 检测/安装 Python 3.12
 echo    2. 创建虚拟环境
 echo    3. 安装项目依赖
 echo    4. 启动程序
@@ -50,14 +50,14 @@ if !errorlevel! equ 0 (
 
 :: 1c. 检查常见安装路径
 for %%p in (
-    "%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
     "%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+    "%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
     "%LOCALAPPDATA%\Programs\Python\Python313\python.exe"
-    "%PROGRAMFILES%\Python311\python.exe"
     "%PROGRAMFILES%\Python312\python.exe"
+    "%PROGRAMFILES%\Python311\python.exe"
     "%PROGRAMFILES%\Python313\python.exe"
-    "C:\Python311\python.exe"
     "C:\Python312\python.exe"
+    "C:\Python311\python.exe"
 ) do (
     if exist %%p (
         set PYTHON_EXE=%%p
@@ -71,7 +71,7 @@ echo.
 echo       [未找到] 系统中未检测到 Python 3.10+
 echo.
 echo       Python 是运行本程序所必需的。
-echo       是否自动下载并安装 Python 3.11.9？
+echo       是否自动下载并安装 Python 3.12.10？
 echo       (约 25 MB，安装过程约 1-2 分钟)
 echo.
 choice /c YN /n /m "       [Y] 自动安装  [N] 手动安装后重试: "
@@ -80,11 +80,11 @@ if errorlevel 1 goto :auto_install
 
 :auto_install
 echo.
-echo [*] 正在下载 Python 3.11.9...
+echo [*] 正在下载 Python 3.12.10...
 echo     下载地址: %PYTHON_INSTALLER%
 echo.
 
-set PYTHON_INSTALLER_PATH=%TEMP%\python-3.11.9-amd64.exe
+set PYTHON_INSTALLER_PATH=%TEMP%\python-3.12.10-amd64.exe
 
 :: 使用 PowerShell 下载（Win10+ 自带）
 powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%PYTHON_INSTALLER%' -OutFile '%PYTHON_INSTALLER_PATH%'" 2>&1
@@ -100,7 +100,7 @@ if !errorlevel! neq 0 (
 
 echo       [OK] 下载完成
 echo.
-echo [*] 正在安装 Python 3.11.9...
+echo [*] 正在安装 Python 3.12.10...
 echo     (请在弹出的安装窗口中点击 Install 完成安装)
 echo.
 
@@ -127,8 +127,8 @@ if !errorlevel! equ 0 (
 
 :: 检查安装路径
 for %%p in (
-    "%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
-    "%PROGRAMFILES%\Python311\python.exe"
+    "%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+    "%PROGRAMFILES%\Python312\python.exe"
 ) do (
     if exist %%p (
         set PYTHON_EXE=%%p
