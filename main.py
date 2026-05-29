@@ -186,6 +186,7 @@ class AppCore:
         self._bridge.fired.connect(self._handle_trigger)
         self._management_panel.db_updated.connect(self.reload_db)
         self._management_panel.hotkeys_changed.connect(self._on_hotkeys_changed)
+        self._management_panel.theme_changed.connect(self._on_theme_changed)
 
     # ---- 热键 ----
 
@@ -232,6 +233,10 @@ class AppCore:
     def _on_hotkeys_changed(self, new_hotkeys):
         print(f"[热键] 快捷键已更新: {new_hotkeys}")
         self._register_hotkeys(new_hotkeys)
+
+    def _on_theme_changed(self):
+        """主题变更时刷新 Overlay 缓存的样式（管理面板自身已刷新）。"""
+        self._overlay.refresh_theme()
 
     # ---- 定时器 ----
 

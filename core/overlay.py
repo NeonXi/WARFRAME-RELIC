@@ -625,5 +625,35 @@ class Overlay(QWidget):
                 self._preview_label.hide()
             self._hide_at = 0
 
+    def refresh_theme(self):
+        """主题变更时刷新 Overlay 中缓存的样式（label、按钮的 stylesheet）。"""
+        # label 样式
+        self.label.setStyleSheet(f"color: {CYBER_YELLOW}; background: transparent;")
+
+        # 按钮样式（重建 rgba + stylesheet）
+        btn_bg_r, btn_bg_g, btn_bg_b = _hex_to_rgb(BTN_DEFAULT_BG)
+        btn_hover_r, btn_hover_g, btn_hover_b = _hex_to_rgb(BTN_HOVER_BORDER)
+        btn_style = f"""
+            QPushButton {{
+                background-color: rgba({btn_bg_r}, {btn_bg_g}, {btn_bg_b}, 220);
+                color: {BTN_DEFAULT_TEXT};
+                border: 2px solid {BTN_DEFAULT_BORDER};
+                border-radius: 6px;
+                padding: 10px 24px;
+                font-size: 16px;
+                font-family: "Microsoft YaHei";
+            }}
+            QPushButton:hover {{
+                background-color: rgba({btn_hover_r}, {btn_hover_g}, {btn_hover_b}, 30);
+                border-color: {BTN_HOVER_BORDER};
+                color: {BTN_HOVER_TEXT};
+            }}
+        """
+        for btn in self._mode_buttons.values():
+            btn.setStyleSheet(btn_style)
+
+        # 强制重绘
+        self.update()
+
     def _log(self, msg):
         print(f"[{time.strftime('%H:%M:%S')}] {msg}")
