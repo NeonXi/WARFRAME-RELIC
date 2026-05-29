@@ -55,13 +55,21 @@
 - Python 3.10+（推荐 3.12）
 - 网络连接（首次安装依赖时）
 
-### 方式一：一键启动（推荐）
+### 方式一：零基础启动（推荐，无需安装任何东西）
+
+1. 克隆本项目
+2. 双击 `SETUP.bat`
+3. 脚本会自动：检测/安装 Python → 创建虚拟环境 → 安装依赖 → 启动程序
+
+> 以后直接双击 `WARFRAME-RELIC.bat` 即可。
+
+### 方式二：已有 Python 环境
 
 1. 克隆本项目
 2. 双击 `WARFRAME-RELIC.bat`
 3. 脚本会自动：检查 Python → 创建虚拟环境 → 安装依赖 → 启动程序
 
-### 方式二：手动启动
+### 方式三：手动启动
 
 ```bash
 python -m venv venv
@@ -70,7 +78,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-### 方式三：开发模式（热重载）
+### 方式四：开发模式（热重载）
 
 ```bash
 python dev_runner.py
@@ -78,7 +86,7 @@ python dev_runner.py
 
 修改任意 `.py` 文件后自动重启，方便开发调试。
 
-### 方式四：打包版 EXE
+### 方式五：打包版 EXE
 
 从 [Releases](../../releases) 下载 `WARFRAME-RELIC.exe`，直接运行，无需安装 Python。
 
