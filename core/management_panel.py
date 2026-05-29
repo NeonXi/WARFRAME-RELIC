@@ -477,6 +477,31 @@ class ManagementPanel(QWidget):
         bili_row.addWidget(self._btn_bilibili, 1)
         about_layout.addLayout(bili_row)
 
+        # GitHub 链接按钮
+        github_row = QHBoxLayout()
+        github_icon = QLabel("🐙")
+        github_icon.setStyleSheet("font-size: 14px;")
+        self._btn_github = QPushButton("GitHub 仓库 →")
+        self._btn_github.setObjectName("githubBtn")
+        self._btn_github.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_github.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #58A6FF;
+                border: none;
+                padding: 4px 0px;
+                font-size: 12px;
+                text-align: left;
+            }
+            QPushButton:hover {
+                color: #79C0FF;
+            }
+        """)
+        self._btn_github.clicked.connect(self._open_github)
+        github_row.addWidget(github_icon)
+        github_row.addWidget(self._btn_github, 1)
+        about_layout.addLayout(github_row)
+
         # 项目信息
         project_row = QHBoxLayout()
         project_label = QLabel("WARFRAME-RELIC v1.0")
@@ -1150,6 +1175,11 @@ class ManagementPanel(QWidget):
         """打开作者 Bilibili 主页"""
         import webbrowser
         webbrowser.open("https://space.bilibili.com/21001459")
+
+    def _open_github(self):
+        """打开项目 GitHub 仓库"""
+        import webbrowser
+        webbrowser.open("https://github.com/NeonXi/WARFRAME-RELIC")
 
     def _open_data_dir(self):
         """打开数据目录"""

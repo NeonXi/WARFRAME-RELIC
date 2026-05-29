@@ -41,7 +41,7 @@ class AppCore:
 
     def __init__(self, app: QApplication):
         self._app = app
-        self._camera = dxcam.create(output_color="BGR")
+        self._camera = dxcam.create(output_idx=0, output_color="BGR")
         self._overlay = Overlay()
         self._overlay.show()
 

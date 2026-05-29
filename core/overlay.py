@@ -18,11 +18,19 @@ _VK_RBUTTON = 0x02
 
 
 def _get_dpi_scale() -> float:
-    """获取 Windows 当前显示器的 DPI 缩放比例。
+    """获取主显示器（1号屏）的 DPI 缩放比例。
     
     dxcam 返回的是物理像素坐标，而 Qt 在 dpiawareness=0 时使用逻辑坐标。
     缩放比例 = 物理DPI / 96，例如 125% → 1.25。
+    使用主屏幕的 DPI（而非桌面整体），确保与 dxcam output_idx=0 一致。
     """
+    try:
+        screen = QApplication.primaryScreen()
+        if screen:
+            dpi = screen.logicalDotsPerInch()
+            return dpi / 96.0
+    except Exception:
+        pass
     try:
         hdc = ctypes.windll.user32.GetDC(0)
         dpi_x = ctypes.windll.gdi32.GetDeviceCaps(hdc, 88)  # LOGPIXELSX
@@ -514,11 +522,9 @@ class Overlay(QWidget):
             | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        # 覆盖所有显示器的并集区域（兼容多显示器/副屏场景）
-        total_rect = QApplication.primaryScreen().geometry()
-        for screen in QApplication.screens():
-            total_rect = total_rect.united(screen.geometry())
-        self.setGeometry(total_rect)
+        # 只覆盖主屏幕（1号屏），dxcam 也只截主屏幕
+        primary_geo = QApplication.primaryScreen().geometry()
+        self.setGeometry(primary_geo)
 
     def _setup_label(self):
         self.label = QLabel("", self)
