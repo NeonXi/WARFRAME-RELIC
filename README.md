@@ -52,8 +52,8 @@
 ### 系统要求
 
 - Windows 10 / 11
-- Python 3.10+（推荐 3.12）
 - 网络连接（首次安装依赖时）
+- 无需手动安装 Python（SETUP.bat 会自动处理）
 
 ### 方式一：零基础启动（推荐，无需安装任何东西）
 
@@ -96,24 +96,29 @@ python dev_runner.py
 
 ```
 WARFRAME-RELIC/
-├── main.py                  # 程序入口（协调各模块）
+├── main.py                  # 程序入口（AppCore 类，协调各模块）
 ├── core/
-│   ├── overlay.py           # 全屏覆盖层（框选、标注、流式动画、DPI适配）
+│   ├── overlay.py           # 全屏覆盖层（框选、标注、流式动画、DPI 适配）
 │   ├── management_panel.py  # 管理面板（数据库更新、热键配置、日志）
-│   └── hotkey_config.py     # 热键配置读写
+│   ├── hotkey_config.py     # 热键配置读写
+│   ├── fetch_worker.py      # 后台线程：从 GitHub 下载最新数据
+│   └── update_worker.py     # 后台线程：执行数据库更新
 ├── recognizers/
 │   └── relic_name.py        # 遗物名称 OCR 识别器（RapidOCR + 正则匹配 + 纠错）
 ├── data/
 │   ├── relics.db            # SQLite 本地数据库（自动生成）
 │   ├── all.json             # WFInfo 全量掉落数据
 │   ├── wfinfo_relics.py     # 数据库查询接口（四级匹配查找）
+│   ├── db_utils.py          # 数据库公共工具（表结构、别名、迁移逻辑）
 │   └── migrate_to_sqlite.py # JSON → SQLite 迁移
 ├── update_db.py             # 数据库更新工具（自动推断出入库状态）
 ├── build_exe.py             # PyInstaller 打包脚本
 ├── test_recognizer.py       # OCR 识别器测试脚本
 ├── dev_runner.py            # 开发热重载脚本
-├── WARFRAME-RELIC.bat       # 一键启动批处理
-├── 打包为exe.bat            # 一键打包批处理
+├── SETUP.bat                # 零基础启动（自动安装 Python + 依赖）
+├── WARFRAME-RELIC.bat       # 日常启动批处理
+├── git-push.bat             # Git 一键推送
+├── 打包.bat                 # 一键打包批处理
 ├── qt.conf                  # Qt DPI 感知配置
 └── requirements.txt         # Python 依赖
 ```
@@ -126,7 +131,7 @@ WARFRAME-RELIC/
 | **dxcam** | 高性能屏幕截图（Windows DXGI） |
 | **keyboard** | 全局热键注册 |
 | **rapidocr-onnxruntime** | OCR 引擎（离线识别，无需联网） |
-| **opencv-python** | ~~图像缩放~~ (已移除，改用 Pillow) |
+| **opencv-python** | RapidOCR 图像预处理依赖 |
 | **Pillow** | 调试截图保存 |
 
 ---

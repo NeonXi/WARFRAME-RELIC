@@ -21,7 +21,7 @@ echo.
 rem ==========================================
 rem 步骤 1: 检查是否已有 Python
 rem ==========================================
-set PYTHON_INSTALLER=https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+set PYTHON_INSTALLER=https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe
 set PYTHON_EXE=
 
 echo [1/4] 检测 Python 环境...
