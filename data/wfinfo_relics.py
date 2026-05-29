@@ -154,10 +154,17 @@ class RelicDB:
 
     @staticmethod
     def _fuzzy_normalize(s: str) -> str:
-        """将字符串标准化用于模糊匹配（统一易混淆字符）"""
+        """将字符串标准化用于模糊匹配（统一易混淆字符）。
+
+        注意：OCR 常见混淆 → 统一到同一字符，避免双向映射冲突。
+        - 0/O → o（统一为小写 o）
+        - 1/I/l → i（统一为小写 i）
+        - 5/S → s
+        - 8/B → b
+        """
         return s.replace(' ', '').lower().translate(str.maketrans({
             '0': 'o', '1': 'i', '5': 's', '8': 'b',
-            'l': '1', 'o': '0',
+            'l': 'i',
         }))
 
     # ========== 批量查询 ==========

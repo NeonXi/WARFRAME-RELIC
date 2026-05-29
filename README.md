@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey" alt="Platform">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  <img src="https://img.shields.io/badge/license-GPLv3-blue" alt="License">
 </p>
 
 ---
@@ -228,4 +228,4 @@ A: 非框选模式下覆盖层会穿透鼠标事件，不影响游戏操作。�
 
 ## 📄 License
 
-MIT
+GNU General Public License v3.0

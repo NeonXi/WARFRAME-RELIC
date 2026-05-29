@@ -201,9 +201,6 @@ class Overlay(QWidget):
         total_width = total_btns * btn_width + (total_btns - 1) * btn_gap
         start_x = (self.width() - total_width) // 2
         start_y = 70
-        btn_width = 200
-        btn_height = 45
-        btn_gap = 20
 
         for i, (mode_id, btn) in enumerate(self._mode_buttons.items()):
             x = start_x + i * (btn_width + btn_gap)
@@ -338,21 +335,18 @@ class Overlay(QWidget):
 
     # ========== 标注系统 ==========
 
-    def show_annotations(self, annotations, auto_hide_ms=5000):
-        """显示标注列表，支持带颜色的标注和多行分别着色。
+    def _normalize_annotations(self, annotations, auto_hide_ms=5000):
+        """预处理标注列表，统一为 (text, x, y, expire_ms, color, line_colors) 格式。
 
         annotations 元素格式（向后兼容）：
           - 3元组: (text, x, y)                        → 默认金色 + auto_hide_ms
           - 4元组: (text, x, y, color)                  → 指定颜色 + auto_hide_ms
           - 5元组: (text, x, y, expire_ms, color)        → 完全自定义
           - 6元组: (text, x, y, expire_ms, color, line_colors) → 多行分别着色
-
-        line_colors: 每行对应的颜色列表 ['#FFD700', '#C0C0C0', '#CD7F32', ...]
-                     行数需与 text 中 \\n 分割后的行数一致。
         """
         now_ms = int(time.time() * 1000)
+        default_color = "#FFD900"
         result = []
-        default_color = "#FFD900"  # 原始默认金色
         for item in annotations:
             line_colors = None
             if len(item) >= 6:
@@ -373,7 +367,11 @@ class Overlay(QWidget):
             else:
                 text, x, y = item
                 result.append((text, int(x), int(y), now_ms + auto_hide_ms, default_color, None))
-        self._annotations = result
+        return result
+
+    def show_annotations(self, annotations, auto_hide_ms=5000):
+        """显示标注列表，支持带颜色的标注和多行分别着色。"""
+        self._annotations = self._normalize_annotations(annotations, auto_hide_ms)
         self.update()
 
     def clear_annotations(self):
@@ -385,41 +383,11 @@ class Overlay(QWidget):
     # ========== 流式标注（逐条出现，提升体验）==========
 
     def show_annotations_stream(self, annotations, auto_hide_ms=5000, interval_ms=30, batch_size=2):
-        """逐批显示标注，产生「逐步出现」的动画感。
-
-        annotations: 与 show_annotations 格式相同
-        interval_ms: 每批之间的间隔（毫秒）
-        batch_size: 每批显示几条
-        """
+        """逐批显示标注，产生「逐步出现」的动画感。"""
         self.clear_annotations()
 
-        # 预处理所有标注项（时间戳计算等，复用 show_annotations 逻辑）
-        now_ms = int(time.time() * 1000)
-        default_color = "#FFD900"
-        processed = []
-        for item in annotations:
-            line_colors = None
-            if len(item) >= 6:
-                text, x, y, expire_offset, color = item[:5]
-                line_colors = item[5]
-                processed.append((text, int(x), int(y), now_ms + int(expire_offset), color, line_colors))
-            elif len(item) >= 5:
-                text, x, y, expire_offset, color = item[:5]
-                processed.append((text, int(x), int(y), now_ms + int(expire_offset), color, None))
-            elif len(item) == 4:
-                val4 = item[3]
-                if isinstance(val4, str) and val4.startswith('#'):
-                    text, x, y, color = item
-                    processed.append((text, int(x), int(y), now_ms + auto_hide_ms, color, None))
-                else:
-                    text, x, y, expire_offset = item
-                    processed.append((text, int(x), int(y), now_ms + int(expire_offset), default_color, None))
-            else:
-                text, x, y = item
-                processed.append((text, int(x), int(y), now_ms + auto_hide_ms, default_color, None))
-
-        # 放入队列
-        self._stream_queue = processed
+        # 预处理所有标注项（复用归一化逻辑）
+        self._stream_queue = self._normalize_annotations(annotations, auto_hide_ms)
         self._stream_batch_size = batch_size
 
         # 启动定时器

@@ -5,14 +5,8 @@ WARFRAME-RELIC 管理面板
 """
 
 import os
-import sys
-import json
 import sqlite3
 import threading
-import socket
-import time
-import urllib.request
-import urllib.error
 from pathlib import Path
 from datetime import datetime
 
@@ -21,13 +15,15 @@ from PyQt6.QtWidgets import (
     QFrame, QFileDialog, QProgressBar, QMessageBox, QGroupBox,
     QApplication, QDialog, QDialogButtonBox, QTextEdit, QLineEdit,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QObject
-from PyQt6.QtGui import QFont, QColor, QPalette
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
 
 from core.hotkey_config import (
     load_hotkeys, save_hotkeys, validate_hotkey,
     DEFAULT_HOTKEYS, HOTKEY_LABELS,
 )
+from core.update_worker import UpdateWorker
+from core.fetch_worker import FetchWorker, ALLJSON_URL
 
 
 # ============================================================
@@ -68,249 +64,6 @@ def _get_db_stats(db_path: str) -> dict:
         }
     except Exception as e:
         return {'exists': False, 'error': str(e)}
-
-
-# ============================================================
-# 更新线程（避免阻塞 UI）
-# ============================================================
-
-class UpdateWorker(QObject):
-    """在后台线程执行数据库更新，通过信号通知 UI"""
-    progress = pyqtSignal(str)       # 进度文本
-    finished = pyqtSignal(dict)      # 完成统计
-    error = pyqtSignal(str)          # 错误信息
-
-    def __init__(self, json_path: str, db_path: str):
-        super().__init__()
-        self.json_path = json_path
-        self.db_path = db_path
-
-    def run(self):
-        try:
-            # 导入更新逻辑（复用 update_db.py 的核心函数）
-            data_dir = str(Path(self.db_path).parent)
-            sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-            from update_db import update_from_alljson, _finalize_db
-
-            self.progress.emit("正在读取数据文件...")
-            stats = update_from_alljson(self.json_path, self.db_path)
-            _finalize_db(self.db_path)
-
-            self.progress.emit("更新完成!")
-            self.finished.emit(stats)
-        except Exception as e:
-            self.error.emit(str(e))
-
-
-# ============================================================
-# 数据拉取线程（从 GitHub 下载 all.json）
-# ============================================================
-
-GITHUB_RAW_BASE = "https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data"
-ALLJSON_URL = f"{GITHUB_RAW_BASE}/all.json"
-RELIC_URL = f"{GITHUB_RAW_BASE}/relics.json"
-
-
-class FetchWorker(QObject):
-    """后台线程：从 GitHub 下载最新 all.json，精细化进度反馈"""
-
-    # ---- 信号定义 ----
-    step_changed = pyqtSignal(int, str)       # 当前步骤 (1~7), 步骤描述
-    log = pyqtSignal(str, str)                # 日志: (类型: ok/warn/error/info, 消息)
-    progress_pct = pyqtSignal(int)             # 下载进度 0~100
-    finished = pyqtSignal(str)                # 下载完成 → 携带保存路径
-    error = pyqtSignal(str)                   # 致命错误
-
-    def __init__(self, save_path: str, url: str = ALLJSON_URL):
-        super().__init__()
-        self.save_path = save_path
-        self.url = url
-
-    # ------------------------------------------------------------
-    # 核心执行流程
-    # ------------------------------------------------------------
-    def run(self):
-        start_time = time.time()
-
-        # ===== 步骤 1: 解析 URL，检测网络环境 =====
-        self.step_changed.emit(1, "解析目标地址")
-        self.log.emit("info", f"目标: {self.url}")
-        try:
-            parsed = urllib.request.urlparse(self.url)
-            host = parsed.hostname or ""
-            port = parsed.port or (443 if parsed.scheme == "https" else 80)
-        except Exception as e:
-            self.log.emit("error", f"URL 解析失败: {e}")
-            self.error.emit(f"URL 解析失败: {e}")
-            return
-
-        self.log.emit("info", f"主机: {host}:{port}")
-        self.log.emit("info", f"路径: {parsed.path}")
-        self.log.emit("info", f"协议: {parsed.scheme.upper()}")
-
-        # ===== 步骤 2: DNS 解析 =====
-        self.step_changed.emit(2, "DNS 解析")
-        self.log.emit("info", f"正在解析 {host} ...")
-        try:
-            ip = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
-            ip_str = ip[0][4][0] if ip else "未知"
-            self.log.emit("ok", f"DNS 解析成功 → {ip_str}")
-        except socket.gaierror as e:
-            self.log.emit("error", f"DNS 解析失败: {e}")
-            self.log.emit("error", "可能原因: 网络未连接 / DNS 服务器无响应 / 域名被屏蔽")
-            self.error.emit(f"DNS 解析失败: {e}\n请检查网络连接")
-            return
-
-        # ===== 步骤 3: TCP 连接 + SSL 握手 =====
-        self.step_changed.emit(3, "建立安全连接")
-        self.log.emit("info", "正在建立 HTTPS 连接...")
-        try:
-            req = urllib.request.Request(
-                self.url,
-                headers={"User-Agent": "WARFRAME-RELIC/1.0"}
-            )
-            # 打开连接（会触发 TCP + TLS 握手）
-            conn_start = time.time()
-            resp = urllib.request.urlopen(req, timeout=15)
-            conn_time = (time.time() - conn_start) * 1000
-            self.log.emit("ok", f"HTTPS 连接成功 (耗时 {conn_time:.0f} ms)")
-        except urllib.error.HTTPError as e:
-            self.log.emit("error", f"HTTP 错误: {e.code} {e.reason}")
-            if e.code == 404:
-                self.log.emit("error", "文件不存在，可能是 GitHub 路径已变更")
-            elif e.code == 403:
-                self.log.emit("error", "访问被拒绝 (403)，可能被 GitHub 限流")
-            self.error.emit(f"HTTP {e.code}: {e.reason}")
-            return
-        except urllib.error.URLError as e:
-            reason = str(e.reason)
-            self.log.emit("error", f"连接失败: {reason}")
-            if "timed out" in reason.lower():
-                self.log.emit("error", "连接超时，可能原因: 防火墙阻止 / 网络不稳定 / GitHub 不可达")
-            elif "certificate" in reason.lower():
-                self.log.emit("error", "SSL 证书验证失败，可能原因: 系统时间不正确 / 代理干扰")
-            elif "getaddrinfo" in reason.lower():
-                self.log.emit("error", "无法解析主机名，请检查 DNS 设置")
-            self.error.emit(f"连接失败: {reason}")
-            return
-        except Exception as e:
-            self.log.emit("error", f"未知连接错误: {e}")
-            self.error.emit(str(e))
-            return
-
-        # ===== 步骤 4: 获取文件信息 =====
-        self.step_changed.emit(4, "获取文件信息")
-        content_length = resp.headers.get("Content-Length")
-        content_type = resp.headers.get("Content-Type", "未知")
-        content_encoding = resp.headers.get("Content-Encoding", "无")
-        last_modified = resp.headers.get("Last-Modified", "未知")
-        self.log.emit("info", f"Content-Type: {content_type}")
-        self.log.emit("info", f"Content-Encoding: {content_encoding}")
-        self.log.emit("info", f"Last-Modified: {last_modified}")
-        if content_length:
-            size_kb = int(content_length) / 1024
-            size_mb = size_kb / 1024
-            if size_mb >= 1:
-                self.log.emit("info", f"文件大小: {size_mb:.2f} MB ({int(content_length):,} bytes)")
-            else:
-                self.log.emit("info", f"文件大小: {size_kb:.0f} KB ({int(content_length):,} bytes)")
-        else:
-            self.log.emit("warn", "服务器未提供 Content-Length，无法显示下载进度")
-
-        # ===== 步骤 5: 下载数据（带进度） =====
-        self.step_changed.emit(5, "下载数据")
-        self.log.emit("info", "开始下载 all.json 数据文件...")
-        self.log.emit("info", f"每次读取块大小: 8 KB | 连接超时: 15s")
-        chunks = []
-        downloaded = 0
-        total = int(content_length) if content_length else 0
-        last_pct = -1
-        dl_start = time.time()
-
-        try:
-            while True:
-                chunk = resp.read(8192)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-                downloaded += len(chunk)
-                if total > 0:
-                    pct = min(int(downloaded * 100 / total), 100)
-                    if pct != last_pct:
-                        self.progress_pct.emit(pct)
-                        if pct % 20 == 0 and pct != last_pct:
-                            elapsed = time.time() - dl_start
-                            speed = (downloaded / 1024 / elapsed) if elapsed > 0 else 0
-                            self.log.emit("info", f"下载进度: {pct}% ({downloaded/1024:.0f}/{total/1024:.0f} KB, {speed:.0f} KB/s)")
-                        last_pct = pct
-            content = b"".join(chunks)
-        except Exception as e:
-            self.log.emit("error", f"下载中断: {e}")
-            self.error.emit(f"下载中断: {e}")
-            return
-
-        dl_time = time.time() - dl_start
-        dl_kb = len(content) / 1024
-        dl_mb = dl_kb / 1024
-        speed = dl_kb / dl_time if dl_time > 0 else 0
-        if dl_mb >= 1:
-            self.log.emit("ok", f"下载完成 → {dl_mb:.2f} MB (耗时 {dl_time:.1f}s, 平均 {speed:.0f} KB/s)")
-        else:
-            self.log.emit("ok", f"下载完成 → {dl_kb:.0f} KB (耗时 {dl_time:.1f}s, 平均 {speed:.0f} KB/s)")
-        self.progress_pct.emit(100)
-
-        # ===== 步骤 6: 验证数据格式 =====
-        self.step_changed.emit(6, "验证数据格式")
-        self.log.emit("info", "正在验证 JSON 数据格式...")
-        try:
-            data = json.loads(content)
-            # 统计顶层 key
-            if isinstance(data, dict):
-                key_count = len(data)
-                # 列出部分关键字段
-                top_keys = list(data.keys())
-                key_preview = ', '.join(top_keys[:8])
-                if len(top_keys) > 8:
-                    key_preview += f' ... 等 {len(top_keys)} 个字段'
-                self.log.emit("ok", f"JSON 格式正确 (顶层 {key_count} 个字段)")
-                self.log.emit("info", f"  字段列表: {key_preview}")
-            elif isinstance(data, list):
-                self.log.emit("ok", f"JSON 格式正确 (数组, {len(data)} 个元素)")
-            else:
-                self.log.emit("ok", "JSON 格式正确")
-        except json.JSONDecodeError as e:
-            self.log.emit("error", f"JSON 解析失败: {e}")
-            self.log.emit("error", "下载的文件可能损坏或不完整")
-            self.log.emit("error", f"错误位置: 第 {e.lineno} 行, 第 {e.colno} 列")
-            self.error.emit(f"数据格式错误: {e}")
-            return
-
-        # ===== 步骤 7: 保存文件 =====
-        self.step_changed.emit(7, "保存文件")
-        save_path = Path(self.save_path)
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # 备份旧文件
-        if save_path.exists():
-            backup = save_path.with_suffix('.json.bak')
-            try:
-                save_path.replace(backup)
-                self.log.emit("info", f"旧文件已备份: {backup.name}")
-            except Exception as e:
-                self.log.emit("warn", f"备份旧文件失败: {e}")
-
-        try:
-            with open(save_path, 'wb') as f:
-                f.write(content)
-            self.log.emit("ok", f"文件已保存: {save_path}")
-        except Exception as e:
-            self.log.emit("error", f"保存文件失败: {e}")
-            self.error.emit(f"保存文件失败: {e}")
-            return
-
-        total_time = time.time() - start_time
-        self.log.emit("ok", f"========== 全部完成 (总耗时 {total_time:.1f}s) ==========")
-        self.finished.emit(str(save_path))
 
 
 # ============================================================
