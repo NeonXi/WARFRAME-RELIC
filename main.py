@@ -451,8 +451,8 @@ def main():
     print("  右键          → 取消框选 / 清除标注 / 关闭功能选择")
     print("")
     print("  识别后会弹出功能选择按钮：")
-    print("    📋 出入库查询  — 标注遗物名称（绿=出库 红=入库 金=虚空商人）")
-    print("    🔍 遗物内容查询  — 匹配遗物对应的 Prime 部件（带颜色）")
+    print("    [出入库查询]  — 标注遗物名称（绿=出库 红=入库 金=虚空商人）")
+    print("    [遗物内容查询] — 匹配遗物对应的 Prime 部件（带颜色）")
     print("")
     print(f"  [WFInfo 数据库] 总计 {db_stats['total_relics']} 个遗物"
           f" | 入库 {db_stats['available']} | 出库 {db_stats['vaulted']}{vt_str}")

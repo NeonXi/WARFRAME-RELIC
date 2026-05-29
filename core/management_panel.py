@@ -463,9 +463,9 @@ class ManagementPanel(QWidget):
                 self.layout().activate()
                 # 重新设置一个合理的最小尺寸
                 content_h = self.layout().sizeHint().height()
-                self.setMinimumSize(580, max(content_h, 700))
-                if self.height() < 600:
-                    self.resize(580, 760)
+                self.setMinimumSize(580, max(content_h, 780))
+                if self.height() < 680:
+                    self.resize(580, 840)
             QTimer.singleShot(50, _fix_size)
 
     # ============================================================
@@ -474,8 +474,8 @@ class ManagementPanel(QWidget):
 
     def _setup_ui(self):
         self.setWindowTitle("WARFRAME-RELIC - 管理面板")
-        self.setMinimumSize(580, 600)
-        self.resize(580, 760)
+        self.setMinimumSize(580, 680)
+        self.resize(580, 840)
         self.setWindowFlags(
             Qt.WindowType.Window
             | Qt.WindowType.WindowStaysOnTopHint
@@ -685,6 +685,54 @@ class ManagementPanel(QWidget):
         hotkey_layout.addLayout(btn_row)
 
         main_layout.addWidget(hotkey_group)
+
+        # ---- 关于作者 ----
+        about_group = QGroupBox("关于作者")
+        about_layout = QVBoxLayout(about_group)
+        about_layout.setSpacing(4)
+
+        # 作者信息
+        author_row = QHBoxLayout()
+        author_label = QLabel("作者: NeonXi (B站: MichaelJackso2)")
+        author_label.setStyleSheet("color: #c0c0c0; font-size: 12px;")
+        author_row.addWidget(author_label)
+        author_row.addStretch()
+        about_layout.addLayout(author_row)
+
+        # Bilibili 链接按钮
+        bili_row = QHBoxLayout()
+        bili_icon = QLabel("📺")
+        bili_icon.setStyleSheet("font-size: 14px;")
+        self._btn_bilibili = QPushButton("Bilibili 主页 →")
+        self._btn_bilibili.setObjectName("bilibiliBtn")
+        self._btn_bilibili.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_bilibili.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #FB7299;
+                border: none;
+                padding: 4px 0px;
+                font-size: 12px;
+                text-align: left;
+            }
+            QPushButton:hover {
+                color: #FF8DB0;
+            }
+        """)
+        self._btn_bilibili.clicked.connect(self._open_bilibili)
+        bili_row.addWidget(bili_icon)
+        bili_row.addWidget(self._btn_bilibili, 1)
+        about_layout.addLayout(bili_row)
+
+        # 项目信息
+        project_row = QHBoxLayout()
+        project_label = QLabel("WARFRAME-RELIC v1.0")
+        project_label.setStyleSheet("color: #666; font-size: 11px;")
+        project_row.addWidget(project_label)
+        project_row.addStretch()
+        about_layout.addLayout(project_row)
+
+        main_layout.addWidget(about_group)
 
         # ---- 底部提示 ----
         tip = QLabel("提示: 按 Ctrl+Shift+G 可随时唤出此面板 | 主程序 Ctrl+G 框选截图")
@@ -1352,6 +1400,11 @@ class ManagementPanel(QWidget):
         layout.addWidget(btn_box)
 
         dlg.exec()
+
+    def _open_bilibili(self):
+        """打开作者 Bilibili 主页"""
+        import webbrowser
+        webbrowser.open("https://space.bilibili.com/21001459")
 
     def _open_data_dir(self):
         """打开数据目录"""
