@@ -4,23 +4,23 @@ import numpy as np
 from PIL import Image
 from rapidocr_onnxruntime import RapidOCR
 
+from core.constants import OCR_TEXT_SCORE, OCR_BOX_THRESH, OCR_UPSCALE_MIN_WIDTH
+
 
 class RelicNameRecognizer:
-    """从遗物选择界面截图中识别所有遗物名称"""
+    """从遗物选择界面截图中识别所有遗物名称。"""
 
     RELIC_PATTERN = re.compile(
-        r'(古纪|前纪|中纪|后纪|安魂|先锋)[\s.,，。、]*([A-TV-Z0-9]\d+)'
-    )
+        r'(古纪|前纪|中纪|后纪|安魂|先锋)[\s.,，。、]*([A-TV-Z0-9]\d+)')
 
     TRASH_PATTERN = re.compile(r'^[xX]\d+$|^$$.*[$$】]$|^不装备遗物$')
 
     OCR_FIX_MAP = str.maketrans({
-        '\u2018': 'L', '\u2019': 'L',
-        ',': 'L', '|': 'I', ';': 'L',
+        '\u2018': 'L', '\u2019': 'L', ',': 'L', '|': 'I', ';': 'L',
     })
 
     def __init__(self):
-        self._ocr = RapidOCR(text_score=0.35, box_thresh=0.2)
+        self._ocr = RapidOCR(text_score=OCR_TEXT_SCORE, box_thresh=OCR_BOX_THRESH)
 
     @staticmethod
     def _fix_ocr_number(code: str) -> str:
@@ -40,7 +40,7 @@ class RelicNameRecognizer:
         t0 = time.perf_counter()
 
         h, w = image.shape[:2]
-        if w > 900:
+        if w > OCR_UPSCALE_MIN_WIDTH:
             scale = 1.5
             big = self._resize_fast(image, scale)
         else:

@@ -6,6 +6,22 @@ from PyQt6.QtWidgets import QWidget, QLabel, QApplication, QPushButton
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QCursor
 
+from core.constants import (
+    CYBER_YELLOW, CYBER_CYAN, CYBER_MAGENTA,
+    CYBER_DARK_BG, CYBER_BORDER, CYBER_TEXT,
+    OVERLAY_BG_COLOR, OVERLAY_SELECTION_OVERLAY, OVERLAY_STATUS_BG,
+    OVERLAY_CROSSHAIR_COLOR, OVERLAY_SELECTION_BORDER,
+    BTN_DEFAULT_BG, BTN_DEFAULT_TEXT, BTN_DEFAULT_BORDER,
+    BTN_HOVER_BG, BTN_HOVER_TEXT, BTN_HOVER_BORDER,
+    PANEL_DARKEST,
+)
+
+
+def _hex_to_rgb(hex_color: str) -> tuple:
+    """将 #RRGGBB 转为 (R, G, B) 整数元组"""
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
 
 # ========== Win32 鼠标穿透 ==========
 _WS_EX_TRANSPARENT = 0x00000020
@@ -163,23 +179,26 @@ class Overlay(QWidget):
     # ========== 功能选择按钮（★ 新增）==========
 
     def _setup_buttons(self):
-        """创建功能选择按钮，初始隐藏"""
+        """创建功能选择按钮，初始隐藏（2077 赛博朋克风格）"""
         self._mode_buttons = {}
-        btn_style = """
-            QPushButton {
-                background-color: rgba(30, 30, 30, 230);
-                color: #FFD900;
-                border: 2px solid #FFD900;
-                border-radius: 8px;
+        # 从 hex 颜色手动构建半透明 rgba（Qt stylesheet 不支持 8位 hex）
+        btn_bg_r, btn_bg_g, btn_bg_b = _hex_to_rgb(BTN_DEFAULT_BG)
+        btn_hover_r, btn_hover_g, btn_hover_b = _hex_to_rgb(BTN_HOVER_BORDER)
+        btn_style = f"""
+            QPushButton {{
+                background-color: rgba({btn_bg_r}, {btn_bg_g}, {btn_bg_b}, 220);
+                color: {BTN_DEFAULT_TEXT};
+                border: 2px solid {BTN_DEFAULT_BORDER};
+                border-radius: 6px;
                 padding: 10px 24px;
                 font-size: 16px;
                 font-family: "Microsoft YaHei";
-            }
-            QPushButton:hover {
-                background-color: rgba(60, 60, 60, 230);
-                border-color: #FFF;
-                color: #FFF;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: rgba({btn_hover_r}, {btn_hover_g}, {btn_hover_b}, 30);
+                border-color: {BTN_HOVER_BORDER};
+                color: {BTN_HOVER_TEXT};
+            }}
         """
 
         # 定义可用功能（可在此处扩展新功能）
@@ -370,7 +389,7 @@ class Overlay(QWidget):
           - 6元组: (text, x, y, expire_ms, color, line_colors) → 多行分别着色
         """
         now_ms = int(time.time() * 1000)
-        default_color = "#FFD900"
+        default_color = CYBER_YELLOW
         result = []
         for item in annotations:
             line_colors = None
@@ -455,8 +474,8 @@ class Overlay(QWidget):
                 fm = painter.fontMetrics()
                 line_height = fm.height() + 4  # 行高（含行间距）
 
-                # 背景颜色：深色半透明，确保文字可读
-                bg_color = QColor(20, 20, 20, 210)
+                # 背景颜色：2077 深蓝黑半透明
+                bg_color = QColor(*OVERLAY_BG_COLOR)
 
                 if '\n' in text:
                     # === 多行文本 ===
@@ -464,33 +483,35 @@ class Overlay(QWidget):
                     max_tw = max(fm.boundingRect(line).width() for line in lines) + 16
                     total_th = line_height * len(lines) + 8
 
-                    # 绘制深色半透明背景（整体外框）
+                    # 绘制半透明背景 + 2077 风格左边框装饰条
                     painter.fillRect(x, y, max_tw, total_th, bg_color)
+                    painter.fillRect(x, y, 3, total_th, QColor(str(CYBER_YELLOW)))
 
                     # 逐行绘制：有 line_colors 则按行着色，否则统一用 color
                     for i, line in enumerate(lines):
                         if line_colors and i < len(line_colors):
-                            painter.setPen(QColor(line_colors[i]))
+                            painter.setPen(QColor(str(line_colors[i])))
                         else:
-                            painter.setPen(QColor(color))
+                            painter.setPen(QColor(str(color)))
                         line_y = y + fm.ascent() + 2 + i * line_height
-                        painter.drawText(x + 8, line_y, line)
+                        painter.drawText(x + 12, line_y, line)
                 else:
                     # === 单行文本 ===
-                    tw = fm.boundingRect(text).width() + 12
+                    tw = fm.boundingRect(text).width() + 16
                     th = fm.height() + 6
                     painter.fillRect(x, y, tw, th, bg_color)
-                    painter.setPen(QColor(color))
-                    painter.drawText(x + 6, y + fm.ascent() + 3, text)
+                    painter.fillRect(x, y, 3, th, QColor(str(CYBER_YELLOW)))
+                    painter.setPen(QColor(str(color)))
+                    painter.drawText(x + 10, y + fm.ascent() + 3, text)
 
         if not self._selecting:
             return
 
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 120))
+        painter.fillRect(self.rect(), QColor(*OVERLAY_SELECTION_OVERLAY))
 
         if self._status:
-            painter.fillRect(0, 0, self.width(), 36, QColor(0, 0, 0, 180))
-            painter.setPen(QColor("#FFD900"))
+            painter.fillRect(0, 0, self.width(), 36, QColor(*OVERLAY_STATUS_BG))
+            painter.setPen(QColor(str(CYBER_YELLOW)))
             painter.setFont(QFont("Microsoft YaHei", 12))
             painter.drawText(20, 24, self._status)
 
@@ -513,20 +534,20 @@ class Overlay(QWidget):
         painter.fillRect(x, y, w, h, QColor(0, 0, 0, 0))
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
 
-        pen = QPen(QColor("#FFD700"), 2)
+        pen = QPen(QColor(str(OVERLAY_SELECTION_BORDER)), 2)
         painter.setPen(pen)
         painter.drawRect(x, y, w, h)
 
-        painter.setPen(QColor("#FFFFFF"))
+        painter.setPen(QColor(str(CYBER_CYAN)))
         painter.setFont(QFont("Microsoft YaHei", 11))
         painter.drawText(x + 5, y - 8, f"{w} × {h}")
 
     def _draw_crosshair(self, painter, pos):
-        pen = QPen(QColor("#FFD700"), 1, Qt.PenStyle.DashLine)
+        pen = QPen(QColor(str(OVERLAY_CROSSHAIR_COLOR)), 1, Qt.PenStyle.DashLine)
         painter.setPen(pen)
         painter.drawLine(0, pos.y(), self.width(), pos.y())
         painter.drawLine(pos.x(), 0, pos.x(), self.height())
-        painter.setPen(QPen(QColor("#FFD700"), 2))
+        painter.setPen(QPen(QColor(str(OVERLAY_CROSSHAIR_COLOR)), 2))
         painter.drawLine(pos.x() - 12, pos.y(), pos.x() + 12, pos.y())
         painter.drawLine(pos.x(), pos.y() - 12, pos.x(), pos.y() + 12)
 
@@ -546,7 +567,7 @@ class Overlay(QWidget):
     def _setup_label(self):
         self.label = QLabel("", self)
         self.label.setFont(QFont("Microsoft YaHei", 14))
-        self.label.setStyleSheet("color: #FFD900; background: transparent;")
+        self.label.setStyleSheet(f"color: {CYBER_YELLOW}; background: transparent;")
 
     # ========== 显示信息 ==========
 
@@ -571,6 +592,13 @@ class Overlay(QWidget):
 
     def _check_auto_hide(self):
         now = int(time.time() * 1000)
+
+        # 清理过期的标注（避免 paintEvent 每帧遍历全列表）
+        if self._annotations:
+            active = [a for a in self._annotations if a[3] > now]
+            if len(active) != len(self._annotations):
+                self._annotations = active
+                self.update()
 
         # 右键清除标注（非框选模式）
         if not self._selecting:

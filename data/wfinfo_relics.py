@@ -3,6 +3,7 @@ WFInfo 遗物掉落表数据库模块
 - 从 SQLite 数据库加载遗物→Prime部件映射
 - 提供遗物名称查询接口
 - 支持模糊匹配（处理 OCR 误识别）
+- 线程安全：使用 threading.Lock 保护连接生命周期
 
 数据源: relics.db (由 migrate_to_sqlite.py 从 relics.json 生成)
 """
@@ -10,11 +11,12 @@ WFInfo 遗物掉落表数据库模块
 import os
 import re
 import sqlite3
+import threading
 from typing import Optional
 
 
 class RelicDB:
-    """Warframe 遗物掉落表数据库 (SQLite 版本)"""
+    """Warframe 遗物掉落表数据库 (SQLite 版本，线程安全)。"""
 
     def __init__(self, data_dir: str = None):
         if data_dir is None:
@@ -22,32 +24,44 @@ class RelicDB:
         self._db_path = os.path.join(data_dir, 'relics.db')
         self._conn: sqlite3.Connection | None = None
         self._loaded = False
+        self._lock = threading.Lock()  # 保护连接生命周期
 
     # ========== 连接管理 ==========
 
     def _get_conn(self) -> sqlite3.Connection:
-        """获取数据库连接（懒加载 + 单例）"""
+        """获取数据库连接（懒加载 + 单例，线程安全）。"""
         if self._conn is None:
-            if not os.path.exists(self._db_path):
-                print(f"[RelicDB] 数据库文件不存在: {self._db_path}")
-                print("[RelicDB] 提示: 运行 python -m data.migrate_to_sqlite 生成数据库")
-                raise FileNotFoundError(f"DB not found: {self._db_path}")
-            self._conn = sqlite3.connect(self._db_path)
-            self._conn.row_factory = sqlite3.Row
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA foreign_keys=ON")
+            with self._lock:
+                if self._conn is None:  # 双重检查
+                    if not os.path.exists(self._db_path):
+                        raise FileNotFoundError(
+                            f"[RelicDB] 数据库文件不存在: {self._db_path}\n"
+                            f"[RelicDB] 提示: 运行 update_db.py 生成数据库")
+                    self._conn = sqlite3.connect(self._db_path)
+                    self._conn.row_factory = sqlite3.Row
+                    self._conn.execute("PRAGMA journal_mode=WAL")
+                    self._conn.execute("PRAGMA foreign_keys=ON")
         return self._conn
 
     def close(self):
-        """关闭数据库连接"""
-        if self._conn:
-            self._conn.close()
-            self._conn = None
+        """关闭数据库连接（线程安全）。"""
+        with self._lock:
+            if self._conn:
+                try:
+                    self._conn.close()
+                except Exception:
+                    pass
+                self._conn = None
+                self._loaded = False
+
+    def invalidate(self):
+        """通知数据库已被外部更新，下次查询时将重新打开连接。"""
+        self.close()
 
     # ========== 加载（兼容旧接口）==========
 
     def load(self) -> bool:
-        """检查数据库是否可用，返回是否成功"""
+        """检查数据库是否可用，返回是否成功。"""
         try:
             conn = self._get_conn()
             cur = conn.execute("SELECT COUNT(*) FROM relics")
@@ -60,7 +74,7 @@ class RelicDB:
             return False
 
     def ensure_loaded(self):
-        """懒加载：首次查询时自动初始化"""
+        """懒加载：首次查询时自动初始化。"""
         if not self._loaded:
             self.load()
 

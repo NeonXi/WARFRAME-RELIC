@@ -28,10 +28,11 @@ class FetchWorker(QObject):
     finished = pyqtSignal(str)                # 下载完成 → 携带保存路径
     error = pyqtSignal(str)                   # 致命错误
 
-    def __init__(self, save_path: str, url: str = ALLJSON_URL):
+    def __init__(self, save_path: str, url: str = ALLJSON_URL, max_retries: int = 2):
         super().__init__()
         self.save_path = save_path
         self.url = url
+        self.max_retries = max_retries
 
     # ------------------------------------------------------------
     # 核心执行流程
@@ -68,72 +69,78 @@ class FetchWorker(QObject):
             self.error.emit(f"DNS 解析失败: {e}\n请检查网络连接")
             return
 
-        # ===== 步骤 3: TCP 连接 + SSL 握手 =====
+        # ===== 步骤 3: TCP 连接 + SSL 握手（带重试）=====
         self.step_changed.emit(3, "建立安全连接")
         self.log.emit("info", "正在建立 HTTPS 连接...")
-        try:
-            req = urllib.request.Request(
-                self.url,
-                headers={"User-Agent": "WARFRAME-RELIC/1.0"}
-            )
-            conn_start = time.time()
-            resp = urllib.request.urlopen(req, timeout=15)
-            conn_time = (time.time() - conn_start) * 1000
-            self.log.emit("ok", f"HTTPS 连接成功 (耗时 {conn_time:.0f} ms)")
-        except urllib.error.HTTPError as e:
-            self.log.emit("error", f"HTTP 错误: {e.code} {e.reason}")
-            if e.code == 404:
-                self.log.emit("error", "文件不存在，可能是 GitHub 路径已变更")
-            elif e.code == 403:
-                self.log.emit("error", "访问被拒绝 (403)，可能被 GitHub 限流")
-            self.error.emit(f"HTTP {e.code}: {e.reason}")
-            return
-        except urllib.error.URLError as e:
-            reason = str(e.reason)
-            self.log.emit("error", f"连接失败: {reason}")
-            if "timed out" in reason.lower():
-                self.log.emit("error", "连接超时，可能原因: 防火墙阻止 / 网络不稳定 / GitHub 不可达")
-            elif "certificate" in reason.lower():
-                self.log.emit("error", "SSL 证书验证失败，可能原因: 系统时间不正确 / 代理干扰")
-            elif "getaddrinfo" in reason.lower():
-                self.log.emit("error", "无法解析主机名，请检查 DNS 设置")
-            self.error.emit(f"连接失败: {reason}")
-            return
-        except Exception as e:
-            self.log.emit("error", f"未知连接错误: {e}")
-            self.error.emit(str(e))
-            return
-
-        # ===== 步骤 4: 获取文件信息 =====
-        self.step_changed.emit(4, "获取文件信息")
-        content_length = resp.headers.get("Content-Length")
-        content_type = resp.headers.get("Content-Type", "未知")
-        content_encoding = resp.headers.get("Content-Encoding", "无")
-        last_modified = resp.headers.get("Last-Modified", "未知")
-        self.log.emit("info", f"Content-Type: {content_type}")
-        self.log.emit("info", f"Content-Encoding: {content_encoding}")
-        self.log.emit("info", f"Last-Modified: {last_modified}")
-        if content_length:
-            size_kb = int(content_length) / 1024
-            size_mb = size_kb / 1024
-            if size_mb >= 1:
-                self.log.emit("info", f"文件大小: {size_mb:.2f} MB ({int(content_length):,} bytes)")
-            else:
-                self.log.emit("info", f"文件大小: {size_kb:.0f} KB ({int(content_length):,} bytes)")
+        resp = None
+        last_error = None
+        for attempt in range(1, self.max_retries + 1):
+            if attempt > 1:
+                self.log.emit("info", f"第 {attempt} 次重试...")
+                time.sleep(2)
+            try:
+                req = urllib.request.Request(
+                    self.url,
+                    headers={"User-Agent": "WARFRAME-RELIC/1.0"}
+                )
+                conn_start = time.time()
+                resp = urllib.request.urlopen(req, timeout=15)
+                conn_time = (time.time() - conn_start) * 1000
+                self.log.emit("ok", f"HTTPS 连接成功 (耗时 {conn_time:.0f} ms)")
+                break
+            except urllib.error.HTTPError as e:
+                last_error = (f"HTTP {e.code}: {e.reason}", e)
+                if e.code == 404:
+                    self.log.emit("error", "文件不存在，可能是 GitHub 路径已变更")
+                elif e.code == 403:
+                    self.log.emit("error", "访问被拒绝 (403)，可能被 GitHub 限流")
+                break  # HTTP 错误不重试
+            except urllib.error.URLError as e:
+                last_error = (f"连接失败: {e.reason}", e)
+                reason = str(e.reason)
+                self.log.emit("warn", f"连接失败 (第 {attempt}/{self.max_retries} 次): {reason}")
+                if "timed out" in reason.lower():
+                    self.log.emit("warn", "连接超时，可能原因: 防火墙阻止 / 网络不稳定")
+            except Exception as e:
+                last_error = (str(e), e)
+                self.log.emit("warn", f"未知连接错误 (第 {attempt}/{self.max_retries} 次): {e}")
         else:
-            self.log.emit("warn", "服务器未提供 Content-Length，无法显示下载进度")
-
-        # ===== 步骤 5: 下载数据（带进度） =====
-        self.step_changed.emit(5, "下载数据")
-        self.log.emit("info", "开始下载 all.json 数据文件...")
-        self.log.emit("info", f"每次读取块大小: 8 KB | 连接超时: 15s")
-        chunks = []
-        downloaded = 0
-        total = int(content_length) if content_length else 0
-        last_pct = -1
-        dl_start = time.time()
+            msg, exc = last_error or ("未知错误", Exception("unknown"))
+            self.log.emit("error", f"{msg}（已重试 {self.max_retries} 次）")
+            self.log.emit("error", "建议: 使用 Watt Toolkit 加速 GitHub 或手动下载")
+            self.error.emit(f"{msg}\n已重试 {self.max_retries} 次，仍然失败。\n请尝试手动下载或使用网络加速工具。")
+            return
 
         try:
+            # ===== 步骤 4: 获取文件信息 =====
+            self.step_changed.emit(4, "获取文件信息")
+            content_length = resp.headers.get("Content-Length")
+            content_type = resp.headers.get("Content-Type", "未知")
+            content_encoding = resp.headers.get("Content-Encoding", "无")
+            last_modified = resp.headers.get("Last-Modified", "未知")
+            self.log.emit("info", f"Content-Type: {content_type}")
+            self.log.emit("info", f"Content-Encoding: {content_encoding}")
+            self.log.emit("info", f"Last-Modified: {last_modified}")
+            if content_length:
+                size_kb = int(content_length) / 1024
+                size_mb = size_kb / 1024
+                if size_mb >= 1:
+                    self.log.emit("info", f"文件大小: {size_mb:.2f} MB ({int(content_length):,} bytes)")
+                else:
+                    self.log.emit("info", f"文件大小: {size_kb:.0f} KB ({int(content_length):,} bytes)")
+            else:
+                self.log.emit("warn", "服务器未提供 Content-Length，无法显示下载进度")
+
+            # ===== 步骤 5: 下载数据（带进度） =====
+            self.step_changed.emit(5, "下载数据")
+            self.log.emit("info", "开始下载 all.json 数据文件...")
+            self.log.emit("info", f"每次读取块大小: 8 KB | 连接超时: 15s")
+            chunks = []
+            downloaded = 0
+            total = int(content_length) if content_length else 0
+            last_pct = -1
+            dl_start = time.time()
+
             while True:
                 chunk = resp.read(8192)
                 if not chunk:
@@ -154,6 +161,13 @@ class FetchWorker(QObject):
             self.log.emit("error", f"下载中断: {e}")
             self.error.emit(f"下载中断: {e}")
             return
+        finally:
+            # 确保响应对象被关闭，防止连接泄漏
+            if resp is not None:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
 
         dl_time = time.time() - dl_start
         dl_kb = len(content) / 1024
