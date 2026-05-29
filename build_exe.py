@@ -162,9 +162,22 @@ def step_install_pyinstaller(python):
         return False
 
 
+def _kill_stale_processes():
+    """杀掉可能占用 dist/ 目录的残留进程（仅杀 EXE，不动 python）"""
+    try:
+        subprocess.run(
+            ["taskkill", "/f", "/im", "WARFRAME-RELIC.exe"],
+            capture_output=True, timeout=5, check=False
+        )
+    except Exception:
+        pass
+
 def step_clean():
     """步骤3: 清理旧构建"""
     print_step(3, 5, "Clean Old Build Files")
+
+    # 先杀残留进程，避免文件被占用
+    _kill_stale_processes()
 
     dirs_to_clean = {
         BUILD_DIR: "build/",
@@ -179,6 +192,7 @@ def step_clean():
                 print("Done")
             except Exception as e:
                 print(f"Failed: {e}")
+                print("  请手动关闭 WARFRAME-RELIC.exe 后重试")
                 return False
         else:
             print(f"  [SKIP] {name} not found")
@@ -232,12 +246,28 @@ def step_build(python):
     cmd = [
         python, "-m", "PyInstaller",
         "--onedir",
-        "--console",
+        "--noconsole",
         "--name", "WARFRAME-RELIC",
         "--add-data", f"data{os.pathsep}data",
         "--add-data", f"core{os.pathsep}core",
         "--add-data", f"recognizers{os.pathsep}recognizers",
         "--add-data", f"qt.conf{os.pathsep}.",
+        # 排除 rapidocr-onnxruntime 拉进来的无关大包（torch/scipy/pandas 等）
+        # 注意：shapely 是 rapidocr_onnxruntime 的依赖，不能排除！
+        "--exclude-module", "torch",
+        "--exclude-module", "torchvision",
+        "--exclude-module", "scipy",
+        "--exclude-module", "pandas",
+        "--exclude-module", "google.protobuf",
+        "--exclude-module", "dateutil",
+        "--exclude-module", "setuptools",
+        "--exclude-module", "charset_normalizer",
+        "--exclude-module", "chardet",
+        "--exclude-module", "certifi",
+        "--exclude-module", "markupsafe",
+        "--exclude-module", "tzdata",
+        "--exclude-module", "safetensors",
+        "--exclude-module", "psutil",
         # 排除用不到的 PyQt6 子模块（减小体积）
         "--exclude-module", "PyQt6.QtWebEngine",
         "--exclude-module", "PyQt6.QtWebEngineCore",
@@ -282,6 +312,7 @@ def step_build(python):
         "--exclude-module", "PyQt6.QtWebSockets",
         "--exclude-module", "PyQt6.QtHttpServer",
         "--collect-all", "rapidocr_onnxruntime",
+        "--collect-all", "onnxruntime",
         "--collect-all", "dxcam",
         "--hidden-import", "PyQt6.QtCore",
         "--hidden-import", "PyQt6.QtGui",

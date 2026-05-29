@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "main.py", line 433, in <module>
+    main()
+  File "main.py", line 428, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "main.py", line 44, in __init__
+    self._camera = dxcam.create(output_idx=0, output_color="BGR")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "dxcam\__init__.py", line 262, in create
+  File "dxcam\__init__.py", line 153, in create
+  File "dxcam\dxcam.py", line 96, in __init__
+  File "dxcam\dxcam.py", line 166, in _create_duplicator
+  File "dxcam\core\backend.py", line 73, in create_backend_duplicator
+  File "dxcam\core\backend.py", line 14, in _create_dxgi_duplicator
+  File "<string>", line 11, in __init__
+  File "dxcam\core\dxgi_duplicator.py", line 60, in __post_init__
+  File "dxcam\core\dxgi_duplicator.py", line 78, in _duplicate_output
+_ctypes.COMError: (-2005270494, '调用时资源无法使用，但可能稍后可以使用。', (None, None, None, 0, None))

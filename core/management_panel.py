@@ -231,9 +231,9 @@ class ManagementPanel(QWidget):
         self.resize(580, 840)
         self.setWindowFlags(
             Qt.WindowType.Window
-            | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.WindowCloseButtonHint
             | Qt.WindowType.WindowMaximizeButtonHint
+            | Qt.WindowType.WindowMinimizeButtonHint
         )
         self.setStyleSheet(STYLE_DARK)
 

@@ -41,7 +41,7 @@ class AppCore:
 
     def __init__(self, app: QApplication):
         self._app = app
-        self._camera = dxcam.create(output_idx=0, output_color="BGR")
+        self._camera = self._create_camera_with_retry()
         self._overlay = Overlay()
         self._overlay.show()
 
@@ -61,6 +61,26 @@ class AppCore:
         self._screenshot_busy = False    # 防重复触发
         self._registered_hotkeys = {}    # hotkey_str → 清理函数
 
+    @staticmethod
+    def _create_camera_with_retry(max_retries: int = 5):
+        """创建 dxcam 摄像头，带重试机制。
+        
+        dxcam 依赖 DXGI DuplicateOutput，在某些环境下（如刚启动、GPU 繁忙）
+        可能暂时不可用。这里加入重试和短暂等待。
+        """
+        import time as _time
+        last_err = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                return dxcam.create(output_idx=0, output_color="BGR")
+            except Exception as e:
+                last_err = e
+                if attempt < max_retries:
+                    _time.sleep(0.5 * attempt)  # 递增等待：0.5s, 1s, 1.5s...
+        raise RuntimeError(
+            f"无法初始化 dxcam 摄像头（已重试 {max_retries} 次）: {last_err}"
+        )
+
     def run(self):
         """启动应用主循环。"""
         self._init_db()
@@ -68,6 +88,8 @@ class AppCore:
         self._register_initial_hotkeys()
         self._start_timers()
         self._print_startup_info()
+        # 自动打开管理面板（作为程序主窗口）
+        self._management_panel.show()
         self._app.exec()
 
     # ========== 数据库 ==========
@@ -91,7 +113,6 @@ class AppCore:
     # ========== 日志 ==========
 
     def _log(self, msg: str, log_type: str = "info"):
-        print(msg)
         self._management_panel.add_log(log_type, msg)
 
     # ========== 截图 & OCR ==========
@@ -186,6 +207,13 @@ class AppCore:
         """Ctrl+H：全屏截图 → 立即显示按钮 → 后台 OCR"""
         if self._screenshot_busy:
             return
+
+        # 防止覆盖层内容（标注/按钮/label）被截入图片
+        if self._overlay.is_showing_content():
+            self._overlay.display("请先右键清除标注或关闭功能按钮，再使用全屏截图", auto_hide_ms=3000)
+            self._log("[拒绝] 全屏截图：覆盖层有内容正在显示，请先右键清除", "warn")
+            return
+
         self._screenshot_busy = True
 
         self._log("=== 全屏截图模式 ===")
@@ -404,18 +432,16 @@ class AppCore:
         db_stats = self._relic_db.stats()
         hotkeys_config = load_hotkeys()
 
-        print("程序已启动")
-        print(f"  {hotkeys_config['select']:<16}→ 框选区域截图识别（松手自动识别）")
-        print(f"  {hotkeys_config['fullscreen']:<16}→ 全屏截图识别（跳过框选，直接识别）")
-        print(f"  {hotkeys_config['panel']:<16}→ 打开管理面板（更新数据库/查看状态）")
-        print("  右键          → 取消框选 / 清除标注 / 关闭功能选择")
-        print("")
-        print("  识别后会弹出功能选择按钮：")
-        print("    [出入库查询]  — 标注遗物名称（绿=出库 红=入库）")
-        print("    [遗物内容查询] — 匹配遗物对应的 Prime 部件（带颜色）")
-        print("")
-        print(f"  [WFInfo 数据库] 总计 {db_stats['total_relics']} 个遗物"
-              f" | 入库 {db_stats['available']} | 出库 {db_stats['vaulted']}")
+        self._log("程序已启动")
+        self._log(f"  {hotkeys_config['select']:<16}→ 框选区域截图识别（松手自动识别）")
+        self._log(f"  {hotkeys_config['fullscreen']:<16}→ 全屏截图识别（跳过框选，直接识别）")
+        self._log(f"  {hotkeys_config['panel']:<16}→ 打开管理面板（更新数据库/查看状态）")
+        self._log("  右键          → 取消框选 / 清除标注 / 关闭功能选择")
+        self._log("  识别后会弹出功能选择按钮：")
+        self._log("    [出入库查询]  — 标注遗物名称（绿=出库 红=入库）")
+        self._log("    [遗物内容查询] — 匹配遗物对应的 Prime 部件（带颜色）")
+        self._log(f"  [WFInfo 数据库] 总计 {db_stats['total_relics']} 个遗物"
+                  f" | 入库 {db_stats['available']} | 出库 {db_stats['vaulted']}")
 
 
 def main():

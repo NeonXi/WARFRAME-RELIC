@@ -143,6 +143,23 @@ class Overlay(QWidget):
     def get_region(self):
         return self._saved_region
 
+    def is_showing_content(self) -> bool:
+        """检查当前是否有正在显示的内容（标注、按钮、label 等）。
+        
+        用于全屏截图前判断，防止覆盖层内容被截入图片导致识别异常。
+        """
+        # 有正在显示的标注（含未过期）
+        now = int(time.time() * 1000)
+        if any(a[3] > now for a in self._annotations):
+            return True
+        # 有可见的功能按钮
+        if any(btn.isVisible() for btn in self._mode_buttons.values()):
+            return True
+        # label 有文字且未过期
+        if self._hide_at > now and self.label.text():
+            return True
+        return False
+
     # ========== 功能选择按钮（★ 新增）==========
 
     def _setup_buttons(self):
