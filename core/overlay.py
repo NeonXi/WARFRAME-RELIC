@@ -546,8 +546,11 @@ class Overlay(QWidget):
             | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        screen = QApplication.primaryScreen().geometry()
-        self.setGeometry(screen)
+        # 覆盖所有显示器的并集区域（兼容多显示器/副屏场景）
+        total_rect = QApplication.primaryScreen().geometry()
+        for screen in QApplication.screens():
+            total_rect = total_rect.united(screen.geometry())
+        self.setGeometry(total_rect)
 
     def _setup_label(self):
         self.label = QLabel("", self)

@@ -2,11 +2,11 @@
 setlocal enabledelayedexpansion
 chcp 65001 >nul
 cd /d "%~dp0"
-title Build WARFRAME-RELIC
+title 打包 WARFRAME-RELIC
 
 echo.
 echo ============================================================
-echo           WARFRAME-RELIC - Build to EXE
+echo           WARFRAME-RELIC - 打包
 echo ============================================================
 echo.
 

@@ -1,6 +1,7 @@
 import re
 import time
 import numpy as np
+from PIL import Image
 from rapidocr_onnxruntime import RapidOCR
 
 
@@ -30,9 +31,10 @@ class RelicNameRecognizer:
 
     @staticmethod
     def _resize_fast(img: np.ndarray, scale: float) -> np.ndarray:
-        import cv2
         h, w = img.shape[:2]
-        return cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_LINEAR)
+        pil_img = Image.fromarray(img)
+        pil_img = pil_img.resize((int(w * scale), int(h * scale)), Image.BILINEAR)
+        return np.array(pil_img)
 
     def recognize_all_with_boxes(self, image: np.ndarray) -> list[tuple[str, list]]:
         t0 = time.perf_counter()

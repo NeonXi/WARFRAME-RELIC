@@ -170,20 +170,17 @@ class RelicDB:
         """返回数据库统计信息
         vaulted=1 → 出库(可获取)
         vaulted=0 → 入库(不可获取)
-        vaulted=2 → 虚空商人(可从 Baro Ki'Teer 购买)
         """
         self.ensure_loaded()
         conn = self._get_conn()
         total = conn.execute("SELECT COUNT(*) FROM relics").fetchone()[0]
         vaulted = conn.execute("SELECT COUNT(*) FROM relics WHERE vaulted=1").fetchone()[0]
-        voidtrader = conn.execute("SELECT COUNT(*) FROM relics WHERE vaulted=2").fetchone()[0]
         aliases = conn.execute("SELECT COUNT(*) FROM relic_aliases").fetchone()[0]
         parts = conn.execute("SELECT COUNT(*) FROM relic_parts").fetchone()[0]
         return {
             'total_relics': total,
             'vaulted': vaulted,        # 出库(可获取)
-            'available': total - vaulted - voidtrader,  # 入库(不可获取)
-            'voidtrader': voidtrader,  # 虚空商人可购买
+            'available': total - vaulted,  # 入库(不可获取)
             'total_aliases': aliases,
             'total_parts': parts,
         }

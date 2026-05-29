@@ -27,7 +27,8 @@
 vaulted 字段含义：
   - 0 = 入库（不可获取）
   - 1 = 出库（可获取，有掉落途径）
-  - 2 = 虚空商人（可从 Baro Ki'Teer 购买）
+
+注：虚空商人(Baro Ki'Teer)功能暂未实现，相关遗物按入库处理。
 
 所有查询走 DB → data/wfinfo_relics.py (RelicDB)
 """
@@ -278,14 +279,6 @@ def update_from_alljson(json_path: str, db_path: str) -> dict:
     """
     dropping_set = _extract_dropping_relics(json_path)
 
-    # 获取虚空商人遗物（从 all.json 自动检测 + 从配置文件加载）
-    data_dir = os.path.dirname(json_path) if os.path.dirname(json_path) else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-    vt_from_alljson = _extract_voidtrader_relics(json_path)
-    vt_from_config = _load_voidtrader_relics(data_dir)
-    vt_set = vt_from_alljson | vt_from_config
-    if vt_set:
-        print(f"  [虚空商人] 总计 {len(vt_set)} 个虚空商人可购买遗物 → vaulted=2")
-
     print(f"  读取源文件: {json_path}")
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -321,13 +314,11 @@ def update_from_alljson(json_path: str, db_path: str) -> dict:
         era = TIER_MAP.get(tier_en, tier_en)
         name = f"{era} {code}"
 
-        # 决定 vaulted 状态：虚空商人 > 出库 > 入库
-        if name in vt_set:
-            vaulted = 2  # 虚空商人可购买
-        elif name in dropping_set:
+        # 决定 vaulted 状态
+        if name in dropping_set:
             vaulted = 1  # 出库（可获取）
         else:
-            vaulted = 0  # 入库（不可获取）
+            vaulted = 0  # 入库（不可获取，含虚空商人）
 
         cur.execute(
             "INSERT INTO relics (name, era, code, vaulted) VALUES (?, ?, ?, ?)",
@@ -365,7 +356,6 @@ def update_from_alljson(json_path: str, db_path: str) -> dict:
         'parts': inserted_parts,
         'aliases': inserted_aliases,
         'dropping': len(dropping_set),
-        'voidtrader': len(vt_set),
     }
 
 
@@ -392,15 +382,6 @@ def update_from_relicsjson(json_path: str, db_path: str) -> dict:
     relics_list = data.get('relics', [])
     print(f"  发现 {len(relics_list)} 条遗物记录")
 
-    # 也尝试从 all.json 同级目录加载虚空商人数据
-    data_dir = os.path.dirname(json_path) if os.path.dirname(json_path) else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-    vt_set = _load_voidtrader_relics(data_dir)
-    # 也检查 all.json 中的虚空商人数据
-    alljson_path = os.path.join(data_dir, 'all.json')
-    if os.path.exists(alljson_path):
-        vt_from_all = _extract_voidtrader_relics(alljson_path)
-        vt_set = vt_set | vt_from_all
-
     conn = _open_db_write(db_path)
     cur = conn.cursor()
 
@@ -414,11 +395,7 @@ def update_from_relicsjson(json_path: str, db_path: str) -> dict:
         code = item.get('code', '')
         parts = item.get('parts', [])
 
-        # 优先虚空商人，其次显式 vaulted 字段
-        if name in vt_set:
-            vaulted = 2
-        else:
-            vaulted = 1 if item.get('vaulted', False) else 0
+        vaulted = 1 if item.get('vaulted', False) else 0
 
         if not name:
             continue
@@ -458,7 +435,6 @@ def update_from_relicsjson(json_path: str, db_path: str) -> dict:
         'parts': inserted_parts,
         'aliases': inserted_aliases,
         'dropping': None,
-        'voidtrader': len(vt_set),
     }
 
 
@@ -609,13 +585,10 @@ def _print_summary(stats: dict, db_path: str):
     print(f"  部件数: {stats['parts']}")
     print(f"  别名数: {stats['aliases']}")
     if stats.get('dropping') is not None:
-        vt_count = stats.get('voidtrader', 0)
         dropping_count = stats['dropping']
-        vaulted_count = stats['relics'] - dropping_count - vt_count
+        vaulted_count = stats['relics'] - dropping_count
         print(f"  出库:   {dropping_count} (有掉落途径)")
         print(f"  入库:   {vaulted_count} (无掉落途径)")
-        if vt_count > 0:
-            print(f"  虚空商人: {vt_count} (可从 Baro Ki'Teer 购买)")
     print(f"  DB大小: {os.path.getsize(db_path):,} bytes")
     print(f"  数据库: {db_path}")
     print()

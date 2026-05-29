@@ -52,7 +52,7 @@ echo.
 rem --- 步骤3: 检查依赖 ---
 echo [3/4] 检查依赖包...
 set VENV_PYTHON=venv\Scripts\python.exe
-!VENV_PYTHON! -c "import PyQt6, dxcam, keyboard, rapidocr_onnxruntime, PIL, cv2, numpy" >nul 2>&1
+!VENV_PYTHON! -c "import PyQt6, dxcam, keyboard, rapidocr_onnxruntime, PIL, numpy" >nul 2>&1
 if !errorlevel! neq 0 (
     echo       依赖缺失，正在安装（首次运行约需 1-3 分钟）...
     echo       使用腾讯云镜像加速下载

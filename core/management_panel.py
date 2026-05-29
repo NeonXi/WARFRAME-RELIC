@@ -912,7 +912,7 @@ class ManagementPanel(QWidget):
         self._stat_labels['vaulted'].setStyleSheet("color: #33FF66; font-weight: bold;")
         self._stat_labels['available'].setText(f"{stats['available']}  (红色不可获取)")
         self._stat_labels['available'].setStyleSheet("color: #FF6B6B; font-weight: bold;")
-        self._stat_labels['voidtrader'].setText(f"{stats.get('voidtrader', 0)}  (蓝色虚空商人)")
+        self._stat_labels['voidtrader'].setText(f"{stats.get('voidtrader', 0)}  (功能未实现)")
         self._stat_labels['voidtrader'].setStyleSheet("color: #448AFF; font-weight: bold;")
 
         # 文件大小
@@ -1269,24 +1269,18 @@ class ManagementPanel(QWidget):
             self._step_label.setText("全部完成！")
             self._step_label.setStyleSheet("color: #33FF66; font-size: 13px;")
             dropping = stats.get('dropping', 0)
-            vt_count = stats.get('voidtrader', 0)
             total = stats.get('relics', 0)
-            vaulted_count = total - dropping - vt_count
+            vaulted_count = total - dropping
             detail_text = (
                 f"数据库更新成功！\n"
                 f"  遗物: {total} | 部件: {stats.get('parts', 0)} | 别名: {stats.get('aliases', 0)}\n"
                 f"  出库: {dropping} | 入库: {vaulted_count}"
             )
-            if vt_count > 0:
-                detail_text += f" | 虚空商人: {vt_count}"
             self._log_detail.setText(detail_text)
             self._log_area.append(f'<span style="color:#33FF66;">  ✓ 数据库更新完成 (遗物 {total} 个)</span>')
-            if vt_count > 0:
-                self._log_area.append(f'<span style="color:#448AFF;">  ✓ 虚空商人遗物: {vt_count} 个</span>')
             self._log_area.append('<span style="color:#888;">========== 全部完成 ==========</span>')
 
         # 弹窗显示结果
-        vt_count = stats.get('voidtrader', 0)
         dropping = stats.get('dropping', 0)
         total = stats.get('relics', 0)
         msg = (
@@ -1295,10 +1289,8 @@ class ManagementPanel(QWidget):
             f"部件数: {stats.get('parts', 0)}\n"
             f"别名数: {stats.get('aliases', 0)}\n"
             f"出库:   {dropping} 个\n"
-            f"入库:   {total - dropping - vt_count} 个\n"
+            f"入库:   {total - dropping} 个\n"
         )
-        if vt_count > 0:
-            msg += f"虚空商人: {vt_count} 个\n"
         QMessageBox.information(self, "更新完成", msg)
 
         # 通知 main.py 重新加载数据库

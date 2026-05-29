@@ -63,9 +63,8 @@ def main():
         relic_db = RelicDB()
         if relic_db.load():
             stats = relic_db.stats()
-            vt_str = f" | 虚空商人 {stats.get('voidtrader', 0)}" if stats.get('voidtrader', 0) > 0 else ""
             log(f"  重新加载完成: {stats['total_relics']} 个遗物 | "
-                f"入库 {stats['available']} | 出库 {stats['vaulted']}{vt_str}", "ok")
+                f"入库 {stats['available']} | 出库 {stats['vaulted']}", "ok")
         else:
             log("[警告] 数据库重新加载失败", "error")
 
@@ -166,7 +165,13 @@ def main():
             _screenshot_busy = False
             return
 
-        frame = camera.grab(region=region)
+        # dxcam 使用物理像素，需要把 Qt 逻辑坐标转为物理像素
+        dpi = overlay._dpi_scale
+        phys_region = (
+            int(region[0] * dpi), int(region[1] * dpi),
+            int(region[2] * dpi), int(region[3] * dpi),
+        )
+        frame = camera.grab(region=phys_region)
         if frame is None:
             overlay.display("截图失败", auto_hide_ms=3000)
             _screenshot_busy = False
@@ -182,18 +187,20 @@ def main():
         _screenshot_busy = True
 
         log("=== 全屏截图模式 ===")
-        screen = QApplication.primaryScreen()
-        screen_geo = screen.geometry()
-        full_region = (0, 0, screen_geo.width(), screen_geo.height())
+        # dxcam 使用物理像素，camera.width/height 来自 DXGI
+        full_phys = (0, 0, camera.width, camera.height)
+        # Qt 逻辑坐标区域（用于标注定位）
+        dpi = overlay._dpi_scale
+        full_logical = (0, 0, int(camera.width / dpi), int(camera.height / dpi))
 
-        frame = camera.grab(region=full_region)
+        frame = camera.grab(region=full_phys)
         if frame is None:
             overlay.display("全屏截图失败", auto_hide_ms=3000)
             _screenshot_busy = False
             return
 
-        overlay.display(f"全屏截图 ({screen_geo.width()}x{screen_geo.height()})", auto_hide_ms=2000)
-        _process_frame(frame, full_region)
+        overlay.display(f"全屏截图 ({camera.width}x{camera.height})", auto_hide_ms=2000)
+        _process_frame(frame, full_logical)
 
     # ====== 功能模式处理（用户点击按钮后触发）======
 
@@ -225,24 +232,22 @@ def main():
         颜色规则：
           - vaulted=1 (有掉落途径)  → 出库，亮绿色 #33FF66
           - vaulted=0 (无掉落途径)  → 入库，暖红色 #FF6B6B
-          - vaulted=2 (虚空商人)    → 蓝色 #448AFF
           - 未匹配到数据库          → 灰色 #AAAAAA
         """
         log("=== 出入库查询模式 ===")
         annotations = []
         dpi_scale = overlay._dpi_scale
         for name, box in relics:
-            sx = int((region[0] + int(box[0][0])) / dpi_scale)
-            sy = int((region[1] + int(box[0][1]) - 28) / dpi_scale)
+            # box 来自 OCR（物理像素坐标），region 是 Qt 逻辑坐标
+            # 统一转逻辑坐标：region_offset + box / dpi_scale
+            sx = int(region[0] + box[0][0] / dpi_scale)
+            sy = int(region[1] + box[0][1] / dpi_scale - 28)
 
             # 查询数据库获取 vaulted 状态
             relic_info = relic_db.find(name)
             if relic_info:
                 vaulted = relic_info.get('vaulted', False)
-                if vaulted == 2:
-                    color = "#448AFF"   # 蓝色 - 虚空商人
-                    name_display = f"{name} [虚空商人]"
-                elif vaulted == 1:
+                if vaulted == 1:
                     color = "#33FF66"   # 亮绿 - 出库
                     name_display = f"{name} [出库]"
                 else:
@@ -263,7 +268,7 @@ def main():
         功能B：遗物内容查询 —— 显示出入库状态 + 遗物内 Prime 部件列表
 
         标注格式（每个部件独立一行）：
-          第1行:  遗物名称 [出库 / 入库 / 虚空商人]  ← 状态颜色（外框）
+          第1行:  遗物名称 [出库 / 入库]  ← 状态颜色（外框）
           第2行+:    ★ 部件名  ← 金色
                      ◆ 部件名  ← 银色
                      · 部件名  ← 铜色
@@ -272,7 +277,6 @@ def main():
 
         STATUS_COLOR_OUT = "#33FF66"     # 出库 - 亮绿
         STATUS_COLOR_IN = "#FF6B6B"      # 入库 - 暖红
-        STATUS_COLOR_VT = "#448AFF"      # 虚空商人 - 蓝色
         FALLBACK_COLOR = "#AAAAAA"       # 未匹配 - 灰色
 
         # 部件颜色：按概率分档（同一遗物内比较）
@@ -286,8 +290,8 @@ def main():
         dpi_scale = overlay._dpi_scale
 
         for name, box in relics:
-            sx = int((region[0] + int(box[0][0])) / dpi_scale)
-            sy = int((region[1] + int(box[0][1]) - 28) / dpi_scale)
+            sx = int(region[0] + box[0][0] / dpi_scale)
+            sy = int(region[1] + box[0][1] / dpi_scale - 28)
 
             relic_info = relic_db.find(name)
 
@@ -297,10 +301,7 @@ def main():
                 vaulted = relic_info.get('vaulted', False)
 
                 # === 第1行：遗物名 + 出入库状态 ===
-                if vaulted == 2:
-                    status = "虚空商人"
-                    status_color = STATUS_COLOR_VT
-                elif vaulted == 1:
+                if vaulted == 1:
                     status = "出库"
                     status_color = STATUS_COLOR_OUT
                 else:
@@ -359,7 +360,7 @@ def main():
         summary = f"遗物内容查询: {total}个 | 匹配 {matched}个"
         if unmatched_names:
             summary += f" | 未匹配: {', '.join(unmatched_names)}"
-        summary += "\n(★金=稀有  ◆银=罕见  ·铜=常见  绿=出库  红=入库  蓝=虚空商人)"
+        summary += "\n(★金=稀有  ◆银=罕见  ·铜=常见  绿=出库  红=入库)"
         overlay.display(summary, auto_hide_ms=6000)
 
         log(f"  匹配: {matched}/{total}")
@@ -443,7 +444,7 @@ def main():
 
     # 启动信息
     db_stats = relic_db.stats()
-    vt_str = f" | 虚空商人 {db_stats.get('voidtrader', 0)}" if db_stats.get('voidtrader', 0) > 0 else ""
+    
     print("程序已启动")
     print(f"  {hotkeys_config['select']:<16}→ 框选区域截图识别（松手自动识别）")
     print(f"  {hotkeys_config['fullscreen']:<16}→ 全屏截图识别（跳过框选，直接识别）")
@@ -451,11 +452,11 @@ def main():
     print("  右键          → 取消框选 / 清除标注 / 关闭功能选择")
     print("")
     print("  识别后会弹出功能选择按钮：")
-    print("    [出入库查询]  — 标注遗物名称（绿=出库 红=入库 金=虚空商人）")
+    print("    [出入库查询]  — 标注遗物名称（绿=出库 红=入库）")
     print("    [遗物内容查询] — 匹配遗物对应的 Prime 部件（带颜色）")
     print("")
     print(f"  [WFInfo 数据库] 总计 {db_stats['total_relics']} 个遗物"
-          f" | 入库 {db_stats['available']} | 出库 {db_stats['vaulted']}{vt_str}")
+          f" | 入库 {db_stats['available']} | 出库 {db_stats['vaulted']}")
 
     app.exec()
 

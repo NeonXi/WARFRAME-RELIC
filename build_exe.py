@@ -84,7 +84,7 @@ def step_check_env(python):
         return False
 
     # 检查关键包
-    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime", "PIL", "cv2", "numpy"]
+    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime", "PIL", "numpy"]
     print(f"\n  Checking dependencies...")
     all_ok = True
     for pkg in pkgs:
@@ -193,24 +193,96 @@ def step_clean():
     return True
 
 
+def _find_upx():
+    """查找 UPX 可执行文件"""
+    # 1) PyInstaller 自带的 upx
+    import importlib.util
+    try:
+        spec = importlib.util.find_spec("PyInstaller")
+        if spec and spec.submodule_search_locations:
+            pyi_dir = Path(spec.submodule_search_locations[0]).parent.parent
+            for upx_exe in [pyi_dir / "upx.exe", pyi_dir / "bin" / "upx.exe"]:
+                if upx_exe.exists():
+                    return str(upx_exe)
+    except Exception:
+        pass
+
+    # 2) PATH 中的 upx
+    for p in os.environ.get("PATH", "").split(os.pathsep):
+        upx = Path(p) / "upx.exe"
+        if upx.exists():
+            return str(upx)
+
+    return None
+
+
 def step_build(python):
     """步骤4: PyInstaller 打包（带实时进度显示）"""
     print_step(4, 5, "PyInstaller Build")
     print()
 
+    # 检测 UPX
+    upx_path = _find_upx()
+    if upx_path:
+        print_info(f"UPX found: {upx_path}")
+    else:
+        print_warn("UPX not found, skip compression (download from https://upx.github.io/)")
+
     # PyInstaller 参数
     cmd = [
         python, "-m", "PyInstaller",
-        "--onefile",
+        "--onedir",
         "--console",
         "--name", "WARFRAME-RELIC",
         "--add-data", f"data{os.pathsep}data",
         "--add-data", f"core{os.pathsep}core",
         "--add-data", f"recognizers{os.pathsep}recognizers",
         "--add-data", f"qt.conf{os.pathsep}.",
+        # 排除用不到的 PyQt6 子模块（减小体积）
+        "--exclude-module", "PyQt6.QtWebEngine",
+        "--exclude-module", "PyQt6.QtWebEngineCore",
+        "--exclude-module", "PyQt6.QtWebEngineWidgets",
+        "--exclude-module", "PyQt6.QtWebChannel",
+        "--exclude-module", "PyQt6.QtMultimedia",
+        "--exclude-module", "PyQt6.QtMultimediaWidgets",
+        "--exclude-module", "PyQt6.QtBluetooth",
+        "--exclude-module", "PyQt6.QtSensors",
+        "--exclude-module", "PyQt6.QtSerialPort",
+        "--exclude-module", "PyQt6.QtSql",
+        "--exclude-module", "PyQt6.QtSvg",
+        "--exclude-module", "PyQt6.QtSvgWidgets",
+        "--exclude-module", "PyQt6.QtTest",
+        "--exclude-module", "PyQt6.QtPrintSupport",
+        "--exclude-module", "PyQt6.QtHelp",
+        "--exclude-module", "PyQt6.QtXml",
+        "--exclude-module", "PyQt6.QtQml",
+        "--exclude-module", "PyQt6.QtQuick",
+        "--exclude-module", "PyQt6.QtQuickWidgets",
+        "--exclude-module", "PyQt6.QtDesigner",
+        "--exclude-module", "PyQt6.QtOpenGL",
+        "--exclude-module", "PyQt6.QtOpenGLWidgets",
+        "--exclude-module", "PyQt6.QtTextToSpeech",
+        "--exclude-module", "PyQt6.QtPositioning",
+        "--exclude-module", "PyQt6.QtNfc",
+        "--exclude-module", "PyQt6.QtNetwork",
+        "--exclude-module", "PyQt6.QtDBus",
+        "--exclude-module", "PyQt6.QtPdf",
+        "--exclude-module", "PyQt6.QtPdfWidgets",
+        "--exclude-module", "PyQt6.Qt3DCore",
+        "--exclude-module", "PyQt6.Qt3DRender",
+        "--exclude-module", "PyQt6.Qt3DInput",
+        "--exclude-module", "PyQt6.Qt3DAnimation",
+        "--exclude-module", "PyQt6.Qt3DLogic",
+        "--exclude-module", "PyQt6.Qt3DExtras",
+        "--exclude-module", "PyQt6.QtDataVisualization",
+        "--exclude-module", "PyQt6.QtCharts",
+        "--exclude-module", "PyQt6.QtRemoteObjects",
+        "--exclude-module", "PyQt6.QtSpatialAudio",
+        "--exclude-module", "PyQt6.QtStateMachine",
+        "--exclude-module", "PyQt6.QtWebSockets",
+        "--exclude-module", "PyQt6.QtHttpServer",
         "--collect-all", "rapidocr_onnxruntime",
         "--collect-all", "dxcam",
-        "--hidden-import", "PyQt6",
         "--hidden-import", "PyQt6.QtCore",
         "--hidden-import", "PyQt6.QtGui",
         "--hidden-import", "PyQt6.QtWidgets",
@@ -219,13 +291,15 @@ def step_build(python):
         "--hidden-import", "rapidocr_onnxruntime",
         "--hidden-import", "PIL",
         "--hidden-import", "PIL.Image",
-        "--hidden-import", "cv2",
         "--hidden-import", "numpy",
         "--hidden-import", "onnxruntime",
         "--hidden-import", "json",
         "--hidden-import", "sqlite3",
-        str(ROOT / "main.py"),
     ]
+    # 如果找到 UPX，添加压缩参数
+    if upx_path:
+        cmd.extend(["--upx-dir", str(Path(upx_path).parent)])
+    cmd.append(str(ROOT / "main.py"))
 
     # 打包阶段定义
     stage_names = [
@@ -329,20 +403,30 @@ def step_verify():
     """步骤5: 验证输出"""
     print_step(5, 5, "Verify Output")
 
-    exe_path = DIST_DIR / "WARFRAME-RELIC.exe"
+    exe_dir = DIST_DIR / "WARFRAME-RELIC"
+    exe_path = exe_dir / "WARFRAME-RELIC.exe"
 
     if exe_path.exists():
-        size_bytes = exe_path.stat().st_size
-        size_mb = size_bytes / (1024 * 1024)
-        print_ok(f"Output: {exe_path}")
-        print(f"  File size: {size_mb:.1f} MB ({size_bytes:,} bytes)")
+        # 计算整个文件夹大小
+        total_size = sum(
+            f.stat().st_size for f in exe_dir.rglob("*") if f.is_file()
+        )
+        exe_size = exe_path.stat().st_size
+        total_mb = total_size / (1024 * 1024)
+        exe_mb = exe_size / (1024 * 1024)
+        print_ok(f"Output: {exe_dir}")
+        print(f"  EXE size: {exe_mb:.1f} MB ({exe_size:,} bytes)")
+        print(f"  Total folder size: {total_mb:.1f} MB ({total_size:,} bytes)")
 
-        # 检查 build 目录大小
-        if BUILD_DIR.exists():
-            build_size = sum(
-                f.stat().st_size for f in BUILD_DIR.rglob("*") if f.is_file()
-            )
-            print(f"  build/ size: {build_size / (1024*1024):.1f} MB")
+        # 列出文件夹中主要文件
+        files = sorted(exe_dir.glob("*.dll")) + sorted(exe_dir.glob("*.exe"))
+        if files:
+            print(f"\n  Key files in dist/WARFRAME-RELIC/:")
+            for f in files[:10]:
+                size_kb = f.stat().st_size / 1024
+                print(f"    {f.name:<40} {size_kb:>8.0f} KB")
+            if len(files) > 10:
+                print(f"    ... and {len(files) - 10} more")
 
         return True
     else:
@@ -366,12 +450,12 @@ def print_tips():
     print(f"{'=' * 60}")
     print(f"  BUILD SUCCESS!")
     print(f"{'=' * 60}")
-    print(f"  Output: dist\\WARFRAME-RELIC.exe")
+    print(f"  Output: dist\\WARFRAME-RELIC\\")
     print()
     print(f"  Notes:")
-    print(f"    1. First launch may be slow (~10-30s)")
-    print(f"    2. data/core/recognizers are bundled inside exe")
-    print(f"    3. Recommend 'Run as Administrator' for keyboard hooks")
+    print(f"    1. Distribute the entire 'WARFRAME-RELIC' folder")
+    print(f"    2. Run: dist\\WARFRAME-RELIC\\WARFRAME-RELIC.exe")
+    print(f"    3. First launch loads ~5-10s (no temp extraction needed)")
     print(f"    4. You can delete build/ folder to save space")
     print()
 

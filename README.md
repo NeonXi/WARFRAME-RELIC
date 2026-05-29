@@ -118,16 +118,16 @@ WARFRAME-RELIC/
 | **dxcam** | 高性能屏幕截图（Windows DXGI） |
 | **keyboard** | 全局热键注册 |
 | **rapidocr-onnxruntime** | OCR 引擎（离线识别，无需联网） |
-| **opencv-python** | 图像缩放（小图自动放大提升识别率） |
+| **opencv-python** | ~~图像缩放~~ (已移除，改用 Pillow) |
 | **Pillow** | 调试截图保存 |
 
 ---
 
-## 📦 打包为 EXE
+## 📦 打包
 
 ```bash
 # 双击运行
-打包为exe.bat
+打包.bat
 
 # 或命令行
 python build_exe.py

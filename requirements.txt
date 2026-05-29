@@ -4,4 +4,3 @@ keyboard>=0.13.5
 rapidocr-onnxruntime>=1.4.4
 Pillow>=12.0.0
 numpy>=2.0.0
-opencv-python>=4.10.0
