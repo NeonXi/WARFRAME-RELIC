@@ -50,7 +50,8 @@ QPushButton {{
     border-radius: 4px;
     padding: 8px 16px;
     font-weight: bold;
-    min-height: 24px;
+    min-height: 36px;
+    text-align: center;
 }}
 QPushButton:hover {{
     background-color: {t.btn_hover_bg};
@@ -72,6 +73,8 @@ QPushButton#primaryBtn {{
     border-radius: 4px;
     padding: 8px 16px;
     font-weight: bold;
+    min-height: 36px;
+    text-align: center;
 }}
 QPushButton#primaryBtn:hover {{
     background-color: {t.primary_hover_bg};
@@ -90,6 +93,8 @@ QPushButton#actionBtn {{
     border-radius: 4px;
     padding: 8px 16px;
     font-weight: bold;
+    min-height: 36px;
+    text-align: center;
 }}
 QPushButton#actionBtn:hover {{
     background-color: {t.btn_hover_bg};

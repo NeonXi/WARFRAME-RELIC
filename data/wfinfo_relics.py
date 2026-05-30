@@ -153,10 +153,11 @@ class RelicDB:
             (relic_id,)
         ).fetchall()
 
-        parts = [
-            {'name': p['part_name'], 'rarity': p['rarity'], 'chance': p['chance']}
-            for p in parts_rows
-        ]
+        # 尝试翻译部件名（英文 → 中文）
+        parts = []
+        for p in parts_rows:
+            name = self._translate_part(p['part_name'])
+            parts.append({'name': name, 'rarity': p['rarity'], 'chance': p['chance']})
 
         return {
             'name': row['name'],
@@ -165,6 +166,15 @@ class RelicDB:
             'vaulted': bool(row['vaulted']),
             'parts': parts,
         }
+
+    def _translate_part(self, en_name: str) -> str:
+        """将英文部件名翻译为中文，翻译失败则返回原文"""
+        try:
+            from .translation_db import translate_en_to_cn
+            cn = translate_en_to_cn(en_name)
+            return cn if cn else en_name
+        except Exception:
+            return en_name
 
     @staticmethod
     def _fuzzy_normalize(s: str) -> str:

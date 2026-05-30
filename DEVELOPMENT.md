@@ -23,7 +23,13 @@
    - [5.8 快捷键系统 (hotkey_config.py)](#58-快捷键系统-hotkey_configpy)
    - [5.9 样式表生成 (stylesheet.py)](#59-样式表生成-stylesheetpy)
    - [5.10 后台 Worker 线程](#510-后台-worker-线程)
+   - [5.11 物品识别与匹配（recognizers/）](#511-物品识别与匹配recognizers)
 6. [数据层详解](#6-数据层详解)
+   - [6.1 数据文件说明](#61-数据文件说明)
+   - [6.2 全物品数据库构建流程（items_i18n.db）](#62-全物品数据库构建流程items_i18ndb)
+   - [6.3 物品匹配流程（4 轮降级）](#63-物品匹配流程4-轮降级)
+   - [6.4 数据库生成流程（遗物）](#64-数据库生成流程遗物)
+   - [6.5 别名生成策略](#65-别名生成策略)
 7. [配色系统深度剖析](#7-配色系统深度剖析)
 8. [线程安全与并发](#8-线程安全与并发)
 9. [配置与持久化](#9-配置与持久化)
@@ -76,7 +82,14 @@
 
 ### 外部数据源
 
-- [WFCD/warframe-drop-data](https://github.com/WFCD/warframe-drop-data) — 遗物掉落数据（`all.json`）
+| 数据源 | 说明 | 用途 |
+|--------|------|------|
+| [WFCD/warframe-drop-data](https://github.com/WFCD/warframe-drop-data) | 遗物掉落数据 | `all.json` → `relics.db` |
+| [WFCD/warframe-items](https://github.com/WFCD/warframe-items) | 全物品数据（含 uniqueName） | `all_items.json` + `i18n.json` → `items_i18n.db`（辅助源） |
+| AdminRoc 中英翻译 | 16907 条中英对照（最全） | `zh_en_dict.json` → `items_i18n.db`（★ 主数据源） |
+| [warframe.market API](https://api.warframe.market/v2) | 实时交易价格 | → `wm_prices.db` |
+
+**数据优先级**：`zh_en_dict.json`（16907 条，最全）> `all_items.json`（15729 条，含详细属性）> `i18n.json`（翻译补充）
 
 ---
 
@@ -104,19 +117,36 @@ WARFRAME-RELIC/
 │   ├── fetch_worker.py             # GitHub 下载后台 Worker（7 步进度）
 │   ├── overlay.py                  # ★ 全屏覆盖层（框选/标注/按钮）
 │   ├── stylesheet.py               # QSS 样式表动态生成
-│   └── hotkey_config.py            # 快捷键配置读写
+│   ├── hotkey_config.py            # 快捷键配置读写
+│   ├── item_info_panel.py          # 物品信息面板（翻译+价格）
+│   └── word_wrap_button.py         # 自动换行按钮控件
 ├── recognizers/                    # OCR 识别模块
 │   ├── __init__.py                 # 空（包标记）
-│   └── relic_name.py               # ★ 遗物名称 OCR 识别器
+│   ├── base_ocr.py                 # OCR 基类（RapidOCR 封装）
+│   ├── item_name.py                # ★ 物品名称 OCR 识别器
+│   ├── relic_name.py               # ★ 遗物名称 OCR 识别器
+│   ├── mod_name.py                 # MOD 名称 OCR 识别器
+│   └── matcher.py                  # ★ 物品匹配引擎（4 轮降级匹配）
 ├── data/                           # 数据 & 配置目录
 │   ├── __init__.py                 # 数据模块标记
 │   ├── all.json                    # WFInfo 全量掉落数据源（~6MB）
 │   ├── all.json.bak                # 数据源备份
+│   ├── all_items.json              # WFCD 全物品数据（~47MB，辅助源）
+│   ├── i18n.json                   # WFCD 多语言翻译数据
+│   ├── zh_en_dict.json             # ★ 中英对照字典（~1MB，主数据源）
 │   ├── relics.db                   # ★ SQLite 遗物数据库（~616KB）
+│   ├── items_i18n.db               # ★ 全物品中英对照数据库（~8MB）
+│   ├── items_i18n.py               # ★ 全物品数据库构建/查询模块
+│   ├── wm_prices.db                # warframe.market 价格数据库
+│   ├── wm_prices.py                # 价格拉取/查询模块
+│   ├── translation.db              # 翻译数据库（旧版，已被 items_i18n.db 替代）
+│   ├── translation_db.py           # 翻译库构建模块
 │   ├── wfinfo_relics.py            # ★ RelicDB 查询模块（四级匹配）
 │   ├── db_utils.py                 # 数据库工具函数（表结构/别名/迁移）
-│   ├── migrate_to_sqlite.py        # JSON → SQLite 迁移脚本
 │   ├── hotkeys.json                # 快捷键持久化配置
+│   ├── ui_strings.py               # UI 字符串定义
+│   ├── language_preset.json        # 语言预设
+│   ├── feature_toggles.json        # 功能开关配置
 │   └── presets/                    # ★ 配色预设目录
 │       ├── _active.json            # 当前活动预设 ID
 │       ├── cyberpunk.json          # 赛博朋克配色（用户修改版）
@@ -146,8 +176,15 @@ WARFRAME-RELIC/
 | `core/fetch_worker.py` | ~232 | GitHub 下载 Worker |
 | `core/update_worker.py` | ~30 | 数据库更新 Worker |
 | `core/constants.py` | ~92 | 业务常量 + 兼容层 |
-| `recognizers/relic_name.py` | ~83 | OCR 识别器 |
-| `data/wfinfo_relics.py` | ~208 | SQLite 查询模块 |
+| `recognizers/item_name.py` | ~821 | ★ 物品名称 OCR 识别器 |
+| `recognizers/matcher.py` | ~400 | ★ 物品匹配引擎（4 轮降级） |
+| `recognizers/relic_name.py` | ~83 | 遗物名称 OCR 识别器 |
+| `recognizers/base_ocr.py` | ~150 | OCR 基类 |
+| `recognizers/mod_name.py` | ~100 | MOD 名称识别器 |
+| `data/items_i18n.py` | ~730 | ★ 全物品数据库构建/查询 |
+| `data/wm_prices.py` | ~350 | 价格拉取/查询模块 |
+| `data/translation_db.py` | ~500 | 翻译库构建模块 |
+| `data/wfinfo_relics.py` | ~208 | SQLite 遗物查询模块 |
 | `data/db_utils.py` | ~337 | 数据库工具 |
 | `build_exe.py` | ~539 | 打包脚本 |
 | `dev_runner.py` | ~258 | 开发热重载 |
@@ -794,6 +831,34 @@ class UpdateWorker(QObject):
         # 调用 update_db.update_from_alljson() → _finalize_db()
 ```
 
+### 5.11 物品识别与匹配（`recognizers/` 目录）
+
+#### 物品名称识别 (`item_name.py`)
+
+从屏幕截图中 OCR 识别物品英文名，生成纠错候选列表。
+
+**核心流程**：
+1. `_group_by_slot()` — 按位置分组（2D 网格聚类）
+2. `_process_slots()` — 遍历分组结果，提取英文名 + 特征词
+3. `_fix_ocr_confusions()` — 模糊修复 OCR 常见错误（如 PNme→Prime）
+4. 输出 `[(en_name, box, [variants]), ...]`
+
+**模糊修复**：基于 Levenshtein 编辑距离 + 滑窗匹配，自动纠正任意 OCR 变体词。
+
+#### 物品匹配引擎 (`matcher.py`)
+
+将 OCR 识别的英文名匹配到 `items_i18n.db` 数据库。
+
+**4 轮降级匹配**（详见 §6.3）：
+1. 精确匹配 → 2. 模糊匹配 → 3. 纠错候选 → 4. 部件蓝图直通
+
+**关键设计**：
+- `_upsert_part_to_db()` — 部件直通发现的新物品自动写入 DB，实现自愈
+- `match_and_price()` — 匹配 + 查价一站式接口
+- `_try_variants()` — 单词覆盖率检查防止前缀误匹配
+
+---
+
 ---
 
 ## 6. 数据层详解
@@ -804,14 +869,65 @@ class UpdateWorker(QObject):
 |------|------|------|
 | `data/all.json` | ~6MB | WFInfo 全量掉落数据（从 GitHub 下载） |
 | `data/all.json.bak` | ~6MB | 下载前的自动备份 |
+| `data/all_items.json` | ~47MB | WFCD 全物品数据（辅助数据源，含 category/tradable/rarity 等属性） |
+| `data/i18n.json` | ~5MB | WFCD 多语言翻译（uniqueName → zh/en 翻译） |
+| `data/zh_en_dict.json` | ~1MB | ★ **主数据源** — 16907 条中英对照（最全，含 382 条 Blueprint 部件） |
 | `data/relics.db` | ~616KB | SQLite 遗物数据库（主查询源） |
+| `data/items_i18n.db` | ~8MB | ★ 全物品中英对照数据库（17564 个物品） |
+| `data/wm_prices.db` | ~368KB | warframe.market 价格数据库 |
+| `data/translation.db` | ~6MB | 翻译数据库（旧版，已被 items_i18n.db 替代） |
 | `data/hotkeys.json` | <1KB | 快捷键配置（仅保存非默认值） |
 | `data/presets/_active.json` | <1KB | 当前活动配色预设 ID |
 | `data/presets/cyberpunk.json` | ~2KB | 赛博朋克配色（用户修改版） |
 | `data/presets/daylight.json` | ~2KB | 白天模式配色（用户修改版） |
 | `data/presets/custom.json` | ~2KB | 自定义配色 |
 
-### 6.2 数据库生成流程
+### 6.2 全物品数据库构建流程（items_i18n.db）
+
+```
+zh_en_dict.json (主数据源，16907 条中英对照)
+    │  ★ 第一优先级：最全的数据源
+    │
+    ├── 步骤 1：以 zh_en_dict.json 为基准构建 item_map
+    │   └── 每条提供 [zh_name, en_name] 对照
+    │
+    ▼
+all_items.json (辅助数据源，15729 条详细属性)
+    │  补充：category / tradable / rarity / description / imageName
+    │  仅用于已存在于 zh_en_dict 中的物品，补充元信息
+    │
+    ▼
+i18n.json (翻译补充)
+    │  仅用于 all_items.json 中有但 zh_en_dict 中无的物品
+    │  （约 657 条额外物品，如部分 Skins / Glyphs）
+    │
+    ▼
+items_i18n.db (~17564 个物品)
+    ├── items (主表: unique_name, zh_name, en_name, category, ...)
+    └── items_meta (元信息: total, has_cn, source, updated_at)
+```
+
+### 6.3 物品匹配流程（4 轮降级）
+
+```
+OCR 英文文本 → matcher._match_one_item()
+    │
+    ├── 第1轮: 精确匹配 → search_items(en_name) → en_name == ocr_text
+    │   └── ★ 需要 items_i18n.db 中有该物品
+    │
+    ├── 第2轮: 模糊匹配 → 单词合理性 + 编辑距离容错
+    │   └── 排除 Glyph/Sigil/Emblem 等无关物品
+    │
+    ├── 第3轮: 纠错候选 → 对 OCR 纠错后的 variants 逐个尝试
+    │   └── 含单词覆盖率检查（防止前缀误匹配）
+    │
+    └── 第4轮: 部件蓝图直通 → _is_warframe_part() 判断
+        ├── 构造虚拟条目（en_name + zh_name 拼接）
+        ├── 实时查 warframe.market API 获取价格
+        └── ★ 自动写入 items_i18n.db（下次可精确匹配）
+```
+
+### 6.4 数据库生成流程（遗物）
 
 ```
 all.json (WFCD 数据源)
@@ -830,7 +946,7 @@ relics.db (3 表 + 5 索引)
     └── relic_aliases (别名表, FK → relics)
 ```
 
-### 6.3 别名生成策略
+### 6.5 别名生成策略
 
 每个遗物自动生成 5 个别名变体（`db_utils.generate_aliases()`）：
 

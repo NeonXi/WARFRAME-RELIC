@@ -71,9 +71,10 @@ DEFAULT_AUTO_HIDE_MS = 5000
 LABEL_AUTO_HIDE_MS = 3000
 
 # OCR
-OCR_TEXT_SCORE = 0.35
-OCR_BOX_THRESH = 0.2
-OCR_UPSCALE_MIN_WIDTH = 900
+OCR_TEXT_SCORE = 0.38       # 文本置信度阈值（平衡识别率和误报）
+OCR_BOX_THRESH = 0.22       # 检测框阈值
+OCR_UPSCALE_MIN_WIDTH = 900 # 图片宽度 > 此值时放大
+OCR_UPSCALE_SCALE = 1.4     # 上采样倍率（1.4x 平衡性能和精度）
 
 # 按钮布局
 BTN_WIDTH = 200

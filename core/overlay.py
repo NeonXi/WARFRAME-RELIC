@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QLabel, QApplication, QPushButton
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QCursor
 
+from core.word_wrap_button import WordWrapButton
 from core.constants import (
     CYBER_YELLOW, CYBER_CYAN, CYBER_MAGENTA,
     CYBER_DARK_BG, CYBER_BORDER, CYBER_TEXT,
@@ -15,6 +16,7 @@ from core.constants import (
     BTN_HOVER_BG, BTN_HOVER_TEXT, BTN_HOVER_BORDER,
     PANEL_DARKEST,
 )
+from data.ui_strings import S
 
 
 def _hex_to_rgb(hex_color: str) -> tuple:
@@ -91,6 +93,11 @@ class Overlay(QWidget):
         self._annotations = []
         self.on_selection_done = None
         self._right_was_down = False
+        self._ignore_right_until = 0  # 框选结束后短暂忽略右键（防误触）
+
+        # ★ 价格查询4等分区域框线（临时显示）
+        self._split_regions = []          # [(rx, ry, rw, rh, label), ...] 物理坐标
+        self._split_regions_until = 0     # 过期时间戳(ms)
 
         # ★ 流式标注：逐条显示的队列和定时器
         self._stream_queue = []          # 待显示的标注队列
@@ -159,6 +166,23 @@ class Overlay(QWidget):
     def get_region(self):
         return self._saved_region
 
+    def show_split_regions(self, regions, duration_ms=2000):
+        """显示4等分区域框线（用于价格查询前确认截图区域）。
+
+        regions: [(x, y, w, h, label), ...] 屏幕物理坐标列表
+        duration_ms: 框线显示时长（毫秒），到时自动清除
+        """
+        self._split_regions = regions
+        self._split_regions_until = int(time.time() * 1000) + duration_ms
+        self.update()
+
+    def _clear_split_regions(self):
+        """清除4等分区域框线。"""
+        if self._split_regions:
+            self._split_regions = []
+            self._split_regions_until = 0
+            self.update()
+
     def is_showing_content(self) -> bool:
         """检查当前是否有正在显示的内容（标注、按钮、label 等）。
         
@@ -176,12 +200,23 @@ class Overlay(QWidget):
             return True
         return False
 
-    # ========== 功能选择按钮（★ 新增）==========
+    # ========== 功能选择按钮（动态生成）==========
+
+    # 功能按钮定义：mode_id → (显示名, 图标)
+    # 注：显示名通过 S("button", ...) 从 ui_strings 读取
+    MODE_DEFS = {
+        "check_status": ("⊞", "mode_check_status"),
+        "query_parts":  ("◎", "mode_query_parts"),
+        "query_price":  ("⟐", "mode_query_price"),
+        "translate":    ("⬢", "mode_translate"),
+    }
 
     def _setup_buttons(self):
-        """创建功能选择按钮，初始隐藏（2077 赛博朋克风格）"""
-        self._mode_buttons = {}
-        # 从 hex 颜色手动构建半透明 rgba（Qt stylesheet 不支持 8位 hex）
+        """初始化按钮字典（按钮按需创建/销毁）。"""
+        self._mode_buttons = {}  # mode_id → QPushButton
+
+    def _create_mode_button(self, mode_id: str, label: str) -> QPushButton:
+        """创建单个功能按钮。"""
         btn_bg_r, btn_bg_g, btn_bg_b = _hex_to_rgb(BTN_DEFAULT_BG)
         btn_hover_r, btn_hover_g, btn_hover_b = _hex_to_rgb(BTN_HOVER_BORDER)
         btn_style = f"""
@@ -200,58 +235,73 @@ class Overlay(QWidget):
                 color: {BTN_HOVER_TEXT};
             }}
         """
-
-        # 定义可用功能（可在此处扩展新功能）
-        modes = [
-            ("check_status", "📋 出入库查询"),
-            ("query_parts", "🔍 遗物内容查询"),
-        ]
-
-        for i, (mode_id, label) in enumerate(modes):
-            btn = QPushButton(label, self)
-            btn.setStyleSheet(btn_style)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.hide()
-            # 点击时发射信号并隐藏所有按钮
-            btn.clicked.connect(lambda checked, m=mode_id: self._on_mode_clicked(m))
-            self._mode_buttons[mode_id] = btn
+        btn = WordWrapButton(label, self)
+        btn.setStyleSheet(btn_style)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.hide()
+        btn.clicked.connect(lambda checked, m=mode_id: self._on_mode_clicked(m))
+        return btn
 
     def _on_mode_clicked(self, mode: str):
         """按钮被点击：隐藏按钮面板，发射信号给 main.py 处理"""
         self._hide_mode_buttons()
         self.mode_selected.emit(mode)
-        self._log(f"▶ 用户选择了功能: {mode}")
+        self._log(S.format("overlay", "mode_selected", mode=mode))
 
-    def show_mode_buttons(self, relic_count: int = -1):
-        """★ 截图完成后立即调用：显示功能选择按钮
+    def show_mode_buttons(self, enabled_modes: list):
+        """截图完成后调用：根据启用的功能动态显示按钮。
 
-        如果 relic_count >= 0: OCR 已完成，显示识别数量
-        如果 relic_count == -1: OCR 还在后台跑，显示通用文案
+        Args:
+            enabled_modes: 启用的功能列表，如 ['check_status', 'query_parts', 'query_price']
         """
-        if relic_count >= 0:
-            self.label.setText(f"识别到 {relic_count} 个遗物 — 请选择操作：")
-        else:
-            self.label.setText("截图完成 — 请选择操作（后台识别中...）：")
-        self.label.adjustSize()
-        # 屏幕上方居中
-        self.label.move((self.width() - self.label.width()) // 2, 20)
-        self.label.show()
+        print(f"[DEBUG show_mode_buttons] called, enabled_modes={enabled_modes}, _selecting={self._selecting}, _mode_buttons keys={list(self._mode_buttons.keys())}")
+        # 清理旧按钮
+        self._hide_mode_buttons()
+        for btn in self._mode_buttons.values():
+            btn.deleteLater()
+        self._mode_buttons.clear()
 
-        # 布局按钮（水平排列在标签下方，也居中）
-        btn_width = 200
-        btn_height = 45
-        btn_gap = 20
+        if not enabled_modes:
+            self.label.setText(S("overlay", "no_features_enabled"))
+            self.label.adjustSize()
+            self.label.move((self.width() - self.label.width()) // 2, 20)
+            self.label.show()
+            self._hide_at = 0
+            print("[DEBUG show_mode_buttons] no enabled modes, returning")
+            return
+
+        # 为每个启用的功能创建按钮
+        for mode_id in enabled_modes:
+            icon, string_key = self.MODE_DEFS.get(mode_id, ("", mode_id))
+            display_name = S("button", string_key)
+            label = f"{icon} {display_name}"
+            btn = self._create_mode_button(mode_id, label)
+            self._mode_buttons[mode_id] = btn
+
+        # 布局按钮（纵向排列，屏幕居中）
+        # 宽度 320 容纳约 20 个中文字 + 图标（16px 字体），高度 60 支持两行
+        btn_width = 320
+        btn_height = 60
+        btn_gap = 14
         total_btns = len(self._mode_buttons)
-        total_width = total_btns * btn_width + (total_btns - 1) * btn_gap
-        start_x = (self.width() - total_width) // 2
-        start_y = 70
+        total_height = total_btns * btn_height + (total_btns - 1) * btn_gap
+        start_x = (self.width() - btn_width) // 2
+        start_y = (self.height() - total_height) // 2
 
         for i, (mode_id, btn) in enumerate(self._mode_buttons.items()):
-            x = start_x + i * (btn_width + btn_gap)
-            btn.setGeometry(x, start_y, btn_width, btn_height)
+            y = start_y + i * (btn_height + btn_gap)
+            btn.setGeometry(start_x, y, btn_width, btn_height)
             btn.show()
+            print(f"[DEBUG show_mode_buttons] btn {mode_id}: geometry=({start_x},{y},{btn_width},{btn_height}), visible={btn.isVisible()}, isWindow={btn.isWindow()}")
+
+        # 提示文字放在按钮上方
+        self.label.setText(S("overlay", "screenshot_done"))
+        self.label.adjustSize()
+        self.label.move((self.width() - self.label.width()) // 2, max(start_y - 40, 10))
+        self.label.show()
 
         self._hide_at = 0  # 不自动隐藏，等用户选
+        print(f"[DEBUG show_mode_buttons] done, total buttons={total_btns}, _hide_at={self._hide_at}")
 
     def _hide_mode_buttons(self):
         """隐藏所有功能按钮"""
@@ -262,11 +312,12 @@ class Overlay(QWidget):
 
     def start_selection(self):
         self._log("▶ 框选模式启动")
+        print(f"[DEBUG start_selection] _selecting was {self._selecting}, _mode_buttons keys={list(self._mode_buttons.keys())}")
         self._selecting = True
         self._start_pos = None
         self._current_pos = self.mapFromGlobal(QCursor.pos())
         self._left_was_down = self._is_left_down()
-        self._status = "移动鼠标到目标位置，按住左键拖拽框选，右键/ESC 取消"
+        self._status = S("overlay", "selection_status_idle")
         self._annotations = []
         self._hide_mode_buttons()          # ★ 进入框选时隐藏按钮
         self._apply_mouse_passthrough(False)
@@ -275,6 +326,9 @@ class Overlay(QWidget):
         if hasattr(self, '_preview_label'):
             self._preview_label.hide()
         self._hide_at = 0
+        # 确保 overlay 在最前面且可见
+        self.show()
+        self.raise_()
         self._track_timer = QTimer()
         self._track_timer.timeout.connect(self._track_mouse)
         self._track_timer.start(16)
@@ -293,6 +347,8 @@ class Overlay(QWidget):
         if self._track_timer:
             self._track_timer.stop()
             self._track_timer = None
+        # 框选结束后 500ms 内忽略右键（防止拖拽时误触右键清除按钮）
+        self._ignore_right_until = int(time.time() * 1000) + 500
         self.update()
 
     def _track_mouse(self):
@@ -305,7 +361,7 @@ class Overlay(QWidget):
 
         if ctypes.windll.user32.GetAsyncKeyState(0x02) & 0x8000:
             self._log("✕ 用户右键取消框选")
-            self.label.setText("框选已取消")
+            self.label.setText(S("overlay", "selection_cancelled"))
             self.label.adjustSize()
             self.label.move(50, 50)
             self.label.show()
@@ -315,7 +371,7 @@ class Overlay(QWidget):
 
         if self._is_esc_down():
             self._log("✕ 用户按 ESC 取消框选")
-            self.label.setText("框选已取消")
+            self.label.setText(S("overlay", "selection_cancelled"))
             self.label.adjustSize()
             self.label.move(50, 50)
             self.label.show()
@@ -326,28 +382,28 @@ class Overlay(QWidget):
         if left_down and not self._left_was_down:
             self._start_pos = pos
             self._left_was_down = True
-            self._status = f"左键已按下 [{pos.x()},{pos.y()}]，拖拽中..."
+            self._status = S.format("overlay", "selection_status_pressed", x=pos.x(), y=pos.y())
             self._log(f"↓ 左键按下 @ ({pos.x()},{pos.y()})")
 
         elif left_down and self._left_was_down:
             if self._start_pos:
                 w = abs(pos.x() - self._start_pos.x())
                 h = abs(pos.y() - self._start_pos.y())
-                self._status = f"拖拽中... 选区 {w}×{h}"
+                self._status = S.format("overlay", "selection_status_dragging", w=w, h=h)
 
         elif not left_down and self._left_was_down:
             self._left_was_down = False
             self._log(f"↑ 左键松开 @ ({pos.x()},{pos.y()})")
             if self._start_pos:
-                self._status = "左键松开，正在保存..."
+                self._status = S("overlay", "selection_status_released")
                 self._finish_selection()
             else:
-                self._status = "移动鼠标到目标位置，按住左键拖拽框选"
+                self._status = S("overlay", "selection_status_idle")
             return
 
         else:
             self._left_was_down = left_down
-            self._status = "移动鼠标到目标位置，按住左键拖拽框选，右键/ESC 取消"
+            self._status = S("overlay", "selection_status_idle")
 
         self.update()
 
@@ -356,15 +412,16 @@ class Overlay(QWidget):
         left, right = min(p1.x(), p2.x()), max(p1.x(), p2.x())
         top, bottom = min(p1.y(), p2.y()), max(p1.y(), p2.y())
         w, h = right - left, bottom - top
+        print(f"[DEBUG _finish_selection] region=({left},{top},{right},{bottom}) w={w} h={h}")
 
         if w > 20 and h > 20:
             self._saved_region = (left, top, right, bottom)
             self._save_region()
-            msg = f"区域已保存: [{left},{top}] → [{right},{bottom}]  ({w}×{h})"
+            msg = S.format("overlay", "region_saved", l=left, t=top, r=right, b=bottom, w=w, h=h)
             self._log(f"✓ {msg}")
             self.label.setText(msg)
         else:
-            msg = f"框选太小 ({w}×{h})，请重新框选"
+            msg = S.format("overlay", "region_too_small", w=w, h=h)
             self._log(f"✗ {msg}")
             self.label.setText(msg)
 
@@ -504,6 +561,38 @@ class Overlay(QWidget):
                     painter.setPen(QColor(str(color)))
                     painter.drawText(x + 10, y + fm.ascent() + 3, text)
 
+        # ★ 绘制4等分区域框线（价格查询用，物理坐标 → 需除以dpi转逻辑坐标）
+        if self._split_regions:
+            dpi = self._dpi_scale
+            colors = [
+                QColor(255, 50, 50),      # 红
+                QColor(50, 255, 50),      # 绿
+                QColor(50, 180, 255),     # 蓝
+                QColor(255, 50, 255),     # 紫
+            ]
+            painter.setFont(QFont("Microsoft YaHei", 10, QFont.Weight.Bold))
+            for idx, (rx, ry, rw, rh, label) in enumerate(self._split_regions):
+                color = colors[idx % len(colors)]
+                # 物理坐标 → 逻辑坐标
+                lx = int(rx / dpi)
+                ly = int(ry / dpi)
+                lw = int(rw / dpi)
+                lh = int(rh / dpi)
+                pen = QPen(color, 3)
+                painter.setPen(pen)
+                painter.drawRect(lx, ly, lw, lh)
+
+                # 标签
+                fm = painter.fontMetrics()
+                label_w = fm.boundingRect(label).width() + 12
+                label_h = fm.height() + 6
+                label_y = ly - label_h - 4
+                if label_y < 0:
+                    label_y = ly + lh + 4
+                painter.fillRect(lx, label_y, label_w, label_h, color)
+                painter.setPen(QColor(255, 255, 255))
+                painter.drawText(lx + 6, label_y + fm.ascent() + 2, label)
+
         if not self._selecting:
             return
 
@@ -603,9 +692,10 @@ class Overlay(QWidget):
         # 右键清除标注（非框选模式）
         if not self._selecting:
             right_now = self._is_right_down()
-            if right_now and not self._right_was_down:
+            if right_now and not self._right_was_down and now > self._ignore_right_until:
                 had_annotations = len(self._annotations) > 0
                 had_buttons = any(btn.isVisible() for btn in self._mode_buttons.values())
+                print(f"[DEBUG _check_auto_hide] RIGHT CLICK DETECTED, had_annotations={had_annotations}, had_buttons={had_buttons}")
                 self.clear_annotations()
                 self._hide_mode_buttons()
                 self.label.clear()
@@ -624,6 +714,10 @@ class Overlay(QWidget):
             if hasattr(self, '_preview_label'):
                 self._preview_label.hide()
             self._hide_at = 0
+
+        # 清除过期的4等分区域框线
+        if self._split_regions and now > self._split_regions_until:
+            self._clear_split_regions()
 
     def refresh_theme(self):
         """主题变更时刷新 Overlay 中缓存的样式（label、按钮的 stylesheet）。"""
@@ -657,3 +751,8 @@ class Overlay(QWidget):
 
     def _log(self, msg):
         print(f"[{time.strftime('%H:%M:%S')}] {msg}")
+
+    def _schedule_call(self, callback, delay_ms=0):
+        """从任意线程调度回调到主线程执行。"""
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(delay_ms, callback)

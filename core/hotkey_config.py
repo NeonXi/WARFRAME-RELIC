@@ -10,12 +10,15 @@ import os
 from pathlib import Path
 from typing import Dict
 
+from data.ui_strings import S
+
 
 # 默认热键
 DEFAULT_HOTKEYS = {
     "select": "ctrl+g",           # 框选截图
     "fullscreen": "ctrl+h",       # 全屏截图
     "panel": "ctrl+shift+g",     # 管理面板
+    "query_price": "ctrl+shift+p",  # 价格查询（4等分截图+识别+标注）
 }
 
 # 可用的修饰键
@@ -23,9 +26,10 @@ MODIFIERS = ["ctrl", "alt", "shift", "win"]
 
 # 热键功能说明
 HOTKEY_LABELS = {
-    "select": "框选截图识别",
-    "fullscreen": "全屏截图识别",
-    "panel": "管理面板",
+    "select": S("hotkey", "label_select"),
+    "fullscreen": S("hotkey", "label_fullscreen"),
+    "panel": S("hotkey", "label_panel"),
+    "query_price": S("hotkey", "label_query_price"),
 }
 
 
@@ -92,3 +96,115 @@ def validate_hotkey(hotkey_str: str) -> bool:
             return False
 
     return True
+
+
+# ============================================================
+# 功能开关配置（截图后显示哪些功能按钮）
+# ============================================================
+
+DEFAULT_FEATURE_TOGGLES = {
+    "check_status": True,    # 出入库查询
+    "query_parts": True,     # 遗物内容查询
+    "translate": False,      # 翻译英文（默认关闭）
+}
+
+# 物品区域配置文件路径
+def _item_region_config_path() -> str:
+    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return str(data_dir / "item_region.json")
+
+
+def load_item_region() -> dict | None:
+    """加载用户设置的物品区域。返回 {'x','y','w','h'} 或 None。"""
+    path = _item_region_config_path()
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict) and all(k in data for k in ('x', 'y', 'w', 'h')):
+            return data
+    except Exception:
+        pass
+    return None
+
+
+def save_item_region(region: dict) -> bool:
+    """保存物品区域到配置文件。"""
+    path = _item_region_config_path()
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(region, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception:
+        return False
+
+def _get_feature_toggle_label(key: str) -> str:
+    """动态获取功能开关标签（跟随语言预设）。"""
+    try:
+        from data.ui_strings import S
+        return S("feature_toggle", f"label_{key}")
+    except Exception:
+        pass
+    return {
+        "check_status": "遗物出/入库态判定（光墓查询）",
+        "query_parts": "遗物内含物逆向解析（破壁人协议）",
+        "query_price": "跨维度市场价值评估（黑暗森林博弈）",
+        "translate": "跨语种符号学映射（智子翻译）",
+    }.get(key, key)
+
+
+def get_feature_toggle_labels() -> dict:
+    """获取功能开关标签字典（动态读取）。"""
+    return {k: _get_feature_toggle_label(k) for k in DEFAULT_FEATURE_TOGGLES}
+
+
+# 向后兼容的模块级变量（懒加载）
+FEATURE_TOGGLE_LABELS = {k: "" for k in DEFAULT_FEATURE_TOGGLES}
+
+FEATURE_TOGGLE_REQUIRES = {
+    # 每个功能需要什么 OCR 类型
+    "check_status": "relic",
+    "query_parts": "relic",
+    "query_price": "item",
+    "translate": "text",
+}
+
+
+def _feature_config_path() -> str:
+    """获取功能开关配置文件路径。"""
+    from pathlib import Path
+    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return str(data_dir / "feature_toggles.json")
+
+
+def load_feature_toggles() -> dict:
+    """加载功能开关配置，不存在则返回默认值。"""
+    path = _feature_config_path()
+    if not os.path.exists(path):
+        return dict(DEFAULT_FEATURE_TOGGLES)
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        result = dict(DEFAULT_FEATURE_TOGGLES)
+        if isinstance(data, dict):
+            for key in DEFAULT_FEATURE_TOGGLES:
+                if key in data:
+                    result[key] = bool(data[key])
+        return result
+    except (json.JSONDecodeError, Exception):
+        return dict(DEFAULT_FEATURE_TOGGLES)
+
+
+def save_feature_toggles(toggles: dict) -> bool:
+    """保存功能开关配置。"""
+    path = _feature_config_path()
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(toggles, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception:
+        return False

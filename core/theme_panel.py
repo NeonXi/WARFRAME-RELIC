@@ -13,6 +13,7 @@ from PyQt6.QtGui import QColor
 
 from core.constants import theme, ThemeConfig
 from core.theme_fields import THEME_FIELDS
+from data.ui_strings import S
 
 
 
@@ -87,7 +88,7 @@ class ThemePanel:
 
         # 标题行
         title_row = QHBoxLayout()
-        self._title_lbl = QLabel("🎨 主题配色")
+        self._title_lbl = QLabel(S("theme", "panel_title"))
         self._title_lbl.setStyleSheet(f"color: {theme.cyber_yellow}; font-size: 14px; font-weight: bold;")
         title_row.addWidget(self._title_lbl); title_row.addStretch()
         self._btn_close = QPushButton("✕")
@@ -106,11 +107,12 @@ class ThemePanel:
         # ── 预设主题一键切换 ──
         preset_row = QHBoxLayout()
         preset_row.setSpacing(6)
-        self._preset_label = QLabel("预设方案：")
+        self._preset_label = QLabel(S("theme", "preset_label"))
         self._preset_label.setStyleSheet(f"color: {theme.text}; font-size: 12px;")
         preset_row.addWidget(self._preset_label)
 
         self._preset_combo = QComboBox()
+        self._preset_combo.wheelEvent = lambda e: e.ignore()  # 禁用滚轮切换
         self._preset_combo.setMinimumHeight(26)
         for pid, pinfo in ThemeConfig.PRESETS.items():
             self._preset_combo.addItem(pinfo["name"], pid)
@@ -133,14 +135,14 @@ class ThemePanel:
         """)
         preset_row.addWidget(self._preset_combo, 1)
 
-        self._btn_apply_preset = QPushButton("应用")
+        self._btn_apply_preset = QPushButton(S("button", "apply_preset"))
         self._btn_apply_preset.setFixedHeight(26)
         self._btn_apply_preset.setObjectName("primaryBtn")
         self._btn_apply_preset.clicked.connect(self._on_apply_preset)
         preset_row.addWidget(self._btn_apply_preset)
         panel_layout.addLayout(preset_row)
 
-        tip = QLabel("点击色块改颜色 → 刷新预览看效果 → 保存主题持久化")
+        tip = QLabel(S("hint", "theme_tip"))
         tip.setStyleSheet(f"color: {theme.text_dim}; font-size: 10px;")
         tip.setWordWrap(True)
         panel_layout.addWidget(tip)
@@ -150,13 +152,13 @@ class ThemePanel:
 
         # 底部按钮
         btn_row = QHBoxLayout()
-        self._btn_save = QPushButton("保存主题")
+        self._btn_save = QPushButton(S("button", "save_theme"))
         self._btn_save.setObjectName("primaryBtn")
         self._btn_save.clicked.connect(self._on_save)
-        self._btn_reset = QPushButton("恢复默认")
+        self._btn_reset = QPushButton(S("button", "reset_default"))
         self._btn_reset.setObjectName("actionBtn")
         self._btn_reset.clicked.connect(self._on_reset)
-        self._btn_refresh = QPushButton("刷新预览")
+        self._btn_refresh = QPushButton(S("button", "refresh_preview"))
         self._btn_refresh.setObjectName("actionBtn")
         self._btn_refresh.clicked.connect(self._on_refresh_preview)
         btn_row.addWidget(self._btn_save)
@@ -232,7 +234,8 @@ class ThemePanel:
 
     def _pick_color(self, json_key, swatch):
         current = theme.to_dict().get(json_key, theme.panel_deeper)
-        color = QColorDialog.getColor(QColor(current), self._parent, f"选择颜色 - {json_key}")
+        color = QColorDialog.getColor(QColor(current), self._parent,
+            S.format("theme", "color_pick_title", key=json_key))
         if color.isValid():
             hex_color = color.name()
             self._theme_draft[json_key] = hex_color
@@ -245,7 +248,8 @@ class ThemePanel:
 
     def _on_refresh_preview(self):
         if not self._theme_draft:
-            QMessageBox.information(self._parent, "提示", "请先点击色块修改颜色，再刷新预览。")
+            QMessageBox.information(self._parent, S("theme", "prompt_title"),
+                S("theme", "no_changes_preview"))
             return
         prev_preset = theme.active_preset
         theme.save(self._theme_draft)
@@ -254,7 +258,8 @@ class ThemePanel:
 
     def _on_save(self):
         if not self._theme_draft:
-            QMessageBox.information(self._parent, "提示", "没有需要保存的修改。请先调整颜色。")
+            QMessageBox.information(self._parent, S("theme", "prompt_title"),
+                S("theme", "no_changes"))
             return
         prev_preset = theme.active_preset
         if theme.save(self._theme_draft):
@@ -263,11 +268,11 @@ class ThemePanel:
             self._on_theme_changed()
             preset_name = theme.current_preset_name()
             if prev_preset != theme.active_preset:
-                self._add_log("ok", f"修改已保存到「{preset_name}」，方案已自动切换。")
+                self._add_log("ok", S.format("theme", "saved_to", name=preset_name))
             else:
-                self._add_log("ok", f"主题配色已保存到「{preset_name}」，界面已刷新！")
+                self._add_log("ok", S.format("theme", "saved", name=preset_name))
         else:
-            self._add_log("error", "主题配色保存失败：无法写入配置文件。")
+            self._add_log("error", S("theme", "save_failed"))
 
     def _sync_preset_combo(self, prev_preset: str):
         """如果预设被自动切换了，同步下拉框显示。"""
@@ -278,8 +283,8 @@ class ThemePanel:
 
     def _on_reset(self):
         reply = QMessageBox.question(
-            self._parent, "恢复默认主题",
-            f"确定要恢复当前「{theme.current_preset_name()}」为出厂默认值吗？\n\n当前修改将全部丢失。",
+            self._parent, S("theme", "reset_confirm_title"),
+            S.format("theme", "reset_confirm_msg", name=theme.current_preset_name()),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
         if reply != QMessageBox.StandardButton.Yes:
@@ -287,8 +292,8 @@ class ThemePanel:
         theme.reset()
         self._theme_draft = {}
         self._on_theme_changed()
-        QMessageBox.information(self._parent, "已恢复",
-            f"「{theme.current_preset_name()}」已恢复为出厂默认值。")
+        QMessageBox.information(self._parent, S("theme", "reset_done_title"),
+            S.format("theme", "reset_done_msg", name=theme.current_preset_name()))
 
     def _on_apply_preset(self):
         preset_id = self._preset_combo.currentData()
@@ -302,9 +307,9 @@ class ThemePanel:
             idx = self._preset_combo.findData(preset_id)
             if idx >= 0:
                 self._preset_combo.setCurrentIndex(idx)
-            self._add_log("ok", f"已应用预设配色：{preset_name}")
+            self._add_log("ok", S.format("theme", "preset_applied", name=preset_name))
         else:
-            self._add_log("error", "预设配色应用失败")
+            self._add_log("error", S("theme", "preset_failed"))
 
     # ============================================================
     # 样式刷新
