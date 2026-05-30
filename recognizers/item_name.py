@@ -1109,7 +1109,11 @@ def _translate_cn_unique_name(cn_name: str) -> str | None:
                 continue
         translated_parts.append(part)
 
-    return ' '.join(translated_parts) if changed else None
+    result = ' '.join(translated_parts) if changed else None
+    # ★ 最后防线：永远不要返回 Set（套装）
+    if result and result.endswith(' Set'):
+        return None
+    return result
 
 
 def _translate_one_cn_part(part: str) -> str | None:
@@ -1120,12 +1124,39 @@ def _translate_one_cn_part(part: str) -> str | None:
     try:
         from data.items_i18n import search_items
 
+        def _pick_first_non_set(items, cn_clean):
+            """从结果中选最合适的非 Set 条目。
+
+            优先级：精确 zh_name 匹配 > 不含部件词的基础名 > 任意非 Set 条目。
+            """
+            if not items:
+                return None
+            non_set = [it for it in items
+                       if it.get('en_name', '') and not it.get('en_name', '').endswith(' Set')]
+            if not non_set:
+                return None
+            # 优先：zh_name 精确匹配（基础名）
+            for it in non_set:
+                if it.get('zh_name', '') == cn_clean:
+                    return it['en_name']
+            # 其次：不含部件词（Blueprint/Stock/Receiver/Barrel/String/Link/Blade/Handle 等）
+            PART_EN_WORDS = ('Blueprint', 'Stock', 'Receiver', 'Barrel',
+                            'String', 'Link', 'Blade', 'Handle', 'Guard',
+                            'Head', 'Chassis', 'Systems', 'Neuroptics')
+            for it in non_set:
+                en = it.get('en_name', '')
+                if not any(w in en for w in PART_EN_WORDS):
+                    return en
+            # 兜底：第一个非 Set
+            return non_set[0]['en_name']
+
         # 先去除非中文字符，用纯中文名搜索
         cn_clean = re.sub(r'[^\u4e00-\u9fff\s]', '', part).strip()
         if cn_clean:
-            items = search_items(cn_clean, is_tradable=False, limit=1)
-            if items:
-                return items[0].get('en_name')
+            items = search_items(cn_clean, is_tradable=False, limit=10)
+            result = _pick_first_non_set(items, cn_clean)
+            if result:
+                return result
 
         # 纯中文搜索失败 → 剥离已知中文部件词后再试
         # 例如 "关刀刀刃" → 去掉"刀刃" → "关刀"
@@ -1136,9 +1167,10 @@ def _translate_one_cn_part(part: str) -> str | None:
                 if cn_clean.endswith(cn_part) and len(cn_clean) > len(cn_part):
                     cn_base = cn_clean[:-len(cn_part)].strip()
                     if cn_base:
-                        items = search_items(cn_base, is_tradable=False, limit=1)
-                        if items:
-                            return items[0].get('en_name')
+                        items = search_items(cn_base, is_tradable=False, limit=10)
+                        result = _pick_first_non_set(items, cn_base)
+                        if result:
+                            return result
                     break
     except Exception:
         pass
@@ -1372,8 +1404,13 @@ class ItemNameRecognizer(BaseOCR):
             if en_name and re.search(r'[\u4e00-\u9fff]', en_name):
                 translated = _translate_cn_unique_name(en_name)
                 if translated:
-                    print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" → \"{translated}\"", flush=True)
-                    en_name = translated
+                    # ★ 永远不要翻译成 Set（套装）
+                    if translated.endswith(' Set'):
+                        print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" → \"{translated}\" (排除套装)", flush=True)
+                        translation_failed = True
+                    else:
+                        print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" → \"{translated}\"", flush=True)
+                        en_name = translated
                 else:
                     print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" → 翻译失败!", flush=True)
                     translation_failed = True
