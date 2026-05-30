@@ -257,6 +257,10 @@ def _match_one_item(
     items = search_items(search_text, is_tradable=True, limit=5)
     for item in items:
         if item.get('en_name', '').lower() == search_text.lower():
+            # ★ 排除整套（Set），永远不要查套装价格
+            if item.get('en_name', '').endswith(' Set'):
+                print(f"[匹配-精确] ✗ 排除套装: \"{item['en_name']}\"", flush=True)
+                continue
             matched = item
             match_quality = 'exact'
             print(f"[匹配-精确] ✓ \"{item['en_name']}\"", flush=True)
@@ -347,8 +351,12 @@ def _fuzzy_match(search_text: str, items: list[dict]) -> Optional[dict]:
         for item in reasonable:
             if item.get('category', '') in ('Glyph', 'Sigil', 'Emblem', 'Glyphs'):
                 continue
+            # ★ 排除整套（Set）
+            if item.get('en_name', '').endswith(' Set'):
+                continue
             return item
-        return reasonable[0]
+        # 如果所有候选都被排除了（全部是 Set/Glyph），返回 None
+        return None
 
     # ---- 第3级: 编辑距离容错 ----
     # 适用于 OCR 字符混淆（如 PNme→Prime, RevenantPNme→Revenant Prime）
@@ -358,6 +366,9 @@ def _fuzzy_match(search_text: str, items: list[dict]) -> Optional[dict]:
     for item in items:
         en = item.get('en_name', '').lower()
         if not en:
+            continue
+        # ★ 排除整套（Set）
+        if en.endswith(' set'):
             continue
         dist = _levenshtein(st_lower, en)
         # 允许的最大编辑距离 = max(3, len(st_lower) // 4)
@@ -404,6 +415,10 @@ def _try_variants(ocr_text: str, variants: list[str]) -> tuple[Optional[dict], s
         # 精确
         for v_item in v_items:
             if v_item.get('en_name', '').lower() == variant.lower():
+                # ★ 排除整套（Set）
+                if v_item.get('en_name', '').endswith(' Set'):
+                    print(f"[匹配-候选] ✗ 排除套装: \"{v_item['en_name']}\"", flush=True)
+                    continue
                 return v_item, 'variant'
         # 模糊
         if v_items:
@@ -414,6 +429,9 @@ def _try_variants(ocr_text: str, variants: list[str]) -> tuple[Optional[dict], s
             for v_item in v_items:
                 en = v_item.get('en_name', '').lower()
                 if not en:
+                    continue
+                # ★ 排除整套（Set）
+                if en.endswith(' set'):
                     continue
                 words = en.replace("'", " ").replace("-", " ").split()
                 if en.startswith(v_lower):
@@ -476,6 +494,7 @@ def match_and_price(
     """将识别到的英文物品名匹配本地数据库并查询价格。
 
     先调用 match_items() 匹配，然后通过 PriceService 统一查询价格。
+    永远不会查询整套（Set）的价格。
 
     Returns:
         list[dict]: [{
@@ -486,8 +505,18 @@ def match_and_price(
     from core.price_service import get_price_service
 
     base_results = match_items(recognized)
+
+    # ★ 最后一道防线：排除整套（Set），永远不要查套装价格
+    filtered = []
+    for item in base_results:
+        en_name = item.get('en_name', '')
+        if en_name.endswith(' Set'):
+            print(f"[价格查询] ✗ 排除套装: \"{en_name}\"", flush=True)
+            continue
+        filtered.append(item)
+
     svc = get_price_service()
-    return svc.query_prices_batch(base_results)
+    return svc.query_prices_batch(filtered)
 
 
 def match_and_translate(
