@@ -250,6 +250,7 @@ STRINGS = {
         "no_text_detected": "未检测到可识别文本",
         "translate_failed": "翻译失败",
         "translate_summary": "翻译: {total}个 | 匹配成功 {matched}个 (右键清除)",
+        "price_query_scanning": "正在扫描物品区域并查询价格...",
         "price_query_summary": "价格查询: {total}个 | 有价格数据 {with_price}个",
         "relic_no_parts_info": "{name}\n  (未找到部件信息)",
         "relic_vaulted": "出库",

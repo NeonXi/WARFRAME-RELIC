@@ -250,6 +250,7 @@ STRINGS = {
         "no_text_detected": "智子未在二维平面检测到可识别文本",
         "translate_failed": "智子跨语种映射失败（三体世界通讯中断）",
         "translate_summary": "智子翻译（跨语种符号学映射）: {total}个实体 | 匹配成功 {matched}个 (右键清除)",
+        "price_query_scanning": "⏳ 智子展开中·正在扫描物品区域并评估黑暗森林市场...",
         "price_query_summary": "黑暗森林市场评估: {total}个实体 | 有价格数据 {with_price}个",
         "relic_no_parts_info": "{name}\n  (光墓中未找到部件信息·可能已被归零者清除)",
         "relic_vaulted": "出库",

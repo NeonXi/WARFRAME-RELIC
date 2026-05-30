@@ -676,7 +676,7 @@ class AppCore:
         screen_w = ctypes.windll.user32.GetSystemMetrics(0)
         screen_h = ctypes.windll.user32.GetSystemMetrics(1)
 
-        # ★ 先显示4等分区域框线（2秒），确认截图区域
+        # ★ 显示4等分区域框线，持续到价格标注显示出来为止（不设自动过期）
         split_regions = []
         for i in range(4):
             ix = x + i * item_w
@@ -686,13 +686,11 @@ class AppCore:
             rh = min(h, screen_h - ry)
             if rw > 0 and rh > 0:
                 split_regions.append((rx, ry, rw, rh, f"子图{i+1}"))
-        self._overlay.show_split_regions(split_regions, duration_ms=600)
-        self._overlay.display("确认4等分框线位置...", auto_hide_ms=600)
+        self._overlay.show_split_regions(split_regions, duration_ms=99999)  # 持续显示，等标注完成后手动清除
+        self._overlay.display(S("overlay", "price_query_scanning"), auto_hide_ms=99999)
 
-        # 延迟执行截图+识别（等框线消失，800ms足够快速确认）
-        OVERLAY_DURATION = 800  # 从 2200ms 缩短到 800ms
-        QTimer.singleShot(OVERLAY_DURATION, lambda: self._do_price_query_capture(
-            x, y, w, h, item_w, screen_w, screen_h))
+        # ★ 立即开始截图+识别（不延迟，框线持续显示）
+        self._do_price_query_capture(x, y, w, h, item_w, screen_w, screen_h)
 
     def _do_price_query_capture(self, x, y, w, h, item_w, screen_w, screen_h):
         """价格查询的截图+识别+标注阶段（在框线消失后执行）。"""
@@ -750,6 +748,7 @@ class AppCore:
 
         if not all_items:
             print(f"[价格查询] 无识别结果，结束", flush=True)
+            self._overlay._clear_split_regions()
             self._overlay.display("未能识别到任何物品", auto_hide_ms=3000)
             return
 
@@ -765,6 +764,8 @@ class AppCore:
         QApplication.processEvents()
 
         matched = match_and_price(all_items)
+        # ★ 清除框线（价格标注即将显示，框线不再需要）
+        self._overlay._clear_split_regions()
         if matched:
             print(f"\n[价格查询] 匹配+查价完成: {len(matched)} 个", flush=True)
             for m in matched:
