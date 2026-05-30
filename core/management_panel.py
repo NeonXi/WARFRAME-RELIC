@@ -927,7 +927,7 @@ class ManagementPanel(QWidget):
     def eventFilter(self, obj, event):
         """事件过滤器：动态调整清除按钮位置 + 滚轮转发到隐藏滚动条。"""
         from PyQt6.QtCore import QEvent
-        if obj is self._items_search_input and event.type() == QEvent.Type.Resize:
+        if hasattr(self, '_items_search_input') and obj is self._items_search_input and event.type() == QEvent.Type.Resize:
             btn = self._items_clear_btn
             frame = self._items_input_frame
             btn.move(frame.width() - btn.width() - 1, 4)
