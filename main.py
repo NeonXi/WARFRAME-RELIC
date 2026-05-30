@@ -693,10 +693,42 @@ class AppCore:
         self._do_price_query_capture(x, y, w, h, item_w, screen_w, screen_h)
 
     def _do_price_query_capture(self, x, y, w, h, item_w, screen_w, screen_h):
-        """价格查询的截图+识别+标注阶段（在框线消失后执行）。"""
+        """价格查询的截图+识别+标注阶段。
+
+        采用一次截图 + numpy 切片方案，避免 dxcam 连续 grab() 返回 None 的已知 bug。
+        """
+        import numpy as np
+
         print(f"\n{'='*60}", flush=True)
         print(f"[价格查询] 开始截图+识别 (区域: {x},{y},{w},{h}, 4等分每份={item_w})", flush=True)
         print(f"{'='*60}", flush=True)
+
+        # ★ 一次截取整个区域，避免 dxcam 连续 grab() 返回 None 的问题
+        #    裁剪区域不超出屏幕边界
+        full_rx = max(0, x)
+        full_ry = max(0, y)
+        full_rw = min(w, screen_w - full_rx)
+        full_rh = min(h, screen_h - full_ry)
+        if full_rw <= 0 or full_rh <= 0:
+            self._overlay._clear_split_regions()
+            self._overlay.display("物品区域超出屏幕范围", auto_hide_ms=3000)
+            self._log("价格查询失败：物品区域超出屏幕范围", "warn", "_do_price_query")
+            return
+
+        dxcam_region = (full_rx, full_ry, full_rx + full_rw, full_ry + full_rh)
+        print(f"\n[价格查询] 截取完整区域: ({full_rx},{full_ry}) {full_rw}x{full_rh}", flush=True)
+        full_frame = self._camera.grab(region=dxcam_region)
+        if full_frame is None:
+            self._overlay._clear_split_regions()
+            self._overlay.display("截图失败，请重试", auto_hide_ms=3000)
+            self._log("价格查询截图失败（dxcam 返回 None）", "error", "_do_price_query")
+            return
+
+        print(f"[价格查询] 完整截图成功: {full_frame.shape[1]}x{full_frame.shape[0]}", flush=True)
+
+        # 原始区域起点和完整截图起点的偏移（区域被裁剪后，full_rx 可能 != x）
+        offset_x = full_rx - x
+        offset_y = full_ry - y
 
         dpi = self._overlay._dpi_scale
         all_items = []
@@ -704,33 +736,41 @@ class AppCore:
             # ★ 进度反馈：OCR 阶段
             self._overlay.display(f"⟐ 正在识别第 {i+1}/4 个物品...", auto_hide_ms=2000)
 
-            # 截取第 i 个物品卡片
-            ix = x + i * item_w
-            # 裁剪区域使其不超出屏幕边界，避免 dxcam 报 Invalid Region
-            rx = max(0, ix)
-            ry = max(0, y)
-            rw = min(item_w, screen_w - rx)
-            rh = min(h, screen_h - ry)
-            if rw <= 0 or rh <= 0:
-                self._log(f"第{i+1}个物品区域超出屏幕范围，跳过", "warn", "_do_price_query")
-                continue
-            # dxcam region 格式为 (left, top, right, bottom)
-            dxcam_region = (rx, ry, rx + rw, ry + rh)
-            print(f"\n[价格查询] 截取子图{i+1}/4: ({rx},{ry}) {rw}x{rh}", flush=True)
-            frame = self._camera.grab(region=dxcam_region)
-            if frame is None:
-                print(f"[价格查询] 子图{i+1}/4 截图返回 None!", flush=True)
-                self._log(f"第{i+1}个物品截图失败", "warn", "_do_price_query")
+            # 在大图中的子区域坐标（相对于 full_frame）
+            # 原区域中第 i 个子区域的起点: x + i*item_w
+            # 大图中对应起点: (x + i*item_w) - full_rx = i*item_w - offset_x
+            sub_x = i * item_w - offset_x
+            sub_w = item_w
+            # 裁剪到有效范围
+            sub_x = max(0, sub_x)
+            sub_w = min(sub_w, full_rw - sub_x)
+            if sub_w <= 0:
+                self._log(f"第{i+1}个物品区域超出截图范围，跳过", "warn", "_do_price_query")
                 continue
 
-            print(f"[价格查询] 子图{i+1}/4 截图成功: {frame.shape[1]}x{frame.shape[0]}", flush=True)
+            # numpy 切片: frame[y1:y2, x1:x2]
+            # full_rh 已经在 full_ry 裁剪过了，所以 y 方向从 offset_y 开始
+            sub_y = -offset_y  # offset_y 是负值（full_ry < y）时，子图需要下移
+            sub_y = max(0, sub_y)
+            sub_h = full_rh - sub_y
+            if sub_h <= 0:
+                self._log(f"第{i+1}个物品区域高度无效，跳过", "warn", "_do_price_query")
+                continue
 
-            # OCR 识别（同步，因为4张图很快）
-            results = self._item_ocr.recognize_all_with_boxes(frame)
+            sub_frame = full_frame[sub_y:sub_y + sub_h, sub_x:sub_x + sub_w]
+
+            # 子图在屏幕上的实际起点（用于坐标转换）
+            rx = full_rx + sub_x
+            ry = full_ry + sub_y
+            rw_actual = sub_w
+            rh_actual = sub_h
+
+            print(f"\n[价格查询] 子图{i+1}/4: 切片 ({sub_x},{sub_y}) {rw_actual}x{rh_actual} → 屏幕 ({rx},{ry})", flush=True)
+
+            # OCR 识别
+            results = self._item_ocr.recognize_all_with_boxes(sub_frame)
             if results:
-                # results: [(name, box, variants), ...]
                 for r_name, r_box, r_variants in results:
-                    # 转换坐标为全局坐标（使用裁剪后的实际截图起点 rx, ry）
                     global_box = [
                         [r_box[0][0] + rx, r_box[0][1] + ry],
                         [r_box[1][0] + rx, r_box[1][1] + ry],
