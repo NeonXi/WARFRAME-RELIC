@@ -409,20 +409,22 @@ def _try_variants(ocr_text: str, variants: list[str]) -> tuple[Optional[dict], s
         if v_items:
             v_lower = variant.lower()
             v_words = v_lower.split()
+            # ★ 用 variant 的单词集做覆盖检查（而非原始 OCR 单词）
+            v_word_set = set(v_words)
             for v_item in v_items:
                 en = v_item.get('en_name', '').lower()
                 if not en:
                     continue
                 words = en.replace("'", " ").replace("-", " ").split()
                 if en.startswith(v_lower):
-                    # ★ 检查 OCR 中有多少单词在 en_name 中找到
+                    # ★ 检查 variant 中有多少单词在 en_name 中找到
                     # 防止 "Revenant Prime" 匹配到 "Revenant Prime Theme"
-                    # 而 OCR 中还有 "Neuroptics Blueprint" 这些词
+                    # 而 variant 中还有 "Neuroptics Blueprint" 这些词
                     en_word_set = set(words)
-                    covered = sum(1 for w in ocr_words if w in en_word_set)
-                    missing = len(ocr_words) - covered
-                    # 缺失的单词数不能超过 OCR 总单词数的 50%
-                    if missing <= len(ocr_words) * 0.5:
+                    covered = sum(1 for w in v_word_set if w in en_word_set)
+                    missing = len(v_word_set) - covered
+                    # 缺失的单词数不能超过 variant 总单词数的 50%
+                    if missing <= len(v_word_set) * 0.5:
                         return v_item, 'variant_fuzzy'
                     else:
                         continue
