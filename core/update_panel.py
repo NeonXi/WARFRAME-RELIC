@@ -258,16 +258,16 @@ class UpdatePanel(QObject):
         stats = get_translation_db_stats()
         if not stats.get('exists'):
             self._trans_stat_labels['trans_total'].setText(S("status", "db_not_exist"))
-            self._trans_stat_labels['trans_size'].setText(S("status", "placeholder"))
-            self._trans_stat_labels['trans_mtime'].setText(S("status", "placeholder"))
+            self._trans_stat_labels['db_size'].setText(S("status", "placeholder"))
+            self._trans_stat_labels['last_update'].setText(S("status", "placeholder"))
             if self._trans_cat_label:
                 self._trans_cat_label.setText("")
             return
 
         self._trans_stat_labels['trans_total'].setText(S.format("stat_fmt", "trans_count", count=stats['total']))
         self._trans_stat_labels['trans_total'].setStyleSheet(f"color: {theme.cyber_green}; font-weight: bold;")
-        self._trans_stat_labels['trans_size'].setText(S.format("stat_fmt", "db_size_kb", size=stats['db_size'] / 1024))
-        self._trans_stat_labels['trans_mtime'].setText(stats['db_mtime'])
+        self._trans_stat_labels['db_size'].setText(S.format("stat_fmt", "db_size_kb", size=stats['db_size'] / 1024))
+        self._trans_stat_labels['last_update'].setText(stats['db_mtime'])
 
         # 分类详情
         if self._trans_cat_label and stats.get('categories'):

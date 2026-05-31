@@ -410,8 +410,8 @@ class ManagementPanel(QWidget):
         # 统计行
         stat_grid = [
             (S("stat_label", "trans_total"), "trans_total"),
-            (S("stat_label", "db_size"), "trans_size"),
-            (S("stat_label", "last_update"), "trans_mtime"),
+            (S("stat_label", "db_size"), "db_size"),
+            (S("stat_label", "last_update"), "last_update"),
         ]
         self._trans_stat_labels = {}
         for label, key in stat_grid:
@@ -499,8 +499,8 @@ class ManagementPanel(QWidget):
         stat_grid = [
             (S("stat_label", "items_total"), "items_total"),
             (S("stat_label", "items_has_cn"), "items_has_cn"),
-            (S("stat_label", "db_size"), "items_size"),
-            (S("stat_label", "last_update"), "items_mtime"),
+            (S("stat_label", "db_size"), "db_size"),
+            (S("stat_label", "last_update"), "last_update"),
         ]
         self._items_stat_labels = {}
         for label, key in stat_grid:
@@ -911,7 +911,7 @@ class ManagementPanel(QWidget):
 
         if not stats.get('exists'):
             self._items_stat_labels['items_total'].setText(S("status", "db_not_exist"))
-            for k in ['items_has_cn', 'items_size', 'items_mtime']:
+            for k in ['items_has_cn', 'db_size', 'last_update']:
                 self._items_stat_labels[k].setText(S("status", "placeholder"))
             return
 
@@ -919,8 +919,8 @@ class ManagementPanel(QWidget):
         self._items_stat_labels['items_total'].setStyleSheet(f"color: {theme.cyber_green}; font-weight: bold;")
 
         self._items_stat_labels['items_has_cn'].setText(S.format("stat_fmt", "count_items", count=stats['has_cn']))
-        self._items_stat_labels['items_size'].setText(S.format("stat_fmt", "db_size_kb", size=stats['db_size'] / 1024))
-        self._items_stat_labels['items_mtime'].setText(stats['db_mtime'])
+        self._items_stat_labels['db_size'].setText(S.format("stat_fmt", "db_size_kb", size=stats['db_size'] / 1024))
+        self._items_stat_labels['last_update'].setText(stats['db_mtime'])
 
     # ---- 物品名称查询 ----
 
