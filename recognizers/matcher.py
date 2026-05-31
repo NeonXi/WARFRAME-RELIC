@@ -15,6 +15,7 @@ from typing import Optional
 from data.items_i18n import search_items
 import sqlite3
 import os
+import re
 
 
 # ============================================================
@@ -455,6 +456,78 @@ def _try_variants(ocr_text: str, variants: list[str]) -> tuple[Optional[dict], s
 
 
 # ============================================================
+# 精炼版本过滤
+# ============================================================
+
+# 遗物精炼标签（英文）
+_REFINEMENT_TAGS = {'Intact', 'Exceptional', 'Flawless', 'Radiant'}
+# 遗物精炼标签正则（用于从名称末尾剥离）
+_REFINEMENT_RE = re.compile(
+    r'\s+(Intact|Exceptional|Flawless|Radiant)$',
+    re.IGNORECASE
+)
+
+
+def _strip_refinement_tag(name: str) -> str:
+    """去除遗物名称末尾的精炼标签，返回基础名称。"""
+    return _REFINEMENT_RE.sub('', name).strip()
+
+
+def _is_relic_with_refinement(name: str) -> bool:
+    """检查名称是否是带精炼标签的遗物（如 'Axi S20 Radiant'）。"""
+    if not name:
+        return False
+    # 检查是否以已知精炼标签结尾
+    words = name.split()
+    if len(words) >= 3 and words[-1] in _REFINEMENT_TAGS:
+        # 再检查前面是否有 Relic 或符合遗物命名模式
+        if 'Relic' in words or (len(words) >= 3 and words[0] in {'Lith', 'Meso', 'Neo', 'Axi', 'Requiem', 'Vanguard'}):
+            return True
+    return False
+
+
+def _filter_relic_refinements(results: list[dict]) -> list[dict]:
+    """过滤遗物精炼版本：只保留基础版本（不带精炼标签的）。
+
+    策略：
+      1. 对每个 OCR 结果，如果匹配到的是带精炼标签的遗物，
+         尝试用基础名称重新匹配一次。
+      2. 如果基础名称能匹配到，则替换为不带精炼标签的版本。
+      3. 如果基础名称匹配不到，保留原结果（可能是真的只有精炼版本）。
+    """
+    filtered = []
+    for item in results:
+        en_name = item.get('en_name', '')
+        if _is_relic_with_refinement(en_name):
+            # 去除精炼标签，尝试重新匹配
+            base_name = _strip_refinement_tag(en_name)
+            if base_name and base_name != en_name:
+                # 用基础名称重新搜索
+                base_items = search_items(base_name, is_tradable=True, limit=5)
+                # 找精确匹配基础名称的项
+                base_matched = None
+                for bi in base_items:
+                    bi_en = bi.get('en_name', '')
+                    if bi_en.lower() == base_name.lower():
+                        base_matched = bi
+                        break
+                    # 或者匹配 "Xxx Yyy Relic" 这种基础形式
+                    if bi_en.lower().startswith(base_name.lower()) and not _is_relic_with_refinement(bi_en):
+                        base_matched = bi
+                        break
+                if base_matched:
+                    print(f"[精炼过滤] '{en_name}' → '{base_matched.get('en_name', base_name)}'", flush=True)
+                    item['en_name'] = base_matched.get('en_name', base_name)
+                    item['zh_name'] = base_matched.get('zh_name', item.get('zh_name', ''))
+                    item['category'] = base_matched.get('category', item.get('category', ''))
+                    item['match_quality'] = 'refinement_filtered'
+                else:
+                    print(f"[精炼过滤] '{en_name}' 无基础版本，保留原结果", flush=True)
+        filtered.append(item)
+    return filtered
+
+
+# ============================================================
 # 公开 API
 # ============================================================
 
@@ -484,6 +557,9 @@ def match_items(
             'box': box,
             'match_quality': match_quality,
         })
+
+    # ★ 过滤遗物精炼版本，只保留基础版本
+    results = _filter_relic_refinements(results)
 
     return results
 

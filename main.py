@@ -10,6 +10,7 @@ WARFRAME-RELIC 主程序入口
 """
 import sys
 import os
+import re
 import time
 import threading
 
@@ -45,6 +46,7 @@ from core.price_service import (
     price_to_color, build_display_name, format_price_annotation,
     clear_price_cache,
 )
+from core.relic_tooltip import get_tooltip, hide_tooltip
 from recognizers.relic_name import RelicNameRecognizer
 from recognizers.item_name import ItemNameRecognizer, match_and_price
 from data.wfinfo_relics import RelicDB
@@ -83,6 +85,19 @@ class OCRWorker(QObject):
 # ============================================================
 # 应用核心控制器
 # ============================================================
+
+# ---- 精炼标签过滤正则 ----
+# 中文精炼标签：完好(Intact)、无瑕(Exceptional)、卓越(Flawless)、光辉(Radiant)
+_REFINEMENT_RE = re.compile(
+    r'\s*[\[(（]?\s*(完好|无瑕|卓越|光辉|INTACT|EXCEPTIONAL|FLAWLESS|RADIANT)\s*[\])）]?\s*$',
+    re.IGNORECASE
+)
+
+
+def _strip_refinement(name: str) -> str:
+    """去除遗物名称末尾的精炼标签，返回基础名称。"""
+    return _REFINEMENT_RE.sub('', name).strip()
+
 
 class AppCore:
     """截图、OCR、标注、热键等所有业务逻辑的中心控制器。"""
@@ -144,16 +159,33 @@ class AppCore:
         self._app.exec()
 
     def _shutdown(self):
+        """关闭面板时触发：清理所有运行缓存和资源。"""
         self._kill_ocr_thread()
+        self._clear_results()
+        self._overlay.clear_annotations()
+        self._overlay.close()
         self._relic_db.close()
+        # 关闭遗物悬浮窗
+        try:
+            tooltip = get_tooltip()
+            tooltip.close()
+        except Exception:
+            pass
+        # 清空热键注册
         for hk_id in self._registered_hotkeys.values():
             try:
                 keyboard.remove_hotkey(hk_id)
             except Exception:
                 pass
         self._registered_hotkeys.clear()
+        try:
+            keyboard.unhook_all()
+        except Exception:
+            pass
         self._camera = None
-        print("[退出] 资源已清理")
+        # 清理价格缓存
+        clear_price_cache()
+        print("[退出] 所有运行缓存已清理，程序退出")
 
     # ---- 摄像头 ----
 
@@ -207,6 +239,7 @@ class AppCore:
         self._management_panel.move(target_screen.geometry().topLeft())
 
     def _show_panel_on_start(self):
+        """启动时显示管理面板。关闭面板即退出程序。"""
         self._position_panel_on_screen()
         self._management_panel.show()
         self._management_panel.raise_()
@@ -214,19 +247,12 @@ class AppCore:
         self._management_panel.adjustSize()
         self._management_panel.resize(580, 840)
 
-    def _toggle_panel(self):
-        if self._management_panel.isVisible():
-            self._management_panel.hide()
-        else:
-            self._position_panel_on_screen()
-            self._management_panel.adjustSize()
-            self._management_panel.show()
-            self._management_panel.raise_()
-            self._management_panel.activateWindow()
-
     # ---- 事件绑定 ----
 
     def _bind_events(self):
+        # ★ RegionSelector 默认回调：框选截图
+        self._restore_default_selection_callback()
+        # 兼容旧接口：overlay.on_selection_done 由 overlay._on_region_selected 内部触发
         self._overlay.on_selection_done = self._on_selection_done
         self._overlay.mode_selected.connect(self._on_mode_selected)
         self._bridge.fired.connect(self._on_hotkey)
@@ -257,8 +283,6 @@ class AppCore:
 
         if action == 'select':
             self._overlay.start_selection()
-        elif action == 'panel':
-            self._toggle_panel()
         elif action == 'fullscreen':
             # 全屏截图：打断一切，从头开始
             self._kill_ocr_thread()
@@ -282,7 +306,7 @@ class AppCore:
             print("[快捷键诊断] ✘ 警告：没有任何已注册的热键！", flush=True)
             return False
 
-        expected_actions = ["select", "fullscreen", "panel", "query_price"]
+        expected_actions = ["select", "fullscreen", "query_price"]
         all_ok = True
         for action in expected_actions:
             hk_str = load_hotkeys().get(action, DEFAULT_HOTKEYS[action])
@@ -336,7 +360,7 @@ class AppCore:
 
         # 第三步：注册新热键
         action_map = {
-            "select": "select", "fullscreen": "fullscreen", "panel": "panel",
+            "select": "select", "fullscreen": "fullscreen",
             "query_price": "query_price",
         }
 
@@ -477,7 +501,7 @@ class AppCore:
 
         # ── 4. 退出框选模式（关键！否则 Overlay 可能卡在框选状态） ──
         try:
-            if self._overlay._selecting:
+            if self._overlay._region_selector.is_active:
                 self._overlay.end_selection()
                 self._log("  ✓ 已退出框选模式", "info", "_on_reset")
         except Exception as e:
@@ -542,8 +566,7 @@ class AppCore:
         self._log(S("log_msg", "startup"), source="_print_startup_info")
         self._log(S.format("log_msg", "startup_select", hk=hotkeys_config['select']), source="_print_startup_info")
         self._log(S.format("log_msg", "startup_fullscreen", hk=hotkeys_config['fullscreen']), source="_print_startup_info")
-        self._log(S.format("log_msg", "startup_panel", hk=hotkeys_config['panel']), source="_print_startup_info")
-        self._log(S.format("log_msg", "startup_query_price", hk=hotkeys_config.get('query_price', 'ctrl+shift+p')), source="_print_startup_info")
+        self._log(S.format("log_msg", "startup_query_price", hk=hotkeys_config.get('query_price', 'ctrl+t')), source="_print_startup_info")
         self._log(S("log_msg", "startup_right_click"), source="_print_startup_info")
         self._log(S("log_msg", "startup_mode_hint"), source="_print_startup_info")
         self._log(S("log_msg", "startup_mode_check"), source="_print_startup_info")
@@ -558,9 +581,9 @@ class AppCore:
     # 核心链路：框选截图
     # ============================================================
     # _on_hotkey('select') → overlay.start_selection()
-    #   → 用户框选完成 → overlay._finish_selection()
-    #   → overlay.on_selection_done() → _on_selection_done()
-    #   → 清除旧数据 → 截图 → 显示功能按钮
+    #   → RegionSelector 处理鼠标交互
+    #   → RegionSelector 回调 → overlay._on_region_selected → on_selection_done
+    #   → _on_selection_done() → 清除旧数据 → 截图 → 显示功能按钮
     # ============================================================
 
     def _on_selection_done(self):
@@ -571,22 +594,21 @@ class AppCore:
         self._overlay._hide_mode_buttons()
         self._overlay.label.clear()
 
-        region = self._overlay.get_region()
-        if region is None:
+        # ★ 从 RegionSelector 获取区域信息
+        region_info = self._overlay._region_selector.last_region
+        if region_info is None:
             self._overlay.display(S("overlay", "please_select_first"), auto_hide_ms=3000)
             return
 
-        dpi = self._overlay._dpi_scale
-        phys_region = (
-            int(region[0] * dpi), int(region[1] * dpi),
-            int(region[2] * dpi), int(region[3] * dpi),
-        )
+        logical = region_info['logical']
+        phys = region_info['physical']
+        phys_region = phys  # (left, top, right, bottom) 物理坐标
         frame = self._camera.grab(region=phys_region)
         if frame is None:
             self._overlay.display(S("overlay", "screenshot_failed"), auto_hide_ms=3000)
             return
 
-        self._after_screenshot(frame, region)
+        self._after_screenshot(frame, logical)
 
     # ============================================================
     # 核心链路：全屏截图
@@ -623,39 +645,47 @@ class AppCore:
 
     def _on_item_region_select(self):
         """管理面板请求设置物品区域：启动物品区域框选模式。"""
+        # ★ 临时替换 RegionSelector 的回调为物品区域保存逻辑
+        self._overlay._region_selector.set_callback(
+            callback=self._on_item_region_selected,
+            on_cancelled=self._on_item_region_cancelled,
+        )
         self._overlay.start_selection()
-        # 覆盖 on_selection_done 为物品区域保存逻辑
-        self._overlay.on_selection_done = self._on_item_region_selection_done
 
-    def _on_item_region_selection_done(self):
+    def _on_item_region_selected(self, region_info: dict):
         """物品区域框选完成：保存区域到配置文件。"""
-        region = self._overlay.get_region()
-        if region is None:
-            self._overlay.display("框选取消，区域未设置", auto_hide_ms=3000)
-        else:
-            # region 格式为 (left, top, right, bottom)，需要转为 (x, y, w, h)
-            dpi = self._overlay._dpi_scale
-            left, top, right, bottom = region
-            phys_region = {
-                'x': int(left * dpi),
-                'y': int(top * dpi),
-                'w': int((right - left) * dpi),
-                'h': int((bottom - top) * dpi),
-            }
-            if save_item_region(phys_region):
-                self._overlay.display(
-                    f"物品区域已保存！(x={phys_region['x']}, y={phys_region['y']}, "
-                    f"w={phys_region['w']}, h={phys_region['h']}) 将横向4等分",
-                    auto_hide_ms=4000)
-                self._log(f"物品区域已保存: {phys_region}", "ok", "_on_item_region_selection_done")
-            else:
-                self._overlay.display("保存物品区域失败！", auto_hide_ms=3000)
-                self._log("保存物品区域失败", "error", "_on_item_region_selection_done")
+        phys_xywh = region_info['physical_xywh']
 
-        # 恢复正常的框选回调
-        self._overlay.on_selection_done = self._on_selection_done
-        # 刷新管理面板状态
+        if save_item_region(phys_xywh):
+            self._overlay.display(
+                f"物品区域已保存！(x={phys_xywh['x']}, y={phys_xywh['y']}, "
+                f"w={phys_xywh['w']}, h={phys_xywh['h']}) 将横向4等分",
+                auto_hide_ms=4000)
+            self._log(f"物品区域已保存: {phys_xywh}", "ok", "_on_item_region_selected")
+        else:
+            self._overlay.display("保存物品区域失败！", auto_hide_ms=3000)
+            self._log("保存物品区域失败", "error", "_on_item_region_selected")
+
+        self._restore_default_selection_callback()
         self._management_panel._refresh_item_region_status()
+
+    def _on_item_region_cancelled(self):
+        """物品区域框选取消。"""
+        self._overlay.display("框选取消，区域未设置", auto_hide_ms=3000)
+        self._restore_default_selection_callback()
+        self._management_panel._refresh_item_region_status()
+
+    def _restore_default_selection_callback(self):
+        """恢复 RegionSelector 的默认回调（框选截图）。"""
+        self._overlay._region_selector.set_callback(
+            callback=self._on_region_selection_for_screenshot,
+        )
+
+    def _on_region_selection_for_screenshot(self, region_info: dict):
+        """RegionSelector 的默认回调：框选后执行截图流程。"""
+        # region_info 已经保存到 overlay._saved_region（由 overlay._on_region_selected 处理）
+        # 这里只需要执行截图业务逻辑
+        self._on_selection_done()
 
     def _do_price_query(self):
         """价格查询快捷键：加载物品区域 → 显示4等分框线 → 截4图 → 逐份识别 → 查价格 → 标注。"""
@@ -884,6 +914,7 @@ class AppCore:
         self._last_items = []
         self._last_texts = []
         clear_price_cache()  # 清价格缓存
+        hide_tooltip()       # 隐藏遗物悬浮窗
 
     def _kill_ocr_thread(self):
         """强制终止 OCR 线程（不关心结果）。"""
@@ -1034,18 +1065,28 @@ class AppCore:
         dpi = self._overlay._dpi_scale
         region = self._last_region
 
+        # ★ 去重：去除精炼标签，按基础名称去重（保留第一次出现的 box）
+        seen_base = {}  # base_name → (original_name, box)
         for name, box in self._last_relics:
+            base_name = _strip_refinement(name)
+            if base_name not in seen_base:
+                seen_base[base_name] = (name, box)
+
+        for base_name, (orig_name, box) in seen_base.items():
             sx = int(region[0] + box[0][0] / dpi)
             sy = int(region[1] + box[0][1] / dpi - 28)
-            info = self._relic_db.find(name)
+            info = self._relic_db.find(base_name)
             if info:
                 if info.get('vaulted', False):
-                    color, label = COLOR_VAULTED, f"{name} [{S('overlay', 'relic_vaulted')}]"
+                    color, label = COLOR_VAULTED, f"{base_name} [{S('overlay', 'relic_vaulted')}]"
                 else:
-                    color, label = COLOR_AVAILABLE, f"{name} [{S('overlay', 'relic_available')}]"
+                    color, label = COLOR_AVAILABLE, f"{base_name} [{S('overlay', 'relic_available')}]"
             else:
-                color, label = COLOR_UNKNOWN, f"{name} [?]"
+                color, label = COLOR_UNKNOWN, f"{base_name} [?]"
             annotations.append((label, sx, sy, 8000, color))
+
+        # 隐藏旧的悬浮窗
+        hide_tooltip()
 
         self._overlay.show_annotations_stream(
             annotations, auto_hide_ms=8000, interval_ms=30, batch_size=2)
@@ -1062,14 +1103,24 @@ class AppCore:
         dpi = self._overlay._dpi_scale
         region = self._last_region
 
+        # ★ 去重：去除精炼标签，按基础名称去重
+        seen_base = {}  # base_name → (original_name, box)
         for name, box in self._last_relics:
+            base_name = _strip_refinement(name)
+            if base_name not in seen_base:
+                seen_base[base_name] = (name, box)
+
+        # ★ 收集遗物详细信息用于悬浮窗
+        tooltip_data = []
+
+        for base_name, (orig_name, box) in seen_base.items():
             sx = int(region[0] + box[0][0] / dpi)
             sy = int(region[1] + box[0][1] / dpi - 28)
-            info = self._relic_db.find(name)
+            info = self._relic_db.find(base_name)
             if not info:
-                unmatched_names.append(name)
+                unmatched_names.append(base_name)
                 annotations.append(
-                    (S.format("overlay", "relic_no_parts_info", name=name), sx, sy, 10000, FALLBACK_COLOR))
+                    (S.format("overlay", "relic_no_parts_info", name=base_name), sx, sy, 10000, FALLBACK_COLOR))
                 continue
 
             matched += 1
@@ -1078,7 +1129,14 @@ class AppCore:
             status_color = COLOR_VAULTED if vaulted else COLOR_AVAILABLE
             status = S("overlay", "relic_vaulted") if vaulted else S("overlay", "relic_available")
 
-            lines = [f"{name} [{status}]"]
+            # ★ 收集悬浮窗数据
+            tooltip_data.append({
+                'name': base_name,
+                'vaulted': vaulted,
+                'parts': parts,
+            })
+
+            lines = [f"{base_name} [{status}]"]
             line_colors = [status_color]
             sorted_parts = sorted(parts, key=lambda p: p.get('chance', 0))
             chances = sorted(set(p.get('chance', 0) for p in sorted_parts))
@@ -1091,7 +1149,14 @@ class AppCore:
         self._overlay.show_annotations_stream(
             annotations, auto_hide_ms=10000, interval_ms=35, batch_size=1)
 
-        total = len(self._last_relics)
+        # ★ 显示遗物内容悬浮窗
+        if tooltip_data:
+            tooltip = get_tooltip()
+            tooltip.show_relics(tooltip_data)
+        else:
+            hide_tooltip()
+
+        total = len(seen_base)
         if unmatched_names:
             summary = S.format("overlay", "query_summary_fmt",
                 total=total, matched=matched, unmatched=', '.join(unmatched_names))
@@ -1280,7 +1345,94 @@ def _on_exit():
         pass
 
 
+def _check_admin() -> bool:
+    """检测是否为管理员权限。返回 True 表示已是管理员。"""
+    try:
+        import ctypes
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except Exception:
+        # 非 Windows 平台或无权限检测，视为 OK
+        return True
+
+
+def _warn_not_admin():
+    """弹出明确的管理员权限提示窗口（在 QApplication 创建前用 ctypes MessageBox 兜底）。"""
+    title = "⚠ 权限不足 - WARFRAME-RELIC"
+    msg = (
+        "未以管理员身份运行！\n\n"
+        "全局热键注册需要管理员权限，否则快捷键（框选、查询等）将无法生效。\n\n"
+        "请右键程序 → 「以管理员身份运行」重新启动。\n\n"
+        "是否仍然继续以非管理员模式启动？\n"
+        "（点击「是」继续启动，点击「否」退出）"
+    )
+    # 用 ctypes MessageBox 保证 QApplication 未启动时也能弹窗
+    try:
+        import ctypes
+        r = ctypes.windll.user32.MessageBoxW(0, msg, title, 0x00000030 | 0x00000004)  # MB_ICONWARNING | MB_YESNO
+        # IDYES = 6, IDNO = 7
+        return r == 6
+    except Exception:
+        # 回退：控制台输出
+        print(f"\n{'=' * 60}")
+        print(f"  {title}")
+        print(f"  {msg}")
+        print(f"{'=' * 60}\n", flush=True)
+        return True  # 无法弹窗时默认继续
+
+
+def _acquire_singleton() -> bool:
+    """单例互斥：通过 Windows 命名 Mutex 确保只运行一个实例。
+    返回 True 表示成功获取锁（可以启动），False 表示已有实例在运行。"""
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        _MUTEX_NAME = "Global\\WARFRAME-RELIC-Singleton-{A8F3C2D1-4E5B-4a6f-8D3C-1B2A3F4E5D6C}"
+
+        # ERROR_ALREADY_EXISTS = 183
+        ERROR_ALREADY_EXISTS = 183
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.CreateMutexW(None, True, _MUTEX_NAME)
+        if handle == 0:
+            return True  # 无法判断时放行
+        if kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+            # 关闭已存在的句柄
+            kernel32.CloseHandle(handle)
+            return False
+        return True
+    except Exception:
+        # 非 Windows 或出错时默认放行
+        return True
+
+
+def _warn_already_running():
+    """弹出"已有实例运行"提示窗口。"""
+    title = "⚠ 程序已在运行 - WARFRAME-RELIC"
+    msg = (
+        "WARFRAME-RELIC 已经在运行中，不能同时启动多个实例。\n\n"
+        "请在系统托盘中查找程序图标，或检查任务管理器。"
+    )
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(0, msg, title, 0x00000030)  # MB_ICONWARNING | MB_OK
+    except Exception:
+        print(f"\n{'=' * 60}")
+        print(f"  {title}")
+        print(f"  {msg}")
+        print(f"{'=' * 60}\n", flush=True)
+
+
 def main():
+    # ★ 单例检测（在一切初始化之前）
+    if not _acquire_singleton():
+        _warn_already_running()
+        sys.exit(1)
+
+    # ★ 管理员权限检测（在 QApplication 创建前）
+    if not _check_admin():
+        if not _warn_not_admin():
+            sys.exit(1)
+
     # ★ 安装全局异常钩子
     sys.excepthook = _log_exception
     atexit.register(_on_exit)
@@ -1292,7 +1444,20 @@ def main():
         pass
 
     app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)
+    # ★ 面板是唯一主窗口，关闭面板 = 退出程序
+    app.setQuitOnLastWindowClosed(True)
+    # ★ 全局 ToolTip 样式（赛博深色主题）
+    app.setStyleSheet(f"""
+        QToolTip {{
+            background-color: #0A0A1E;
+            color: #E8ECFF;
+            border: 1px solid #1A1A3A;
+            border-radius: 6px;
+            padding: 0px;
+            font-family: "Microsoft YaHei";
+            font-size: 12px;
+        }}
+    """)
     core = AppCore(app)
     core.run()
 

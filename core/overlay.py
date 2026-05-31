@@ -7,6 +7,8 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QCursor
 
 from core.word_wrap_button import WordWrapButton
+from core.region_selector import RegionSelector
+from core.relic_tooltip import hide_tooltip
 from core.constants import (
     CYBER_YELLOW, CYBER_CYAN, CYBER_MAGENTA,
     CYBER_DARK_BG, CYBER_BORDER, CYBER_TEXT,
@@ -42,33 +44,7 @@ def _get_dpi_scale() -> float:
     缩放比例 = 物理DPI / 96，例如 125% → 1.25。
     使用主屏幕的 DPI（而非桌面整体），确保与 dxcam output_idx=0 一致。
     """
-    try:
-        screen = QApplication.primaryScreen()
-        if screen:
-            dpi = screen.logicalDotsPerInch()
-            return dpi / 96.0
-    except Exception:
-        pass
-    try:
-        hdc = ctypes.windll.user32.GetDC(0)
-        dpi_x = ctypes.windll.gdi32.GetDeviceCaps(hdc, 88)  # LOGPIXELSX
-        ctypes.windll.user32.ReleaseDC(0, hdc)
-        return dpi_x / 96.0
-    except Exception:
-        return 1.0
-
-
-def _win32_set_mouse_passthrough(hwnd: int, enabled: bool):
-    style = ctypes.windll.user32.GetWindowLongW(hwnd, _GWL_EXSTYLE)
-    if enabled:
-        style |= _WS_EX_TRANSPARENT
-    else:
-        style &= ~_WS_EX_TRANSPARENT
-    ctypes.windll.user32.SetWindowLongW(hwnd, _GWL_EXSTYLE, style)
-    ctypes.windll.user32.SetWindowPos(
-        hwnd, 0, 0, 0, 0, 0,
-        _SWP_NOSIZE | _SWP_NOMOVE | _SWP_NOZORDER | _SWP_FRAMECHANGED
-    )
+    return RegionSelector.get_dpi_scale()
 
 
 class Overlay(QWidget):
@@ -83,17 +59,21 @@ class Overlay(QWidget):
         self._setup_label()
         self._setup_buttons()       # ★ 功能选择按钮
         self._hide_at = 0
-        self._selecting = False
-        self._start_pos = None
-        self._current_pos = None
-        self._saved_region = None
-        self._track_timer = None
-        self._left_was_down = False
-        self._status = ""
-        self._annotations = []
+
+        # ★ 区域选择器（独立封装，负责所有框选交互）
+        self._region_selector = RegionSelector(self, self._dpi_scale)
+        self._region_selector.set_callback(
+            callback=self._on_region_selected,
+            on_cancelled=self._on_region_cancelled,
+        )
+
+        # ★ 兼容旧接口：外部通过 on_selection_done 回调
         self.on_selection_done = None
+
+        self._saved_region = None         # 最近一次有效框选的逻辑坐标 (left,top,right,bottom)
+        self._annotations = []
         self._right_was_down = False
-        self._ignore_right_until = 0  # 框选结束后短暂忽略右键（防误触）
+        self._ignore_right_until = 0      # 框选结束后短暂忽略右键（防误触）
 
         # ★ 价格查询4等分区域框线（临时显示）
         self._split_regions = []          # [(rx, ry, rw, rh, label), ...] 物理坐标
@@ -126,18 +106,10 @@ class Overlay(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        if not self._selecting:
+        if not self._region_selector.is_active:
             self._apply_mouse_passthrough(True)
 
     # ========== 按键检测 ==========
-
-    @staticmethod
-    def _is_left_down():
-        return (ctypes.windll.user32.GetAsyncKeyState(0x01) & 0x8000) != 0
-
-    @staticmethod
-    def _is_esc_down():
-        return (ctypes.windll.user32.GetAsyncKeyState(0x1B) & 0x8000) != 0
 
     @staticmethod
     def _is_right_down():
@@ -254,7 +226,7 @@ class Overlay(QWidget):
         Args:
             enabled_modes: 启用的功能列表，如 ['check_status', 'query_parts', 'query_price']
         """
-        print(f"[DEBUG show_mode_buttons] called, enabled_modes={enabled_modes}, _selecting={self._selecting}, _mode_buttons keys={list(self._mode_buttons.keys())}")
+        print(f"[DEBUG show_mode_buttons] called, enabled_modes={enabled_modes}, _selecting={self._region_selector.is_active}, _mode_buttons keys={list(self._mode_buttons.keys())}")
         # 清理旧按钮
         self._hide_mode_buttons()
         for btn in self._mode_buttons.values():
@@ -308,20 +280,14 @@ class Overlay(QWidget):
         for btn in self._mode_buttons.values():
             btn.hide()
 
-    # ========== 框选模式 ==========
+    # ========== 框选模式（委托给 RegionSelector）==========
 
     def start_selection(self):
+        """启启动区域框选模式。"""
         self._log("▶ 框选模式启动")
-        print(f"[DEBUG start_selection] _selecting was {self._selecting}, _mode_buttons keys={list(self._mode_buttons.keys())}")
-        self._selecting = True
-        self._start_pos = None
-        self._current_pos = self.mapFromGlobal(QCursor.pos())
-        self._left_was_down = self._is_left_down()
-        self._status = S("overlay", "selection_status_idle")
         self._annotations = []
-        self._hide_mode_buttons()          # ★ 进入框选时隐藏按钮
+        self._hide_mode_buttons()
         self._apply_mouse_passthrough(False)
-        self.setCursor(Qt.CursorShape.CrossCursor)
         self.label.hide()
         if hasattr(self, '_preview_label'):
             self._preview_label.hide()
@@ -329,110 +295,55 @@ class Overlay(QWidget):
         # 确保 overlay 在最前面且可见
         self.show()
         self.raise_()
-        self._track_timer = QTimer()
-        self._track_timer.timeout.connect(self._track_mouse)
-        self._track_timer.start(16)
-        self.update()
+        self._region_selector.start()
 
     def end_selection(self):
-        self._log("■ 框选模式结束")
-        self._selecting = False
-        self._start_pos = None
-        self._current_pos = None
-        self._left_was_down = False
-        self._status = ""
+        """强制结束框选模式。"""
+        self._region_selector.stop()
         self._apply_mouse_passthrough(True)
-        self.setCursor(Qt.CursorShape.ArrowCursor)
         self.label.show()
-        if self._track_timer:
-            self._track_timer.stop()
-            self._track_timer = None
         # 框选结束后 500ms 内忽略右键（防止拖拽时误触右键清除按钮）
         self._ignore_right_until = int(time.time() * 1000) + 500
         self.update()
 
-    def _track_mouse(self):
-        if not self._selecting:
-            return
+    def _on_region_selected(self, region_info: dict):
+        """RegionSelector 框选完成回调。"""
+        logical = region_info['logical']
+        left, top, right, bottom = logical
+        w = right - left
+        h = bottom - top
 
-        pos = self.mapFromGlobal(QCursor.pos())
-        self._current_pos = pos
-        left_down = self._is_left_down()
+        self._saved_region = logical
+        self._save_region()
 
-        if ctypes.windll.user32.GetAsyncKeyState(0x02) & 0x8000:
-            self._log("✕ 用户右键取消框选")
-            self.label.setText(S("overlay", "selection_cancelled"))
-            self.label.adjustSize()
-            self.label.move(50, 50)
-            self.label.show()
-            self._hide_at = int(time.time() * 1000) + 3000
-            self.end_selection()
-            return
-
-        if self._is_esc_down():
-            self._log("✕ 用户按 ESC 取消框选")
-            self.label.setText(S("overlay", "selection_cancelled"))
-            self.label.adjustSize()
-            self.label.move(50, 50)
-            self.label.show()
-            self._hide_at = int(time.time() * 1000) + 3000
-            self.end_selection()
-            return
-
-        if left_down and not self._left_was_down:
-            self._start_pos = pos
-            self._left_was_down = True
-            self._status = S.format("overlay", "selection_status_pressed", x=pos.x(), y=pos.y())
-            self._log(f"↓ 左键按下 @ ({pos.x()},{pos.y()})")
-
-        elif left_down and self._left_was_down:
-            if self._start_pos:
-                w = abs(pos.x() - self._start_pos.x())
-                h = abs(pos.y() - self._start_pos.y())
-                self._status = S.format("overlay", "selection_status_dragging", w=w, h=h)
-
-        elif not left_down and self._left_was_down:
-            self._left_was_down = False
-            self._log(f"↑ 左键松开 @ ({pos.x()},{pos.y()})")
-            if self._start_pos:
-                self._status = S("overlay", "selection_status_released")
-                self._finish_selection()
-            else:
-                self._status = S("overlay", "selection_status_idle")
-            return
-
-        else:
-            self._left_was_down = left_down
-            self._status = S("overlay", "selection_status_idle")
-
-        self.update()
-
-    def _finish_selection(self):
-        p1, p2 = self._start_pos, self._current_pos
-        left, right = min(p1.x(), p2.x()), max(p1.x(), p2.x())
-        top, bottom = min(p1.y(), p2.y()), max(p1.y(), p2.y())
-        w, h = right - left, bottom - top
-        print(f"[DEBUG _finish_selection] region=({left},{top},{right},{bottom}) w={w} h={h}")
-
-        if w > 20 and h > 20:
-            self._saved_region = (left, top, right, bottom)
-            self._save_region()
-            msg = S.format("overlay", "region_saved", l=left, t=top, r=right, b=bottom, w=w, h=h)
-            self._log(f"✓ {msg}")
-            self.label.setText(msg)
-        else:
-            msg = S.format("overlay", "region_too_small", w=w, h=h)
-            self._log(f"✗ {msg}")
-            self.label.setText(msg)
-
+        msg = S.format("overlay", "region_saved", l=left, t=top, r=right, b=bottom, w=w, h=h)
+        self._log(f"✓ {msg}")
+        self.label.setText(msg)
         self.label.adjustSize()
         self.label.move(50, 50)
         self.label.show()
         self._hide_at = int(time.time() * 1000) + 2000
-        self.end_selection()
 
-        if self.on_selection_done and w > 20 and h > 20:
+        # 恢复鼠标穿透
+        self._apply_mouse_passthrough(True)
+        self._ignore_right_until = int(time.time() * 1000) + 500
+        self.update()
+
+        # 触发外部回调（兼容旧接口）
+        if self.on_selection_done:
             self.on_selection_done()
+
+    def _on_region_cancelled(self):
+        """RegionSelector 框选取消回调。"""
+        self.label.setText(S("overlay", "selection_cancelled"))
+        self.label.adjustSize()
+        self.label.move(50, 50)
+        self.label.show()
+        self._hide_at = int(time.time() * 1000) + 3000
+
+        self._apply_mouse_passthrough(True)
+        self._ignore_right_until = int(time.time() * 1000) + 500
+        self.update()
 
     # ========== 标注系统 ==========
 
@@ -593,52 +504,8 @@ class Overlay(QWidget):
                 painter.setPen(QColor(255, 255, 255))
                 painter.drawText(lx + 6, label_y + fm.ascent() + 2, label)
 
-        if not self._selecting:
-            return
-
-        painter.fillRect(self.rect(), QColor(*OVERLAY_SELECTION_OVERLAY))
-
-        if self._status:
-            painter.fillRect(0, 0, self.width(), 36, QColor(*OVERLAY_STATUS_BG))
-            painter.setPen(QColor(str(CYBER_YELLOW)))
-            painter.setFont(QFont("Microsoft YaHei", 12))
-            painter.drawText(20, 24, self._status)
-
-        if not self._current_pos:
-            return
-
-        cx, cy = self._current_pos.x(), self._current_pos.y()
-
-        if not self._start_pos:
-            self._draw_crosshair(painter, self._current_pos)
-            return
-
-        sx, sy = self._start_pos.x(), self._start_pos.y()
-        x = min(sx, cx)
-        y = min(sy, cy)
-        w = abs(cx - sx)
-        h = abs(cy - sy)
-
-        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Clear)
-        painter.fillRect(x, y, w, h, QColor(0, 0, 0, 0))
-        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-
-        pen = QPen(QColor(str(OVERLAY_SELECTION_BORDER)), 2)
-        painter.setPen(pen)
-        painter.drawRect(x, y, w, h)
-
-        painter.setPen(QColor(str(CYBER_CYAN)))
-        painter.setFont(QFont("Microsoft YaHei", 11))
-        painter.drawText(x + 5, y - 8, f"{w} × {h}")
-
-    def _draw_crosshair(self, painter, pos):
-        pen = QPen(QColor(str(OVERLAY_CROSSHAIR_COLOR)), 1, Qt.PenStyle.DashLine)
-        painter.setPen(pen)
-        painter.drawLine(0, pos.y(), self.width(), pos.y())
-        painter.drawLine(pos.x(), 0, pos.x(), self.height())
-        painter.setPen(QPen(QColor(str(OVERLAY_CROSSHAIR_COLOR)), 2))
-        painter.drawLine(pos.x() - 12, pos.y(), pos.x() + 12, pos.y())
-        painter.drawLine(pos.x(), pos.y() - 12, pos.x(), pos.y() + 12)
+        # ★ 委托 RegionSelector 绘制框选 UI
+        self._region_selector.paint(painter)
 
     # ========== 窗口设置 ==========
 
@@ -690,7 +557,7 @@ class Overlay(QWidget):
                 self.update()
 
         # 右键清除标注（非框选模式）
-        if not self._selecting:
+        if not self._region_selector.is_active:
             right_now = self._is_right_down()
             if right_now and not self._right_was_down and now > self._ignore_right_until:
                 had_annotations = len(self._annotations) > 0
@@ -698,6 +565,7 @@ class Overlay(QWidget):
                 print(f"[DEBUG _check_auto_hide] RIGHT CLICK DETECTED, had_annotations={had_annotations}, had_buttons={had_buttons}")
                 self.clear_annotations()
                 self._hide_mode_buttons()
+                hide_tooltip()  # ★ 同时隐藏遗物悬浮窗
                 self.label.clear()
                 if hasattr(self, '_preview_label'):
                     self._preview_label.hide()

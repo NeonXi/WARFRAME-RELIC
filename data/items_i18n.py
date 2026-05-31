@@ -24,6 +24,15 @@ import time
 from datetime import datetime
 from typing import Optional
 
+# ---- 拼音支持 ----
+try:
+    from pypinyin import pinyin, Style
+    _HAS_PYPINYIN = True
+except ImportError:
+    _HAS_PYPINYIN = False
+    pinyin = None
+    Style = None
+
 try:
     from PyQt6.QtCore import pyqtSignal, QObject
     _HAS_PYQT = True
@@ -61,12 +70,14 @@ CREATE TABLE IF NOT EXISTS items (
     image_name TEXT,                    -- 图片名称
     description_zh TEXT,                -- 中文描述
     description_en TEXT,                -- 英文描述
+    zh_pinyin TEXT DEFAULT '',          -- 中文拼音（全拼+首字母，空格分隔，用于拼音搜索）
     UNIQUE(zh_name, en_name)
 );
 
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_items_zh ON items(zh_name);
 CREATE INDEX IF NOT EXISTS idx_items_en ON items(en_name);
+CREATE INDEX IF NOT EXISTS idx_items_pinyin ON items(zh_pinyin);
 CREATE INDEX IF NOT EXISTS idx_items_category ON items(category);
 CREATE INDEX IF NOT EXISTS idx_items_type ON items(item_type);
 CREATE INDEX IF NOT EXISTS idx_items_prime ON items(is_prime);
@@ -97,6 +108,37 @@ def build_all_items_db(all_items_path: str = None,
         dict: {'total': int, 'stats': dict}
     """
     start_time = time.time()
+
+    # ---- schema 迁移：确保 zh_pinyin 字段存在 ----
+    if os.path.exists(DB_PATH):
+        try:
+            conn_tmp = sqlite3.connect(DB_PATH)
+            cur_tmp = conn_tmp.cursor()
+            cur_tmp.execute("PRAGMA table_info(items)")
+            cols = [row[1] for row in cur_tmp.fetchall()]
+            if 'zh_pinyin' not in cols:
+                print("[items_i18n] 数据库 schema 过时，添加 zh_pinyin 字段...")
+                cur_tmp.execute("ALTER TABLE items ADD COLUMN zh_pinyin TEXT DEFAULT ''")
+                cur_tmp.execute("CREATE INDEX IF NOT EXISTS idx_items_pinyin ON items(zh_pinyin)")
+                conn_tmp.commit()
+                print("[items_i18n] zh_pinyin 字段添加完成，开始回填已有数据拼音...")
+                # 回填已有数据的拼音
+                if _HAS_PYPINYIN:
+                    cur_tmp.execute("SELECT id, zh_name FROM items WHERE zh_pinyin = '' OR zh_pinyin IS NULL")
+                    rows = cur_tmp.fetchall()
+                    updated = 0
+                    for row_id, zh_name in rows:
+                        py = _make_pinyin(zh_name)
+                        if py:
+                            cur_tmp.execute("UPDATE items SET zh_pinyin = ? WHERE id = ?", (py, row_id))
+                            updated += 1
+                    conn_tmp.commit()
+                    print(f"[items_i18n] 拼音回填完成: {updated}/{len(rows)} 条")
+                else:
+                    print("[items_i18n] 警告: pypinyin 未安装，无法回填拼音")
+            conn_tmp.close()
+        except Exception as e:
+            print(f"[items_i18n] schema 迁移失败: {e}")
 
     all_path = all_items_path or ALL_ITEMS_PATH
     i18n_path = i18n_path or I18N_PATH
@@ -299,12 +341,15 @@ def build_all_items_db(all_items_path: str = None,
             has_desc += 1
 
         try:
+            # 生成拼音索引
+            pinyin_str = _make_pinyin(zh_name)
+
             cur.execute(
                 """INSERT INTO items
                    (unique_name, zh_name, en_name, category, item_type,
                     is_tradable, is_prime, rarity, mr_requirement, image_name,
-                    description_zh, description_en)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    description_zh, description_en, zh_pinyin)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     unique_name,
                     zh_name,
@@ -318,6 +363,7 @@ def build_all_items_db(all_items_path: str = None,
                     item_info['image_name'] or '',
                     description_zh,
                     description_en,
+                    pinyin_str,
                 )
             )
             inserted += 1
@@ -364,6 +410,43 @@ def build_all_items_db(all_items_path: str = None,
         print(f"    {cat}: {count}")
 
     return stats
+
+
+# ============================================================
+# 拼音工具
+# ============================================================
+
+def _make_pinyin(zh_name: str) -> str:
+    """为中文名生成拼音索引字符串（全拼 + 首字母，空格分隔）。
+    例: "龙骑兵 Prime 枪托" → "longqibing prime qiangtuo lqb prime qt"
+    """
+    if not _HAS_PYPINYIN or not zh_name:
+        return ''
+    result_parts = []
+    initials_parts = []
+    for ch in zh_name:
+        if '\u4e00' <= ch <= '\u9fff':
+            try:
+                py = pinyin(ch, style=Style.NORMAL, heteronym=False)
+                if py and py[0]:
+                    full = py[0][0].lower()
+                    result_parts.append(full)
+                    initials_parts.append(full[0] if full else '')
+            except Exception:
+                pass
+        elif ch.isalpha():
+            result_parts.append(ch.lower())
+            initials_parts.append(ch.lower())
+        elif ch == ' ':
+            result_parts.append(' ')
+            initials_parts.append(' ')
+    # 合并：全拼 + 空格 + 首字母
+    full_str = ''.join(result_parts).strip()
+    initials_str = ''.join(initials_parts).strip().replace(' ', '')
+    # 如果首字母和全拼相同则只保留全拼
+    if initials_str and initials_str != full_str.replace(' ', ''):
+        return f"{full_str} {initials_str}"
+    return full_str
 
 
 # ============================================================
@@ -442,21 +525,169 @@ def _is_chinese_query(query: str) -> bool:
     return False
 
 
-def suggest_items(query: str, limit: int = 20) -> list[dict]:
-    """实时输入联想：自动检测输入语言，支持中英双向搜索。
+# ============================================================
+# 精炼版本过滤（用于 suggest_items）
+# ============================================================
 
-    - 输入英文 → 搜索英文名 → 返回中文翻译
-    - 输入中文 → 搜索中文名 → 返回英文原文
+# 遗物精炼标签
+_REFINEMENT_TAGS = {'Intact', 'Exceptional', 'Flawless', 'Radiant'}
+
+# 遗物纪元前缀
+_RELIC_ERAS = {'Lith', 'Meso', 'Neo', 'Axi', 'Requiem', 'Vanguard'}
+
+
+def _filter_relic_refinements_in_suggest(results: list[dict]) -> list[dict]:
+    """过滤 suggest_items 结果中的遗物精炼版本。
+    
+    策略：
+      1. 收集所有基础版遗物名称（如 "Axi S20 Relic"）
+      2. 移除对应的精炼版本（如 "Axi S20 Radiant", "Axi S20 Intact" 等）
+    """
+    if not results:
+        return results
+    
+    # 第一步：找出所有遗物项（含基础版和精炼版）
+    relic_items = []
+    base_names = set()
+    refinement_items = []
+    
+    for r in results:
+        en_name = r.get('en_name', '')
+        if not en_name:
+            continue
+        words = en_name.split()
+        # 检测是否是遗物：至少3个词，第一个词是纪元，包含 Relic 或精炼标签
+        if len(words) >= 3 and words[0] in _RELIC_ERAS:
+            last_word = words[-1]
+            if last_word == 'Relic':
+                # 基础版遗物，如 "Axi S20 Relic"
+                base_names.add(en_name.lower())
+                relic_items.append(r)
+            elif last_word in _REFINEMENT_TAGS:
+                # 精炼版遗物，如 "Axi S20 Radiant"
+                refinement_items.append(r)
+    
+    if not refinement_items:
+        return results
+    
+    # 第二步：从结果中移除精炼版遗物（其基础版已经在结果中）
+    filtered = []
+    for r in results:
+        en_name = r.get('en_name', '')
+        words = en_name.split()
+        if len(words) >= 3 and words[0] in _RELIC_ERAS and words[-1] in _REFINEMENT_TAGS:
+            # 这是精炼版遗物，检查基础版是否已在结果中
+            base_name = ' '.join(words[:-1]) + ' Relic'
+            if base_name.lower() in base_names:
+                # 基础版已存在，跳过精炼版
+                print(f"[suggest过滤] 跳过精炼版: '{en_name}' (基础版 '{base_name}' 已存在)", flush=True)
+                continue
+        filtered.append(r)
+    
+    return filtered
+
+
+def _search_by_field(conn, q: str, search_field: str, match_field: str,
+                     results: list, seen: set, limit: int):
+    """在指定字段上执行三级匹配搜索，结果追加到 results。
+
     - 精确匹配 > 前缀匹配 > 包含匹配
-    - 每个物品返回精简字段
+    - match_field: 'en' | 'zh' | 'py'（标识匹配到哪个字段，用于 UI 高亮）
+    """
+    is_cn = (search_field == 'zh_name')
+    remain = limit - len(results)
+
+    # 第1级：精确匹配
+    if is_cn:
+        rows = conn.execute(
+            f"SELECT zh_name, en_name, category FROM items WHERE {search_field} = ? LIMIT ?",
+            (q, remain)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            f"SELECT zh_name, en_name, category FROM items WHERE LOWER({search_field}) = ? LIMIT ?",
+            (q.lower(), remain)
+        ).fetchall()
+    for r in rows:
+        key = (r['en_name'] + r['zh_name']).lower()
+        if key not in seen:
+            seen.add(key)
+            results.append({
+                'zh_name': r['zh_name'], 'en_name': r['en_name'],
+                'category': r['category'], 'match_quality': 'exact',
+                'match_field': match_field,
+            })
+
+    # 第2级：前缀匹配
+    remain = limit - len(results)
+    if remain > 0:
+        if is_cn:
+            rows = conn.execute(
+                f"SELECT zh_name, en_name, category FROM items "
+                f"WHERE {search_field} LIKE ? AND {search_field} != ? "
+                f"ORDER BY {search_field} LIMIT ?",
+                (f"{q}%", q, remain)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                f"SELECT zh_name, en_name, category FROM items "
+                f"WHERE LOWER({search_field}) LIKE ? AND LOWER({search_field}) != ? "
+                f"ORDER BY {search_field} LIMIT ?",
+                (f"{q.lower()}%", q.lower(), remain)
+            ).fetchall()
+        for r in rows:
+            key = (r['en_name'] + r['zh_name']).lower()
+            if key not in seen:
+                seen.add(key)
+                results.append({
+                    'zh_name': r['zh_name'], 'en_name': r['en_name'],
+                    'category': r['category'], 'match_quality': 'prefix',
+                    'match_field': match_field,
+                })
+
+    # 第3级：包含匹配
+    remain = limit - len(results)
+    if remain > 0:
+        if is_cn:
+            rows = conn.execute(
+                f"SELECT zh_name, en_name, category FROM items "
+                f"WHERE {search_field} LIKE ? AND {search_field} NOT LIKE ? "
+                f"ORDER BY {search_field} LIMIT ?",
+                (f"%{q}%", f"{q}%", remain)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                f"SELECT zh_name, en_name, category FROM items "
+                f"WHERE LOWER({search_field}) LIKE ? AND LOWER({search_field}) NOT LIKE ? "
+                f"ORDER BY {search_field} LIMIT ?",
+                (f"%{q.lower()}%", f"{q.lower()}%", remain)
+            ).fetchall()
+        for r in rows:
+            key = (r['en_name'] + r['zh_name']).lower()
+            if key not in seen:
+                seen.add(key)
+                results.append({
+                    'zh_name': r['zh_name'], 'en_name': r['en_name'],
+                    'category': r['category'], 'match_quality': 'contains',
+                    'match_field': match_field,
+                })
+
+
+def suggest_items(query: str, limit: int = 20) -> list[dict]:
+    """实时输入联想：自动检测输入语言，支持中/英/拼音搜索。
+
+    - 输入中文 → 搜索中文名
+    - 输入英文/拼音 → 同时搜索英文名和拼音字段（两者在数据库中不冲突）
+    - 精确匹配 > 前缀匹配 > 包含匹配
+    - 结果按 match_quality 排序（exact > prefix > contains）
 
     Args:
-        query: 用户输入（英文/中文均可，大小写不敏感）
+        query: 用户输入（英文/中文/拼音均可，大小写不敏感）
         limit: 返回数量上限
 
     Returns:
-        [{zh_name, en_name, category, match_quality, search_mode}, ...]
-        search_mode: 'en2cn' | 'cn2en'
+        [{zh_name, en_name, category, match_quality, match_field}, ...]
+        match_field: 'en' | 'zh' | 'py'（匹配到哪个字段，用于 UI 高亮）
         match_quality: 'exact' | 'prefix' | 'contains'
     """
     if not query or not query.strip():
@@ -470,92 +701,35 @@ def suggest_items(query: str, limit: int = 20) -> list[dict]:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
 
+    # 检测 zh_pinyin 列是否存在（兼容旧数据库）
+    has_pinyin_col = False
+    try:
+        cur = conn.execute("PRAGMA table_info(items)")
+        has_pinyin_col = any(row[1] == 'zh_pinyin' for row in cur.fetchall())
+    except Exception:
+        pass
+
     results = []
     seen = set()
 
-    # 检测输入语言
-    is_cn = _is_chinese_query(q)
-    if is_cn:
-        search_field = 'zh_name'  # 搜索中文名
-        search_mode = 'cn2en'     # 中文→英文
+    if _is_chinese_query(q):
+        # 中文 → 搜索中文名
+        _search_by_field(conn, q, 'zh_name', 'zh', results, seen, limit)
     else:
-        search_field = 'en_name'  # 搜索英文名
-        search_mode = 'en2cn'     # 英文→中文
+        # 非中文：同时搜索英文名和拼音字段（自然不冲突）
+        _search_by_field(conn, q, 'en_name', 'en', results, seen, limit)
+        if has_pinyin_col:
+            _search_by_field(conn, q, 'zh_pinyin', 'py', results, seen, limit)
 
-    # 第1级：精确匹配
-    if is_cn:
-        rows = conn.execute(
-            f"SELECT zh_name, en_name, category FROM items WHERE {search_field} = ? LIMIT ?",
-            (q, limit)
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            f"SELECT zh_name, en_name, category FROM items WHERE LOWER({search_field}) = ? LIMIT ?",
-            (q.lower(), limit)
-        ).fetchall()
-    for r in rows:
-        key = (r['en_name'] + r['zh_name']).lower()
-        if key not in seen:
-            seen.add(key)
-            results.append({
-                'zh_name': r['zh_name'], 'en_name': r['en_name'],
-                'category': r['category'], 'match_quality': 'exact',
-                'search_mode': search_mode,
-            })
-
-    # 第2级：前缀匹配（以输入开头）
-    if len(results) < limit:
-        if is_cn:
-            rows = conn.execute(
-                f"SELECT zh_name, en_name, category FROM items "
-                f"WHERE {search_field} LIKE ? AND {search_field} != ? "
-                f"ORDER BY {search_field} LIMIT ?",
-                (f"{q}%", q, limit - len(results))
-            ).fetchall()
-        else:
-            rows = conn.execute(
-                f"SELECT zh_name, en_name, category FROM items "
-                f"WHERE {search_field} LIKE ? AND LOWER({search_field}) != ? "
-                f"ORDER BY {search_field} LIMIT ?",
-                (f"{q}%", q.lower(), limit - len(results))
-            ).fetchall()
-        for r in rows:
-            key = (r['en_name'] + r['zh_name']).lower()
-            if key not in seen:
-                seen.add(key)
-                results.append({
-                    'zh_name': r['zh_name'], 'en_name': r['en_name'],
-                    'category': r['category'], 'match_quality': 'prefix',
-                    'search_mode': search_mode,
-                })
-
-    # 第3级：包含匹配
-    if len(results) < limit:
-        if is_cn:
-            rows = conn.execute(
-                f"SELECT zh_name, en_name, category FROM items "
-                f"WHERE {search_field} LIKE ? AND {search_field} NOT LIKE ? "
-                f"ORDER BY {search_field} LIMIT ?",
-                (f"%{q}%", f"{q}%", limit - len(results))
-            ).fetchall()
-        else:
-            rows = conn.execute(
-                f"SELECT zh_name, en_name, category FROM items "
-                f"WHERE {search_field} LIKE ? AND {search_field} NOT LIKE ? "
-                f"ORDER BY {search_field} LIMIT ?",
-                (f"%{q}%", f"{q}%", limit - len(results))
-            ).fetchall()
-        for r in rows:
-            key = (r['en_name'] + r['zh_name']).lower()
-            if key not in seen:
-                seen.add(key)
-                results.append({
-                    'zh_name': r['zh_name'], 'en_name': r['en_name'],
-                    'category': r['category'], 'match_quality': 'contains',
-                    'search_mode': search_mode,
-                })
+        # 按匹配质量排序（exact > prefix > contains）
+        quality_order = {'exact': 0, 'prefix': 1, 'contains': 2}
+        results.sort(key=lambda x: quality_order.get(x['match_quality'], 99))
 
     conn.close()
+    
+    # ★ 过滤遗物精炼版本：只保留基础版本（不带精炼标签的）
+    results = _filter_relic_refinements_in_suggest(results)
+    
     return results[:limit]
 
 

@@ -1,4 +1,4 @@
-# WARFRAME-RELIC v3.0
+# WARFRAME-RELIC v3.2
 
 <p align="center">
   <b>Warframe 遗物实时 OCR 辅助工具 · 赛博朋克2077风格</b>
@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey" alt="Platform">
   <img src="https://img.shields.io/badge/license-GPLv3-blue" alt="License">
-  <img src="https://img.shields.io/badge/version-3.0-yellow" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.2-yellow" alt="Version">
 </p>
 
 ---
@@ -21,14 +21,17 @@
 
 - **🔍 OCR 遗物识别** — 基于 RapidOCR，框选或全屏截图后自动识别所有遗物名称
 - **📦 出入库状态** — 颜色标注每个遗物是否可获取（绿色=出库 / 红色=入库）
-- **🗂️ 遗物内容查询** — 显示每个遗物包含的 Prime 部件，按稀有度用金银铜色区分
+- **🗂️ 遗物内容查询** — 显示每个遗物包含的 Prime 部件，按稀有度用金银铜色区分 + 悬浮窗详情
 - **💰 实时市价查询** — Warframe.Market 实时白金价格（加权参考/最低/中位），并行并发查询
+- **🔤 中英翻译** — OCR 识别物品名后自动翻译（中文 ↔ 英文）
 - **🖥️ 半透明覆盖层** — 无侵入标注，非框选模式鼠标穿透，不影响游戏操作
 - **⌨️ 可配置全局热键** — 管理面板内随时修改快捷键，即时生效无需重启
 - **🌐 一键数据更新** — 管理面板内自动从 GitHub 拉取最新掉落数据
 - **📝 流式标注动画** — 结果逐条弹出，视觉效果流畅
 - **🎨 三套语言预设** — 赛博朋克2077(默认) / 三体·威慑纪元 / 普通标准，管理面板内一键切换
 - **🧵 主题可视化换肤** — Cyberpunk 2077 风格配色，管理面板内取色器编辑，实时预览
+- **🔎 物品检索** — 管理面板内置中/英/拼音实时搜索，单击复制英文名，悬停查看掉落来源
+- **📋 遗物悬浮窗** — 遗物内容查询后弹出可拖动详情窗口，金银铜色区分稀有度
 
 ---
 
@@ -38,8 +41,8 @@
 |:------|:---|
 | `Ctrl+G`（默认） | 进入框选模式 → 拖拽选中遗物区域 → 松开自动截图识别 |
 | `Ctrl+H`（默认） | 直接截取全屏进行识别（跳过框选） |
-| `Ctrl+Shift+G`（默认） | 打开管理面板（更新数据库 / 修改热键 / 换肤 / 切换文案预设） |
-| 右键 | 清除所有标注和按钮 |
+| `Ctrl+T`（默认） | 价格查询（自动4等分截图+识别+标注，需先在管理面板设置物品区域） |
+| 右键 | 清除所有标注和按钮（同时隐藏悬浮窗） |
 | ESC | 取消框选 |
 
 **典型使用场景：**
@@ -48,7 +51,7 @@
 2. 按 `Ctrl+G`，拖拽框选遗物列表区域
 3. 松开鼠标后，屏幕上方出现功能按钮
 4. 点击 **「出入库查询」** 查看哪些遗物值得选
-5. 点击 **「遗物内容查询」** 查看每个遗物包含的 Prime 部件
+5. 点击 **「遗物内容查询」** 查看每个遗物包含的 Prime 部件（同时弹出悬浮窗）
 6. 点击 **「价格查询」** 查看 WM 实时白金市价
 7. 右键随时清除标注
 
@@ -107,8 +110,11 @@ WARFRAME-RELIC/
 ├── core/
 │   ├── constants.py            # 共享常量
 │   ├── overlay.py              # 全屏覆盖层（框选、标注、流式动画、DPI 适配）
-│   ├── management_panel.py     # 管理面板（数据库更新、热键配置、主题换肤、文案预设）
-│   ├── price_service.py        # WM 价格服务（缓存→本地DB→实时API 三级查询，并发并行）
+│   ├── region_selector.py      # ★ 独立区域框选器（鼠标拖拽交互封装）
+│   ├── management_panel.py     # 管理面板（物品检索/数据库/热键/主题/文案）
+│   ├── price_service.py        # WM 价格服务（缓存→本地DB→实时API 三级查询）
+│   ├── relic_tooltip.py        # ★ 遗物内容悬浮窗（可拖动，金银铜色部件列表）
+│   ├── drop_tooltip.py         # ★ 物品掉落来源查询 + Tooltip
 │   ├── hotkey_config.py        # 热键配置读写
 │   ├── hotkey_capture_button.py # 热键捕获按钮组件
 │   ├── stylesheet.py           # 动态 QSS 样式表生成
@@ -116,24 +122,28 @@ WARFRAME-RELIC/
 │   ├── theme_panel.py          # 主题可视化编辑面板
 │   ├── fetch_worker.py         # 后台线程：从 GitHub 下载最新数据
 │   ├── update_worker.py        # 后台线程：执行数据库更新
-│   └── item_info_panel.py      # 物品详情弹出面板
+│   └── word_wrap_button.py     # 自动换行按钮组件
 ├── recognizers/
 │   ├── relic_name.py           # 遗物名称 OCR 识别器
 │   ├── item_name.py            # 物品名称 OCR 识别器
-│   ├── matcher.py              # 物品名匹配引擎（匹配+价格查询）
+│   ├── matcher.py              # 物品名匹配引擎（4轮降级匹配 + 精炼过滤）
 │   └── ...                     # 其他识别器
 ├── data/
 │   ├── preset_cyberpunk2077.py # ★ 赛博朋克2077 风格文案预设（默认）
 │   ├── preset_santi.py         # 三体·威慑纪元 风格文案预设
 │   ├── preset_normal.py        # 普通标准 风格文案预设
 │   ├── ui_strings.py           # UI 字符串路由器（预设加载/切换）
-│   ├── language_preset.json    # 语言预设配置
+│   ├── items_i18n.py           # ★ 全物品中英对照数据库（含拼音搜索）
 │   ├── wm_prices.py            # WM 价格数据库管理（拉取/写入/查询）
+│   ├── wfinfo_relics.py        # 遗物数据库查询
+│   ├── items_i18n.db           # 物品中英文对照数据库（含拼音字段）
 │   ├── wm_prices.db            # WM 价格本地缓存 SQLite
-│   ├── items_i18n.db           # 物品中英文对照数据库
-│   ├── all_items.json          # WFInfo 全量掉落数据
-│   ├── zh_en_dict.json         # 中英文对照词典
-│   └── feature_toggles.json    # 功能开关配置
+│   ├── relics.db               # 遗物掉落数据库
+│   ├── language_preset.json    # 语言预设配置
+│   ├── feature_toggles.json    # 功能开关配置
+│   └── item_region.json        # 物品区域配置
+├── DATABASE.md                 # ★ 数据库结构详细文档
+├── DEVELOPMENT.md              # ★ 开发文档
 ├── build_exe.py                # PyInstaller 打包脚本（文件夹模式）
 ├── build_onefile.py            # PyInstaller 打包脚本（单文件模式）
 ├── dev_runner.py               # 开发热重载脚本
@@ -156,7 +166,8 @@ WARFRAME-RELIC/
 | **keyboard** | 全局热键注册 |
 | **rapidocr-onnxruntime** | OCR 引擎（离线识别，无需联网） |
 | **Pillow** | 图像处理与调试截图保存 |
-| **requests** | WM API 价格查询 HTTP 请求 |
+| **numpy** | 数组运算（截图切片） |
+| **pypinyin** | ★ 中文拼音转换（拼音搜索） |
 
 ---
 
@@ -174,7 +185,7 @@ WARFRAME-RELIC/
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
 │  覆盖层标注   │ ←── │  功能选择     │ ←── │  数据查询     │
 │  PyQt6       │     │ 出入库/部件/  │     │  SQLite+WM   │
-│              │     │ 价格查询      │     │  API         │
+│              │     │ 价格查询/翻译 │     │  API         │
 └──────────────┘     └──────────────┘     └──────────────┘
 ```
 
@@ -189,9 +200,12 @@ WARFRAME-RELIC/
 |:------|:---|
 | `AppCore` (main.py) | 中央控制器，协调截图→OCR→查询→标注全流程 |
 | `Overlay` (overlay.py) | 全屏透明覆盖层，三种状态：空闲(穿透)/框选(拦截)/标注(穿透+按钮不穿透) |
-| `ManagementPanel` | 独立管理窗口：数据库/热键/主题换肤/文案预设/日志 |
+| `RegionSelector` | ★ 独立框选模块，封装鼠标拖拽交互，可复用 |
+| `ManagementPanel` | 管理窗口：物品检索/数据库/热键/主题换肤/文案预设/日志 |
 | `PriceService` | 价格查询服务：缓存→DB→API 三级查询，ThreadPoolExecutor 并发 |
-| `Matcher` | 物品名匹配引擎，OCR结果→匹配→价格查询一体化 |
+| `Matcher` | 物品名匹配引擎，OCR结果→匹配→价格查询一体化，含精炼过滤 |
+| `RelicTooltip` | ★ 遗物内容悬浮窗，可拖动，金银铜色部件列表 |
+| `DropSourceIndex` | ★ 物品掉落来源索引，生成 HTML Tooltip |
 | `ThemeConfig` | 主题单例，65 个配色字段，多套预设切换 |
 | `UIStrings` | 文案路由器，三套语言预设独立管理，运行时可切换 |
 
@@ -199,8 +213,9 @@ WARFRAME-RELIC/
 
 - **OCR 线程**：`QThread` + `finished` 信号自动清理，带超时强制终止
 - **价格查询**：`ThreadPoolExecutor` 并发，结果按 index 归位，线程安全
-- **截图竞态**：`AppCore._screenshot_lock` 防止热键连按时重复截图
+- **截图竞态**：热键防重入 500ms 间隔
 - **退出清理**：`aboutToQuit` 信号触发 `_shutdown()` 统一释放资源
+- **热键心跳**：30 秒定时器自动检测+恢复失效热键
 
 ### 文案预设系统
 
@@ -217,18 +232,7 @@ language_preset.json ──→ ui_strings.py (路由器)
 
 ### 数据库结构
 
-```sql
--- 遗物主表
-relics (id, name, era, code, vaulted)
--- 部件表
-relic_parts (id, relic_id, part_name, rarity, chance)
--- 别名表（OCR 模糊匹配用）
-relic_aliases (id, relic_id, alias)
--- WM 价格表
-wm_prices (en_name, sell_min, sell_median, weighted_avg, ...)
--- 物品中英文对照
-items_i18n (item_id, zh_name, en_name, is_tradable, ...)
-```
+详见 [DATABASE.md](DATABASE.md) — 包含完整的表结构、索引、查询 SQL、数据来源和调用链。
 
 ---
 
@@ -244,7 +248,7 @@ items_i18n (item_id, zh_name, en_name, is_tradable, ...)
 # 输出: dist/WARFRAME-RELIC.exe
 
 # 一键打包+压缩
-一键打包.bat            # 打包 → 压缩为 WARFRAME-RELIC_v3.0.0.zip
+一键打包.bat            # 打包 → 压缩为 WARFRAME-RELIC_v3.2.0.zip
 ```
 
 ---
@@ -253,7 +257,7 @@ items_i18n (item_id, zh_name, en_name, is_tradable, ...)
 
 ### 自动更新（推荐）
 
-1. 按 `Ctrl+Shift+G` 打开管理面板
+1. 打开管理面板（启动即显示）
 2. 点击 **「自动更新」**
 3. 程序自动从 [WFCD/warframe-drop-data](https://github.com/WFCD/warframe-drop-data) 拉取最新数据
 
@@ -265,7 +269,7 @@ items_i18n (item_id, zh_name, en_name, is_tradable, ...)
 ### 命令行更新
 
 ```bash
-python update_db.py
+python data/update_db.py
 ```
 
 ---
@@ -291,6 +295,13 @@ python update_db.py
 - **三套预设**：赛博朋克2077(默认) / 三体·威慑纪元 / 普通标准
 - 可自行添加 `data/preset_xxx.py` 并注册到 `language_preset.json`
 
+### 物品检索
+
+- 管理面板 → 物品检索标签页
+- 支持 **中文 / 英文 / 拼音** 三种输入方式
+- 实时联想搜索，单击结果复制英文名
+- 悬停查看掉落来源
+
 ### 框选区域记忆
 
 - 上次框选的区域坐标自动保存到 `%APPDATA%/WARFRAME-RELIC/config.json`
@@ -299,7 +310,7 @@ python update_db.py
 ### 调试
 
 - 每次截图自动保存到 `%APPDATA%/WARFRAME-RELIC/debug/last_capture.png`
-- 运行 `python test_4split_ocr.py` 可对上次截图做 OCR 对比测试
+- 崩溃日志自动记录到 `%APPDATA%/WARFRAME-RELIC/crash_log.txt`
 
 ---
 
@@ -328,6 +339,19 @@ A: 通常因为其他程序（OBS、SteamVR 等）占用了 DXGI 输出接口。
 
 **Q: 怎么切换文案风格？**
 A: 管理面板 → 「语言风格 · 文案预设」下拉框 → 选择赛博朋克2077/三体/普通，即时生效。
+
+**Q: 价格查询热键没反应？**
+A: 需要先在管理面板 → 价格数据 → 设置物品区域（框选遗物选择界面中4个物品所在的一整行区域），然后按 `Ctrl+T` 即可自动4等分截图+识别+标注。
+
+---
+
+## 📚 文档
+
+| 文档 | 说明 |
+|------|------|
+| [README.md](README.md) | 用户使用文档（本文） |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | 开发文档（架构、数据流、模块详解） |
+| [DATABASE.md](DATABASE.md) | 数据库结构文档（DDL、索引、查询SQL） |
 
 ---
 

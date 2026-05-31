@@ -77,7 +77,7 @@ def format_state(state: dict) -> str:
         ("_last_region",       "最后区域 (None=空)"),
         ("_ocr_thread_alive",  "OCR 线程存活"),
         ("_ocr_worker_alive",  "OCR Worker 存活"),
-        ("_selecting",         "框选模式中"),
+        ("_region_selector.is_active", "框选模式中"),
         ("_mode_buttons_count","功能按钮数"),
         ("_hide_at",           "自动隐藏时间"),
         ("_annotations_count", "标注数量"),

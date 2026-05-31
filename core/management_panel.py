@@ -1,6 +1,6 @@
 """
 WARFRAME-RELIC 管理面板
-- 独立窗口，通过热键 Ctrl+Shift+G 唤起
+- 主窗口，启动即显示，关闭面板 = 退出程序
 - 功能：数据库状态、更新、快捷键配置、主题换肤
 - 内部委托给 theme_panel.py / update_panel.py 处理子功能
 """
@@ -12,11 +12,15 @@ from PyQt6.QtWidgets import (
     QFrame, QProgressBar, QMessageBox, QGroupBox,
     QApplication, QTextEdit, QLineEdit,
     QScrollArea, QListWidget, QListWidgetItem,
+    QToolTip,
 )
 from PyQt6 import QtCore
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QEvent
 
 from core.constants import theme, reload_theme, ThemeConfig
+from core.constants import (CYBER_YELLOW, CYBER_CYAN, CYBER_MAGENTA,
+                            COLOR_GOLD, COLOR_SILVER, COLOR_COPPER,
+                            COLOR_VAULTED, COLOR_AVAILABLE)
 from core.stylesheet import build_stylesheet
 from core.hotkey_config import (
     load_hotkeys, save_hotkeys, validate_hotkey,
@@ -30,6 +34,7 @@ from core.theme_panel import ThemePanel
 from core.update_panel import UpdatePanel, get_db_stats
 from core.word_wrap_button import WordWrapButton
 from core.hotkey_capture_button import HotkeyCaptureButton
+from core.drop_tooltip import SOURCE_TYPE_CN
 from data.ui_strings import S
 
 
@@ -63,6 +68,9 @@ class ManagementPanel(QWidget):
         self._theme_panel = None   # ThemePanel 实例
         self._update_panel = None  # UpdatePanel 实例
 
+        # ★ 性能优化：延迟初始化 RelicDB 缓存（用于悬停 tooltip）
+        self._relic_db_cache = None
+
         self._setup_ui()
         self._update_panel.refresh_stats()
         self._update_panel.refresh_translation_stats()
@@ -70,7 +78,12 @@ class ManagementPanel(QWidget):
         self.refresh_price_stats()
         self._refresh_hotkey_ui()
 
-    # ---- showEvent ----
+    # ---- closeEvent / showEvent ----
+
+    def closeEvent(self, event):
+        """关闭面板 = 退出程序，清理所有运行缓存。"""
+        QApplication.instance().quit()
+        event.accept()
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -91,6 +104,11 @@ class ManagementPanel(QWidget):
         init_w = max(hint.width(), content_min_w)
         init_h = max(hint.height(), min_h)
         self.resize(init_w, init_h)
+        # 默认显示在主屏幕左上角
+        screen = QApplication.primaryScreen()
+        if screen:
+            screen_geom = screen.availableGeometry()
+            self.move(screen_geom.left(), screen_geom.top())
 
     @property
     def _theme_panel_width(self):
@@ -554,39 +572,8 @@ class ManagementPanel(QWidget):
         frame_layout.addWidget(self._items_search_input)
         self._items_input_frame.setLayout(frame_layout)
 
-        # 清除按钮：叠在输入框内右侧
-        self._items_clear_btn = WordWrapButton(S("button", "search_clear"))
-        self._reg_text(self._items_clear_btn, "button", "search_clear")
-        self._items_clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._items_clear_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {theme.panel_darkest};
-                color: {theme.text_dim};
-                border: 1px solid {theme.border};
-                border-left: none;
-                border-radius: 0px 3px 3px 0px;
-                font-family: "Microsoft YaHei";
-                font-size: 12px;
-                min-width: 44px;
-                padding: 0px 8px;
-            }}
-            QPushButton:hover {{
-                background-color: {theme.cyber_red};
-                color: #fff;
-                border-color: {theme.cyber_red};
-            }}
-        """)
-        self._items_clear_btn.clicked.connect(self._items_search_input.clear)
-        self._items_clear_btn.setParent(self._items_input_frame)
-        self._items_clear_btn.setFixedSize(46, 28)
-        self._items_clear_btn.move(self._items_input_frame.width() - 47, 3)
-        self._items_clear_btn.show()
-
         input_row.addWidget(self._items_input_frame)
         layout.addLayout(input_row)
-
-        # 窗口大小变化时重新定位清除按钮
-        self._items_search_input.installEventFilter(self)
 
         # 搜索结果提示
         self._items_search_hint = QLabel(S("hint", "items_search_default"))
@@ -595,7 +582,7 @@ class ManagementPanel(QWidget):
 
         # 搜索结果列表（可点击复制英文名）
         self._items_result_list = QListWidget()
-        self._items_result_list.setMaximumHeight(200)
+        self._items_result_list.setMaximumHeight(320)
         self._items_result_list.itemClicked.connect(self._on_item_result_clicked)
         self._items_result_list.setStyleSheet(f"""
             QListWidget {{
@@ -702,7 +689,7 @@ class ManagementPanel(QWidget):
         layout.addLayout(region_btn_row)
 
         region_hint = QLabel("提示：框选4个物品卡片的总区域，程序会自动横向4等分。\n"
-                            "按快捷键 Ctrl+Shift+P 即可自动截4图并查询价格。")
+                            "按快捷键 Ctrl+T 即可自动截4图并查询价格。")
         region_hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 10px; padding: 2px 0;")
         region_hint.setWordWrap(True)
         layout.addWidget(region_hint)
@@ -925,19 +912,42 @@ class ManagementPanel(QWidget):
     # ---- 物品名称查询 ----
 
     def eventFilter(self, obj, event):
-        """事件过滤器：动态调整清除按钮位置 + 滚轮转发到隐藏滚动条。"""
+        """事件过滤器：滚轮转发 + 搜索结果 QLabel tooltip。
+
+        对于普通物品：显示掉落来源 tooltip。
+        对于遗物：同时显示遗物内容（部件+入库状态）+ 掉落来源。
+        """
         from PyQt6.QtCore import QEvent
-        if hasattr(self, '_items_search_input') and obj is self._items_search_input and event.type() == QEvent.Type.Resize:
-            btn = self._items_clear_btn
-            frame = self._items_input_frame
-            btn.move(frame.width() - btn.width() - 1, 4)
-        # 将内容区的鼠标滚轮事件转发到已隐藏的垂直滚动条
+        
+        # 滚轮转发：将内容区的鼠标滚轮事件转发到已隐藏的垂直滚动条
         if obj is self._left_widget and event.type() == QEvent.Type.Wheel:
             if hasattr(self, '_left_scroll') and self._left_scroll:
                 vbar = self._left_scroll.verticalScrollBar()
                 if vbar.isVisible() or vbar.maximum() > vbar.minimum():
                     vbar.wheelEvent(event)
                     return True
+        
+        # Tooltip：处理搜索结果 QLabel 的悬停事件
+        if event.type() == QEvent.Type.ToolTip and isinstance(obj, QLabel):
+            en_name = obj.property("_item_en_name")
+            if en_name:
+                from core.drop_tooltip import get_index
+                idx = get_index()
+                sources = idx.query(en_name, max_sources=20)
+                
+                # 检测是否为遗物
+                category = obj.property("_item_category") or ''
+                if 'Relic' in category or 'Relic' in en_name:
+                    # 遗物：显示遗物内容 + 入库状态 + 掉落来源
+                    relic_info = self._get_relic_info(en_name)
+                    tooltip_html = self._format_relic_tooltip(relic_info, sources, en_name)
+                else:
+                    # 普通物品：只显示掉落来源
+                    tooltip_html = idx.format_tooltip(sources, en_name)
+                
+                QToolTip.showText(event.globalPos(), tooltip_html, obj)
+                return True
+        
         return super().eventFilter(obj, event)
 
     def _on_items_search_changed(self, text: str):
@@ -960,7 +970,10 @@ class ManagementPanel(QWidget):
         try:
             from data.items_i18n import suggest_items
             results = suggest_items(query, limit=30)
-        except Exception:
+        except Exception as e:
+            import traceback
+            print(f"[物品搜索] 异常: {e}")
+            traceback.print_exc()
             self._items_result_list.clear()
             item = QListWidgetItem()
             lbl = QLabel(S("hint", "items_search_error"))
@@ -980,20 +993,13 @@ class ManagementPanel(QWidget):
                 f"color: {theme.cyber_orange}; font-size: 10px;")
             return
 
-        # 判断搜索模式
-        search_mode = results[0].get('search_mode', 'en2cn')
-
         # 统计
         exact_count = sum(1 for r in results if r['match_quality'] == 'exact')
         prefix_count = sum(1 for r in results if r['match_quality'] == 'prefix')
         contain_count = sum(1 for r in results if r['match_quality'] == 'contains')
 
-        if search_mode == 'cn2en':
-            hint_text = S.format("search", "mode_cn2en",
-                total=len(results), exact=exact_count, prefix=prefix_count, contain=contain_count)
-        else:
-            hint_text = S.format("search", "mode_en2cn",
-                total=len(results), exact=exact_count, prefix=prefix_count, contain=contain_count)
+        hint_text = S.format("search", "mode_result",
+            total=len(results), exact=exact_count, prefix=prefix_count, contain=contain_count)
 
         self._items_search_hint.setText(hint_text)
         self._items_search_hint.setStyleSheet(
@@ -1005,6 +1011,7 @@ class ManagementPanel(QWidget):
             zh = r['zh_name']
             cat = r['category']
             quality = r['match_quality']
+            match_field = r.get('match_field', 'en')  # 'en' | 'zh' | 'py'
 
             # 匹配质量颜色和标记
             q_color = {'exact': t.cyber_green, 'prefix': t.cyber_yellow, 'contains': t.text_dim}
@@ -1012,13 +1019,8 @@ class ManagementPanel(QWidget):
             qc = q_color.get(quality, t.text_dim)
             qm = q_mark.get(quality, '?')
 
-            # 根据搜索模式决定高亮哪个字段
-            if search_mode == 'cn2en':
-                # 输入中文 → 高亮中文匹配部分
-                highlight_field = zh
-            else:
-                # 输入英文 → 高亮英文匹配部分
-                highlight_field = en
+            # match_field 决定高亮哪个字段：en→英文, zh→中文, py→中文
+            highlight_field = en if match_field == 'en' else zh
 
             idx = highlight_field.lower().find(query.lower())
             if idx >= 0:
@@ -1027,6 +1029,12 @@ class ManagementPanel(QWidget):
                     f'<span style="color:{t.cyber_yellow}; font-weight:bold;">'
                     f'{self._escape_html(highlight_field[idx:idx+len(query)])}</span>'
                     f'<span style="color:{t.text_dim};">{self._escape_html(highlight_field[idx+len(query):])}</span>'
+                )
+            elif match_field == 'py':
+                # 拼音匹配：query 不直接出现在中文名中，整行中文名高亮
+                highlighted = (
+                    f'<span style="color:{t.cyber_yellow}; font-weight:bold;">'
+                    f'{self._escape_html(highlight_field)}</span>'
                 )
             else:
                 highlighted = f'<span style="color:{t.text_dim};">{self._escape_html(highlight_field)}</span>'
@@ -1040,26 +1048,21 @@ class ManagementPanel(QWidget):
             # 英文名显示
             en_display = f'<span style="color:{t.text_dim};">{self._escape_html(en)}</span>'
 
-            # 如果是中文搜索，高亮中文名；如果是英文搜索，高亮英文名
-            if search_mode == 'cn2en':
-                # 中文高亮 + 英文普通
-                if zh != en:
-                    zh_display = highlighted
-                html = (
-                    f'<span style="color:{qc};">{qm}</span> '
-                    f'{zh_display}  '
-                    f'<span style="color:{t.text_dim};">←</span> {en_display}  '
-                    f'<span style="color:{t.cyber_magenta}; font-size:10px;">[{self._escape_html(cat)}]</span>'
-                )
-            else:
+            # 根据 match_field 决定哪个字段高亮
+            if match_field == 'en':
                 # 英文高亮 + 中文普通
                 en_display = highlighted
-                html = (
-                    f'<span style="color:{qc};">{qm}</span> '
-                    f'{zh_display}  '
-                    f'<span style="color:{t.text_dim};">←</span> {en_display}  '
-                    f'<span style="color:{t.cyber_magenta}; font-size:10px;">[{self._escape_html(cat)}]</span>'
-                )
+            else:
+                # 中文/拼音匹配 → 中文高亮 + 英文普通
+                if zh != en:
+                    zh_display = highlighted
+
+            html = (
+                f'<span style="color:{qc};">{qm}</span> '
+                f'{zh_display}  '
+                f'<span style="color:{t.text_dim};">←</span> {en_display}  '
+                f'<span style="color:{t.cyber_magenta}; font-size:10px;">[{self._escape_html(cat)}]</span>'
+            )
 
             item = QListWidgetItem()
             lbl = QLabel(html)
@@ -1068,6 +1071,11 @@ class ManagementPanel(QWidget):
                 f"font-family: 'Consolas', 'Microsoft YaHei', monospace; font-size: 12px; "
                 f"padding: 0px 6px; background: transparent;"
             )
+            # 存储英文名和分类用于 tooltip 查询
+            lbl.setProperty("_item_en_name", en)
+            lbl.setProperty("_item_category", cat)
+            lbl.setMouseTracking(True)
+            lbl.installEventFilter(self)
             # 强制设置 item 高度，避免 QLabel 的 sizeHint() 计算偏小导致文字截断
             item.setSizeHint(QtCore.QSize(self._items_result_list.viewport().width() - 20, 28))
             # 英文名存 UserRole，点击时复制
@@ -1091,6 +1099,218 @@ class ManagementPanel(QWidget):
                 S.format("search", "copied", name=en_name))
             self._items_search_hint.setStyleSheet(
                 f"color: {theme.cyber_cyan}; font-size: 10px;")
+
+    def _get_relic_info(self, en_name: str) -> dict | None:
+        """根据英文遗物名查询 relics.db 获取遗物详情。
+        
+        使用缓存的 RelicDB 实例，避免每次悬停都重新加载数据库。
+        
+        Args:
+            en_name: 英文遗物名，如 "Axi S20 Relic"
+        
+        Returns:
+            {'name': '后纪 S20', 'era': '后纪', 'code': 'S20', 'vaulted': bool, 'parts': [...]} 或 None
+        """
+        import re
+        m = re.match(
+            r'(Lith|Meso|Neo|Axi|Requiem|Vanguard)\s+([A-Za-z0-9]+)\s+Relic',
+            en_name, re.IGNORECASE
+        )
+        if not m:
+            return None
+        era_en = m.group(1).capitalize()
+        code = m.group(2).upper()
+        era_map = {
+            'Lith': '古纪', 'Meso': '前纪', 'Neo': '中纪',
+            'Axi': '后纪', 'Requiem': '安魂', 'Vanguard': '先锋',
+        }
+        era_cn = era_map.get(era_en)
+        if not era_cn:
+            return None
+        relic_name_cn = f"{era_cn} {code}"
+        
+        try:
+            # ★ 性能优化：复用缓存的 RelicDB 实例
+            if self._relic_db_cache is None:
+                from data.wfinfo_relics import RelicDB
+                self._relic_db_cache = RelicDB()
+            info = self._relic_db_cache.find(relic_name_cn)
+            if info:
+                return info
+        except Exception as e:
+            print(f"[RelicTooltip] 查询遗物失败: {e}")
+        return None
+
+    @staticmethod
+    def _format_relic_tooltip(relic_info: dict | None, sources: list[dict], item_name: str) -> str:
+        """格式化遗物综合 tooltip HTML：遗物内容（部件+入库状态）+ 掉落来源。
+        
+        Args:
+            relic_info: 从 relics.db 查询到的遗物详情
+            sources: 从 all.json 查询到的掉落来源列表
+            item_name: 物品英文名
+        
+        Returns:
+            适合 QToolTip.showText() 使用的 HTML 字符串
+        """
+        def esc(text: str) -> str:
+            return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+        
+        parts = []
+        
+        # ===== 头部：物品名 =====
+        parts.append(
+            f"<div style='background:#0E0E24; padding:8px 12px; "
+            f"border-bottom:1px solid #1a1a3a;'>"
+            f"<span style='color:#00FFFF; font-size:16px; font-weight:bold;'>"
+            f"◈ {esc(item_name)}</span>"
+        )
+        if relic_info:
+            vaulted = relic_info.get('vaulted', False)
+            status_color = '#00FF66' if vaulted else '#FF4444'
+            status_text = '可获取' if vaulted else '已入库'
+            parts.append(
+                f"<span style='color:{status_color}; font-size:13px; margin-left:8px;'>"
+                f"[{status_text}]</span>"
+            )
+        parts.append("</div>")
+        
+        # ===== 遗物内容区（部件列表）=====
+        if relic_info and relic_info.get('parts'):
+            relic_parts = relic_info['parts']
+            sorted_parts = sorted(relic_parts, key=lambda p: p.get('chance', 0))
+            chances = sorted(set(p.get('chance', 0) for p in sorted_parts))
+            
+            # 概率 → 颜色映射（金银铜）
+            if len(chances) >= 3:
+                chance_to_color = {chances[0]: COLOR_GOLD, chances[1]: COLOR_SILVER, chances[2]: COLOR_COPPER}
+            elif len(chances) == 2:
+                chance_to_color = {chances[0]: COLOR_GOLD, chances[1]: COLOR_COPPER}
+            else:
+                chance_to_color = {chances[0]: COLOR_SILVER}
+            
+            parts.append(
+                f"<div style='padding:6px 12px 4px 12px;'>"
+                f"<span style='display:inline-block; width:3px; height:12px; "
+                f"background:#FFD700; border-radius:2px; margin-right:6px; "
+                f"vertical-align:middle;'></span>"
+                f"<span style='color:#FFD700; font-size:14px; font-weight:bold; "
+                f"vertical-align:middle;'>遗物内容</span>"
+                f"<span style='color:#6677AA; font-size:12px; margin-left:4px;'>"
+                f"({len(sorted_parts)}个部件)</span>"
+                f"</div>"
+            )
+            
+            for p in sorted_parts:
+                ch = p.get('chance', 0)
+                clr = chance_to_color.get(ch, COLOR_SILVER)
+                rarity = p.get('rarity', '')
+                # 稀有度中文
+                rarity_cn_map = {'Common': '普通', 'Uncommon': '罕见', 'Rare': '稀有', 'Legendary': '传说'}
+                rarity_cn = rarity_cn_map.get(rarity, rarity)
+                
+                parts.append(
+                    f"<div style='padding:2px 0 2px 20px; font-size:13px; "
+                    f"white-space:nowrap;'>"
+                    f"<span style='color:{clr};'>● {esc(p['name'])}</span>"
+                    f"<span style='color:#6677AA; margin-left:6px; font-size:11px;'>"
+                    f"{rarity_cn} ({ch:.1f}%)</span>"
+                    f"</div>"
+                )
+            
+            # 分隔线
+            parts.append(
+                f"<div style='margin:4px 12px; border-bottom:1px solid rgba(100,100,150,40);'></div>"
+            )
+        
+        # ===== 掉落来源区 =====
+        if sources:
+            
+            # 按 source_type 分组
+            by_type = {}
+            for s in sources:
+                st = s.get('source_type', '')
+                if st not in by_type:
+                    by_type[st] = []
+                by_type[st].append(s)
+            
+            type_colors = {
+                'relics': '#FFD700', 'missionRewards': '#00FFFF',
+                'bountyRewards': '#FF7700', 'cetusBountyRewards': '#FF7700',
+                'solarisBountyRewards': '#FF7700', 'deimosRewards': '#FF7700',
+                'zarimanRewards': '#FF7700', 'entratiLabRewards': '#FF7700',
+                'hexRewards': '#FF7700', 'sortieRewards': '#FF0055',
+                'keyRewards': '#00FF99', 'transientRewards': '#E066FF',
+                'blueprintLocations': '#00FFFF', 'enemyModTables': '#FF6B6B',
+                'enemyBlueprintTables': '#FF6B6B', 'modLocations': '#FF6B6B',
+                'syndicates': '#FFE600', 'resourceByAvatar': '#8E9CB2',
+                'sigilByAvatar': '#8E9CB2', 'additionalItemByAvatar': '#8E9CB2',
+            }
+            
+            parts.append(
+                f"<div style='padding:4px 12px 2px 12px;'>"
+                f"<span style='display:inline-block; width:3px; height:12px; "
+                f"background:#00FFFF; border-radius:2px; margin-right:6px; "
+                f"vertical-align:middle;'></span>"
+                f"<span style='color:#00FFFF; font-size:14px; font-weight:bold; "
+                f"vertical-align:middle;'>掉落来源</span>"
+                f"<span style='color:#6677AA; font-size:12px; margin-left:4px;'>"
+                f"({len(sources)} 条)</span>"
+                f"</div>"
+            )
+            
+            for st, items in by_type.items():
+                cn_st = SOURCE_TYPE_CN.get(st, st)
+                accent = type_colors.get(st, '#6677AA')
+                
+                parts.append(
+                    f"<div style='margin-top:4px; margin-bottom:1px; padding-left:12px;'>"
+                    f"<span style='color:{accent}; font-size:12px; font-weight:bold;'>"
+                    f"{esc(cn_st)}</span>"
+                    f"<span style='color:#6677AA; font-size:11px; margin-left:4px;'>"
+                    f"({len(items)})</span>"
+                    f"</div>"
+                )
+                
+                for item in items:
+                    loc = item.get('location', '?')
+                    chance = item.get('chance', 0)
+                    rotation = item.get('rotation', '')
+                    
+                    if 0 < chance < 100:
+                        chance_str = f"{chance:.1f}%"
+                    elif chance >= 100:
+                        chance_str = "必定"
+                    else:
+                        chance_str = ""
+                    
+                    rot_tag = ""
+                    if rotation:
+                        rot_tag = (
+                            f"<span style='display:inline-block; background:#1a1a3a; "
+                            f"color:#8E9CB2; font-size:11px; padding:1px 5px; "
+                            f"border-radius:3px; margin-left:4px;'>轮次{rotation}</span>"
+                        )
+                    
+                    parts.append(
+                        f"<div style='padding:1px 0 1px 24px; font-size:12px; "
+                        f"white-space:nowrap;'>"
+                        f"<span style='color:#C8D0E0;'>{esc(loc)}</span>"
+                        f"<span style='color:#8E9CB2; margin-left:6px;'>"
+                        f"{chance_str}</span>"
+                        f"{rot_tag}"
+                        f"</div>"
+                    )
+        
+        # ===== 底部数据来源 =====
+        parts.append(
+            f"<div style='background:#0E0E24; padding:4px 12px; "
+            f"border-top:1px solid #1a1a3a; margin-top:4px;'>"
+            f"<span style='color:#444466; font-size:11px;'>"
+            f"数据来源: WFCD warframe-drop-data</span></div>"
+        )
+        
+        return "".join(parts)
 
     def _show_trans_tutorial(self):
         """显示中英文翻译数据库更新教程。"""
@@ -1980,8 +2200,7 @@ class ManagementPanel(QWidget):
             self, S("hotkey", "reset_confirm_title"),
             S.format("hotkey", "reset_confirm_msg",
                 select=DEFAULT_HOTKEYS['select'],
-                fullscreen=DEFAULT_HOTKEYS['fullscreen'],
-                panel=DEFAULT_HOTKEYS['panel']),
+                fullscreen=DEFAULT_HOTKEYS['fullscreen']),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No)
         if reply != QMessageBox.StandardButton.Yes:

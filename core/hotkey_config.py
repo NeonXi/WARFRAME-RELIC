@@ -17,8 +17,7 @@ from data.ui_strings import S
 DEFAULT_HOTKEYS = {
     "select": "ctrl+g",           # 框选截图
     "fullscreen": "ctrl+h",       # 全屏截图
-    "panel": "ctrl+shift+g",     # 管理面板
-    "query_price": "ctrl+shift+p",  # 价格查询（4等分截图+识别+标注）
+    "query_price": "ctrl+t",  # 价格查询（4等分截图+识别+标注）
 }
 
 # 可用的修饰键
@@ -28,7 +27,6 @@ MODIFIERS = ["ctrl", "alt", "shift", "win"]
 HOTKEY_LABELS = {
     "select": S("hotkey", "label_select"),
     "fullscreen": S("hotkey", "label_fullscreen"),
-    "panel": S("hotkey", "label_panel"),
     "query_price": S("hotkey", "label_query_price"),
 }
 
