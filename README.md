@@ -1,4 +1,4 @@
-# WARFRAME-RELIC v3.2
+# WARFRAME-RELIC v3.4
 
 <p align="center">
   <b>Warframe 遗物实时 OCR 辅助工具 · 赛博朋克2077风格</b>
@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey" alt="Platform">
   <img src="https://img.shields.io/badge/license-GPLv3-blue" alt="License">
-  <img src="https://img.shields.io/badge/version-3.2-yellow" alt="Version">
+  <img src="https://img.shields.io/badge/version-3.4-yellow" alt="Version">
 </p>
 
 ---
@@ -32,6 +32,9 @@
 - **🧵 主题可视化换肤** — Cyberpunk 2077 风格配色，管理面板内取色器编辑，实时预览
 - **🔎 物品检索** — 管理面板内置中/英/拼音实时搜索，单击复制英文名，悬停查看掉落来源
 - **📋 遗物悬浮窗** — 遗物内容查询后弹出可拖动详情窗口，金银铜色区分稀有度
+- **⚡ 数据库性能优化** — 批量插入提升5-10倍速度，自动拼音完整性检查与修复
+- **🛡️ Schema版本管理** — 自动检测并升级数据库结构，防止迁移失败
+- **🧩 模块化架构** — v3.4 重构，热键/功能处理/入口逻辑独立模块，main.py 精简43%
 
 ---
 
@@ -64,6 +67,7 @@
 - Windows 10 / 11
 - 网络连接（首次安装依赖时）
 - 无需手动安装 Python（SETUP.bat 会自动处理）
+- 建议以管理员身份运行（确保全局热键正常工作）
 
 ### 方式一：零基础启动（推荐，无需安装任何东西）
 
@@ -106,28 +110,33 @@ python dev_runner.py
 
 ```
 WARFRAME-RELIC/
-├── main.py                     # 程序入口（AppCore 类，协调各模块）
+├── main.py                     # 程序核心：AppCore + TriggerBridge + OCRWorker
 ├── core/
+│   ├── bootstrap.py            # ★ 启动引导：单例检测、管理员检测、异常钩子、main()
+│   ├── hotkey_manager.py       # ★ 热键管理器：注册/健康检查/自动恢复/防重入
+│   ├── mode_handlers.py        # ★ 功能处理器：出入库/遗物查询/翻译/价格标注（纯函数）
 │   ├── constants.py            # 共享常量
 │   ├── overlay.py              # 全屏覆盖层（框选、标注、流式动画、DPI 适配）
 │   ├── region_selector.py      # ★ 独立区域框选器（鼠标拖拽交互封装）
 │   ├── management_panel.py     # 管理面板（物品检索/数据库/热键/主题/文案）
 │   ├── price_service.py        # WM 价格服务（缓存→本地DB→实时API 三级查询）
-│   ├── relic_tooltip.py        # ★ 遗物内容悬浮窗（可拖动，金银铜色部件列表）
 │   ├── drop_tooltip.py         # ★ 物品掉落来源查询 + Tooltip
 │   ├── hotkey_config.py        # 热键配置读写
 │   ├── hotkey_capture_button.py # 热键捕获按钮组件
 │   ├── stylesheet.py           # 动态 QSS 样式表生成
 │   ├── theme_config.py         # 主题配置引擎（65 配色字段，预设切换）
 │   ├── theme_panel.py          # 主题可视化编辑面板
+│   ├── theme_fields.py         # 主题字段定义
+│   ├── theme_proxy.py          # 主题属性代理
 │   ├── fetch_worker.py         # 后台线程：从 GitHub 下载最新数据
 │   ├── update_worker.py        # 后台线程：执行数据库更新
+│   ├── update_panel.py         # 数据库更新面板
 │   └── word_wrap_button.py     # 自动换行按钮组件
 ├── recognizers/
 │   ├── relic_name.py           # 遗物名称 OCR 识别器
 │   ├── item_name.py            # 物品名称 OCR 识别器
 │   ├── matcher.py              # 物品名匹配引擎（4轮降级匹配 + 精炼过滤）
-│   └── ...                     # 其他识别器
+│   └── base_ocr.py             # OCR 管线基类
 ├── data/
 │   ├── preset_cyberpunk2077.py # ★ 赛博朋克2077 风格文案预设（默认）
 │   ├── preset_santi.py         # 三体·威慑纪元 风格文案预设
@@ -136,18 +145,26 @@ WARFRAME-RELIC/
 │   ├── items_i18n.py           # ★ 全物品中英对照数据库（含拼音搜索）
 │   ├── wm_prices.py            # WM 价格数据库管理（拉取/写入/查询）
 │   ├── wfinfo_relics.py        # 遗物数据库查询
+│   ├── translation_db.py       # 翻译数据库管理（旧版）
+│   ├── db_utils.py             # 数据库工具函数
+│   ├── icons.py                # 图标资源管理
+│   ├── icon_loader.py          # 图标加载器
+│   ├── version.py              # 版本信息
 │   ├── items_i18n.db           # 物品中英文对照数据库（含拼音字段）
 │   ├── wm_prices.db            # WM 价格本地缓存 SQLite
 │   ├── relics.db               # 遗物掉落数据库
+│   ├── translation.db          # 翻译缓存（旧版）
 │   ├── language_preset.json    # 语言预设配置
 │   ├── feature_toggles.json    # 功能开关配置
 │   └── item_region.json        # 物品区域配置
+├── assets/                     # SVG 图标资源
 ├── DATABASE.md                 # ★ 数据库结构详细文档
 ├── DEVELOPMENT.md              # ★ 开发文档
 ├── build_exe.py                # PyInstaller 打包脚本（文件夹模式）
 ├── build_onefile.py            # PyInstaller 打包脚本（单文件模式）
 ├── dev_runner.py               # 开发热重载脚本
 ├── SETUP.bat                   # 零基础启动（自动安装 Python + 依赖）
+├── WARFRAME-RELIC.bat          # 快捷启动批处理
 ├── DEV_RUN.bat                 # 开发模式启动
 ├── 打包.bat                    # 打包批处理
 ├── 打包单文件.bat               # 单文件打包批处理
@@ -194,17 +211,19 @@ WARFRAME-RELIC/
 - 用户可在 OCR 完成前点击功能按钮，结果自动延迟执行
 - 价格查询采用 **三级策略**：内存缓存 → 本地 SQLite → 实时 WM API（ThreadPoolExecutor 并发，最多4路并行）
 
-### 核心模块
+### 核心模块（v3.4 重构后）
 
 | 模块 | 职责 |
 |:------|:---|
 | `AppCore` (main.py) | 中央控制器，协调截图→OCR→查询→标注全流程 |
+| `HotkeyManager` (hotkey_manager.py) | ★ 热键管理：注册/更新/健康检查/自动恢复/防重入 |
+| `Mode Handlers` (mode_handlers.py) | ★ 四大功能纯函数：出入库/遗物查询/翻译/价格标注 |
+| `Bootstrap` (bootstrap.py) | ★ 入口逻辑：单例检测/管理员检测/异常钩子/main() |
 | `Overlay` (overlay.py) | 全屏透明覆盖层，三种状态：空闲(穿透)/框选(拦截)/标注(穿透+按钮不穿透) |
 | `RegionSelector` | ★ 独立框选模块，封装鼠标拖拽交互，可复用 |
 | `ManagementPanel` | 管理窗口：物品检索/数据库/热键/主题换肤/文案预设/日志 |
 | `PriceService` | 价格查询服务：缓存→DB→API 三级查询，ThreadPoolExecutor 并发 |
 | `Matcher` | 物品名匹配引擎，OCR结果→匹配→价格查询一体化，含精炼过滤 |
-| `RelicTooltip` | ★ 遗物内容悬浮窗，可拖动，金银铜色部件列表 |
 | `DropSourceIndex` | ★ 物品掉落来源索引，生成 HTML Tooltip |
 | `ThemeConfig` | 主题单例，65 个配色字段，多套预设切换 |
 | `UIStrings` | 文案路由器，三套语言预设独立管理，运行时可切换 |
@@ -215,7 +234,7 @@ WARFRAME-RELIC/
 - **价格查询**：`ThreadPoolExecutor` 并发，结果按 index 归位，线程安全
 - **截图竞态**：热键防重入 500ms 间隔
 - **退出清理**：`aboutToQuit` 信号触发 `_shutdown()` 统一释放资源
-- **热键心跳**：30 秒定时器自动检测+恢复失效热键
+- **热键心跳**：30 秒定时器 → `HotkeyManager.auto_recover()` 自动检测+恢复失效热键
 
 ### 文案预设系统
 
@@ -248,7 +267,7 @@ language_preset.json ──→ ui_strings.py (路由器)
 # 输出: dist/WARFRAME-RELIC.exe
 
 # 一键打包+压缩
-一键打包.bat            # 打包 → 压缩为 WARFRAME-RELIC_v3.2.0.zip
+一键打包.bat            # 打包 → 压缩为 WARFRAME-RELIC_v3.4.0.zip
 ```
 
 ---
@@ -352,6 +371,40 @@ A: 需要先在管理面板 → 价格数据 → 设置物品区域（框选遗�
 | [README.md](README.md) | 用户使用文档（本文） |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | 开发文档（架构、数据流、模块详解） |
 | [DATABASE.md](DATABASE.md) | 数据库结构文档（DDL、索引、查询SQL） |
+
+---
+
+## 🔄 更新日志
+
+### v3.4 (2026-06-02)
+
+**架构重构（模块化拆分）：**
+- ✅ **HotkeyManager** — 热键管理独立模块：注册/健康检查/自动恢复/防重入（`core/hotkey_manager.py`）
+- ✅ **Mode Handlers** — 四大功能处理为纯函数：出入库/遗物查询/翻译/价格标注（`core/mode_handlers.py`）
+- ✅ **Bootstrap** — 入口逻辑独立：单例检测/管理员检测/异常钩子/main()（`core/bootstrap.py`）
+- ✅ **main.py 精简** — 1430行 → 813行（减少43%），聚焦 AppCore 核心控制逻辑
+
+**数据库性能优化：**
+- ✅ **批量插入优化** — 重建数据库速度提升5-10倍（从30-60秒降至5-10秒）
+- ✅ **Schema版本管理** — 自动检测并升级数据库结构，防止迁移失败
+- ✅ **拼音完整性检查** — 启动时自动检测缺失拼音并修复
+- ✅ **命令行工具** — `--check-pinyin` / `--repair-pinyin` 手动检查和修复
+
+**框选交互修复：**
+- ✅ **右键清除后首次框选异常修复** — 重置 `_right_was_down` 状态，防止误取消
+- ✅ **RegionSelector延迟启动保护** — 等待鼠标状态稳定后再开始检测
+
+**打包配置优化：**
+- ✅ **pypinyin依赖声明** — 添加hidden-import确保打包后拼音功能正常
+- ✅ **新模块声明** — 添加 `core.bootstrap`、`core.hotkey_manager`、`core.mode_handlers` 到打包配置
+
+### v3.3 (2026-06-01)
+
+详见 [DEVELOPMENT.md](DEVELOPMENT.md#十一v33-更新记录)
+
+### v3.2 (2026-06-01)
+
+详见 [DEVELOPMENT.md](DEVELOPMENT.md#十二v32-更新记录)
 
 ---
 

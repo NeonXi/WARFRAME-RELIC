@@ -8,7 +8,7 @@ set START_TIME=%time%
 
 echo.
 echo ============================================================
-echo         WARFRAME-RELIC - 一键打包 v3.0
+echo         WARFRAME-RELIC - 一键打包 v3.4
 echo ============================================================
 echo.
 echo  本脚本将自动完成:
@@ -67,7 +67,7 @@ rem ==========================================
 echo [3/3] 正在压缩为 .zip ...
 
 set OUTPUT_DIR=dist\WARFRAME-RELIC
-set ZIP_NAME=WARFRAME-RELIC_v3.0.0.zip
+set ZIP_NAME=WARFRAME-RELIC_v3.4.0.zip
 
 if not exist "%OUTPUT_DIR%" (
     echo        [错误] 输出目录不存在: %OUTPUT_DIR%

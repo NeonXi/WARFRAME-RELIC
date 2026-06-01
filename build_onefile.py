@@ -97,7 +97,7 @@ def step_check_env(python):
         print_err(f"无法获取 Python 版本: {e}")
         return False
 
-    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime", "PIL", "numpy"]
+    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime", "PIL", "numpy", "pypinyin"]
     all_ok = True
     for pkg in pkgs:
         try:
@@ -237,6 +237,12 @@ def step_build(python):
         "--hidden-import", "onnxruntime",
         "--hidden-import", "json",
         "--hidden-import", "sqlite3",
+        "--hidden-import", "pypinyin",
+        "--hidden-import", "pypinyin.pinyin",
+        "--hidden-import", "pypinyin.style",
+        "--hidden-import", "core.bootstrap",
+        "--hidden-import", "core.hotkey_manager",
+        "--hidden-import", "core.mode_handlers",
     ]
     if upx_path:
         cmd.extend(["--upx-dir", str(Path(upx_path).parent)])

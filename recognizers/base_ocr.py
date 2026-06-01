@@ -18,9 +18,15 @@ import re
 import numpy as np
 import cv2
 from PIL import Image
-from rapidocr_onnxruntime import RapidOCR
 
-from core.constants import OCR_TEXT_SCORE, OCR_BOX_THRESH, OCR_UPSCALE_MIN_WIDTH, OCR_UPSCALE_SCALE
+from core.constants import (
+    OCR_UPSCALE_MIN_WIDTH, OCR_UPSCALE_SCALE,
+    OCR_ADAPTIVE_UPSCALE_ENABLED, OCR_ADAPTIVE_BASE_WIDTH, 
+    OCR_ADAPTIVE_MAX_SCALE, OCR_ADAPTIVE_MIN_SCALE,
+    OCR_ENHANCE_CONTRAST, OCR_CLAHE_CLIP_LIMIT, OCR_CLAHE_GRID_SIZE,
+    OCR_DYNAMIC_PARAMS_ENABLED, OCR_LARGE_IMAGE_TEXT_SCORE,
+    OCR_LARGE_IMAGE_BOX_THRESH, OCR_LARGE_IMAGE_THRESHOLD,
+)
 
 
 class BaseOCR:
@@ -39,7 +45,45 @@ class BaseOCR:
     MERGE_OVERLAP_RATIO: float = 0.3         # 水平重叠 > 此值
 
     def __init__(self):
-        self._ocr = RapidOCR(text_score=OCR_TEXT_SCORE, box_thresh=OCR_BOX_THRESH)
+        # ★ 直接使用 RapidOCR（老架构，简单可靠）
+        from rapidocr_onnxruntime import RapidOCR
+        from core.constants import RAPIDOCR_TEXT_SCORE, RAPIDOCR_BOX_THRESH
+        from core.constants import RAPIDOCR_DET_LIMIT_SIDE_LEN, RAPIDOCR_DET_LIMIT_TYPE
+        
+        self._ocr = RapidOCR(
+            text_score=RAPIDOCR_TEXT_SCORE,
+            box_thresh=RAPIDOCR_BOX_THRESH,
+            det_limit_side_len=RAPIDOCR_DET_LIMIT_SIDE_LEN,
+            det_limit_type=RAPIDOCR_DET_LIMIT_TYPE
+        )
+        self._large_image_ocr = None  # 延迟初始化，用于大图优化
+    
+    def _get_ocr_engine(self, image_width: int):
+        """根据图像宽度选择合适的OCR引擎。
+        
+        对于大图（全屏截图），使用更宽松的阈值以提高召回率。
+        """
+        if not OCR_DYNAMIC_PARAMS_ENABLED or image_width < OCR_LARGE_IMAGE_THRESHOLD:
+            return self._ocr
+        
+        # 延迟初始化大图OCR引擎（更宽松的阈值）
+        if self._large_image_ocr is None:
+            self._large_image_ocr = self._create_large_image_engine()
+        
+        return self._large_image_ocr
+    
+    def _create_large_image_engine(self):
+        """创建大图专用的 RapidOCR 引擎（更宽松的阈值）。"""
+        from rapidocr_onnxruntime import RapidOCR
+        from core.constants import RAPIDOCR_DET_LIMIT_SIDE_LEN, RAPIDOCR_DET_LIMIT_TYPE
+        
+        print(f"[OCR] 初始化大图RapidOCR引擎 (width>{OCR_LARGE_IMAGE_THRESHOLD}px)", flush=True)
+        return RapidOCR(
+            text_score=OCR_LARGE_IMAGE_TEXT_SCORE,
+            box_thresh=OCR_LARGE_IMAGE_BOX_THRESH,
+            det_limit_side_len=RAPIDOCR_DET_LIMIT_SIDE_LEN,
+            det_limit_type=RAPIDOCR_DET_LIMIT_TYPE
+        )
 
     # ---- 图片工具 ----
 
@@ -50,6 +94,62 @@ class BaseOCR:
         pil_img = Image.fromarray(img)
         pil_img = pil_img.resize((int(w * scale), int(h * scale)), Image.BILINEAR)
         return np.array(pil_img)
+
+    @staticmethod
+    def _enhance_contrast(img: np.ndarray) -> np.ndarray:
+        """增强图像对比度（CLAHE自适应直方图均衡化）。
+        
+        适用于全屏截图等复杂背景场景，提高文字边缘清晰度。
+        """
+        if not OCR_ENHANCE_CONTRAST:
+            return img
+        
+        if len(img.shape) != 3:
+            return img
+        
+        # 转换到LAB色彩空间
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        
+        # 对L通道应用CLAHE
+        clahe = cv2.createCLAHE(
+            clipLimit=OCR_CLAHE_CLIP_LIMIT, 
+            tileGridSize=(OCR_CLAHE_GRID_SIZE, OCR_CLAHE_GRID_SIZE)
+        )
+        cl = clahe.apply(l)
+        
+        # 合并通道并转回BGR
+        merged = cv2.merge((cl, a, b))
+        enhanced = cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
+        
+        return enhanced
+
+    @staticmethod
+    def _calculate_adaptive_scale(width: int, height: int) -> float:
+        """根据图像尺寸计算自适应上采样倍数。
+        
+        策略：
+        - 小图（宽 < 900px）：不放大，保持原始质量
+        - 中图（900-1920px）：线性插值 1.4x ~ 1.8x
+        - 大图（> 1920px）：动态计算，确保文字像素密度足够
+        """
+        if not OCR_ADAPTIVE_UPSCALE_ENABLED:
+            return OCR_UPSCALE_SCALE if width > OCR_UPSCALE_MIN_WIDTH else 1.0
+        
+        # 小图：不放大
+        if width < OCR_UPSCALE_MIN_WIDTH:
+            return 1.0
+        
+        # 中图：线性插值
+        if width <= 1920:
+            ratio = (width - OCR_UPSCALE_MIN_WIDTH) / (1920 - OCR_UPSCALE_MIN_WIDTH)
+            scale = 1.4 + ratio * 0.4  # 1.4 ~ 1.8
+            return min(scale, OCR_ADAPTIVE_MAX_SCALE)
+        
+        # 大图：基于基准宽度计算，确保文字不会太小
+        base_scale = OCR_ADAPTIVE_BASE_WIDTH / width
+        adaptive_scale = max(OCR_ADAPTIVE_MIN_SCALE, 1.0 / base_scale * 1.5)
+        return min(adaptive_scale, OCR_ADAPTIVE_MAX_SCALE)
 
     # ---- 框工具 ----
 
@@ -165,23 +265,46 @@ class BaseOCR:
     # ---- 核心管线 ----
 
     def _run_ocr(self, image: np.ndarray) -> tuple[list, float]:
-        """执行 OCR 并返回原始结果列表 + 使用的 scale。"""
+        """执行 OCR 并返回原始结果列表 + 使用的 scale。
+        
+        优化流程：
+        1. 自适应上采样（根据图像尺寸动态调整放大倍数）
+        2. 对比度增强（CLAHE，适用于复杂背景）
+        3. 灰度化处理
+        4. OCR识别
+        """
+        
         h, w = image.shape[:2]
-        if w > OCR_UPSCALE_MIN_WIDTH:
-            scale = OCR_UPSCALE_SCALE
+        
+        # 步骤1：计算自适应上采样倍数
+        scale = self._calculate_adaptive_scale(w, h)
+        
+        if scale > 1.0:
             big = self._resize_fast(image, scale)
+            print(f"[OCR] 图像尺寸 {w}x{h}, 上采样倍数 {scale:.2f}x", flush=True)
         else:
-            scale = 1.0
             big = image
-
-        # 灰度化（去掉颜色干扰，保留原始纹理）
+        
+        # 步骤2：对比度增强（仅对大图/全屏截图启用）
+        if scale >= 1.5 and len(big.shape) == 3:
+            big = self._enhance_contrast(big)
+            print(f"[OCR] 已应用对比度增强", flush=True)
+        
+        # 步骤3：灰度化（去掉颜色干扰，保留原始纹理）
         if len(big.shape) == 3:
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
             gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         else:
             gray = big
 
-        result, _ = self._ocr(gray)
+        # 步骤4：选择合适的OCR引擎并执行识别
+        ocr_engine = self._get_ocr_engine(w)
+        
+        result, _ = ocr_engine(gray)
+        
+        if scale > 1.0:
+            print(f"[OCR] 识别完成，使用{'大图优化' if ocr_engine is not self._ocr else '标准'}引擎", flush=True)
+        
         return (result, scale)
 
     def _iter_ocr_lines(self, result, scale: float) -> list[tuple[str, list]]:

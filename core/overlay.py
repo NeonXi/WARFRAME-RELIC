@@ -8,7 +8,6 @@ from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QCursor
 
 from core.word_wrap_button import WordWrapButton
 from core.region_selector import RegionSelector
-from core.relic_tooltip import hide_tooltip
 from core.constants import (
     CYBER_YELLOW, CYBER_CYAN, CYBER_MAGENTA,
     CYBER_DARK_BG, CYBER_BORDER, CYBER_TEXT,
@@ -174,20 +173,20 @@ class Overlay(QWidget):
 
     # ========== 功能选择按钮（动态生成）==========
 
-    # 功能按钮定义：mode_id → (显示名, 图标)
-    # 注：显示名通过 S("button", ...) 从 ui_strings 读取
+    # 功能按钮定义：mode_id → S_key
+    # 注：显示名通过 S("button", ...) 从 ui_strings 读取，图标从 icons.py 读取
     MODE_DEFS = {
-        "check_status": ("⊞", "mode_check_status"),
-        "query_parts":  ("◎", "mode_query_parts"),
-        "query_price":  ("⟐", "mode_query_price"),
-        "translate":    ("⬢", "mode_translate"),
+        "check_status": "mode_check_status",
+        "query_parts":  "mode_query_parts",
+        "query_price":  "mode_query_price",
+        "translate":    "mode_translate",
     }
 
     def _setup_buttons(self):
         """初始化按钮字典（按钮按需创建/销毁）。"""
         self._mode_buttons = {}  # mode_id → QPushButton
 
-    def _create_mode_button(self, mode_id: str, label: str) -> QPushButton:
+    def _create_mode_button(self, mode_id: str, label: str, icon=None) -> QPushButton:
         """创建单个功能按钮。"""
         btn_bg_r, btn_bg_g, btn_bg_b = _hex_to_rgb(BTN_DEFAULT_BG)
         btn_hover_r, btn_hover_g, btn_hover_b = _hex_to_rgb(BTN_HOVER_BORDER)
@@ -200,6 +199,7 @@ class Overlay(QWidget):
                 padding: 10px 24px;
                 font-size: 16px;
                 font-family: "Microsoft YaHei";
+                icon-size: 24px;
             }}
             QPushButton:hover {{
                 background-color: rgba({btn_hover_r}, {btn_hover_g}, {btn_hover_b}, 30);
@@ -209,6 +209,8 @@ class Overlay(QWidget):
         """
         btn = WordWrapButton(label, self)
         btn.setStyleSheet(btn_style)
+        if icon:
+            btn.setIcon(icon)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.hide()
         btn.clicked.connect(lambda checked, m=mode_id: self._on_mode_clicked(m))
@@ -242,12 +244,23 @@ class Overlay(QWidget):
             print("[DEBUG show_mode_buttons] no enabled modes, returning")
             return
 
-        # 为每个启用的功能创建按钮
+        from data.icon_loader import get_icon_loader, get_action_icon
+        
+        icon_loader = get_icon_loader()
+        
         for mode_id in enabled_modes:
-            icon, string_key = self.MODE_DEFS.get(mode_id, ("", mode_id))
+            string_key = self.MODE_DEFS.get(mode_id, mode_id)
             display_name = S("button", string_key)
-            label = f"{icon} {display_name}"
-            btn = self._create_mode_button(mode_id, label)
+            
+            # 优先尝试加载图标文件
+            qicon = icon_loader.get_icon("action", mode_id, size=24)
+            if qicon:
+                btn = self._create_mode_button(mode_id, display_name, qicon)
+            else:
+                icon = get_action_icon(mode_id)
+                label = f"{icon} {display_name}"
+                btn = self._create_mode_button(mode_id, label)
+            
             self._mode_buttons[mode_id] = btn
 
         # 布局按钮（纵向排列，屏幕居中）
@@ -292,6 +305,11 @@ class Overlay(QWidget):
         if hasattr(self, '_preview_label'):
             self._preview_label.hide()
         self._hide_at = 0
+        
+        # ★ 修复：启动框选前重置右键状态，防止上次右键清除导致首次框选立即取消
+        self._right_was_down = False
+        self._ignore_right_until = 0
+        
         # 确保 overlay 在最前面且可见
         self.show()
         self.raise_()
@@ -565,7 +583,6 @@ class Overlay(QWidget):
                 print(f"[DEBUG _check_auto_hide] RIGHT CLICK DETECTED, had_annotations={had_annotations}, had_buttons={had_buttons}")
                 self.clear_annotations()
                 self._hide_mode_buttons()
-                hide_tooltip()  # ★ 同时隐藏遗物悬浮窗
                 self.label.clear()
                 if hasattr(self, '_preview_label'):
                     self._preview_label.hide()

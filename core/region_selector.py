@@ -92,7 +92,19 @@ class RegionSelector:
         self._active = True
         self._start_pos = None
         self._current_pos = self._parent.mapFromGlobal(QCursor.pos())
+        
+        # ★ 修复：采样当前按键状态，避免启动时的残留状态导致误判
+        # 如果左键或右键当前正按下，等待下一帧再开始检测
         self._left_was_down = self._is_key_down(_VK_LBUTTON)
+        right_now = self._is_key_down(_VK_RBUTTON)
+        
+        # 如果右键正按下，设置一个短暂的保护期
+        if right_now:
+            print("[RegionSelector] 检测到右键按下，设置保护期...")
+            # 不立即启动定时器，等待 100ms 后再开始
+            QTimer.singleShot(100, self._delayed_start)
+            return
+        
         self._status_text = S("overlay", "selection_status_idle")
 
         # 修改父窗口属性
@@ -105,6 +117,24 @@ class RegionSelector:
 
         self._parent.update()
         print(f"[RegionSelector] 框选模式启动")
+    
+    def _delayed_start(self):
+        """延迟启动（等待鼠标状态稳定后）。"""
+        if not self._active:
+            return
+        
+        # 重新采样按键状态
+        self._left_was_down = self._is_key_down(_VK_LBUTTON)
+        self._status_text = S("overlay", "selection_status_idle")
+        
+        self._parent.setCursor(Qt.CursorShape.CrossCursor)
+        
+        self._track_timer = QTimer()
+        self._track_timer.timeout.connect(self._tick)
+        self._track_timer.start(TRACK_INTERVAL_MS)
+        
+        self._parent.update()
+        print(f"[RegionSelector] 延迟启动完成")
 
     def cancel(self):
         """取消当前框选（不触发 callback）。"""

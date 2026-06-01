@@ -136,7 +136,6 @@ class ThemePanel:
         preset_row.addWidget(self._preset_combo, 1)
 
         self._btn_apply_preset = QPushButton(S("button", "apply_preset"))
-        self._btn_apply_preset.setFixedHeight(26)
         self._btn_apply_preset.setObjectName("primaryBtn")
         self._btn_apply_preset.clicked.connect(self._on_apply_preset)
         preset_row.addWidget(self._btn_apply_preset)

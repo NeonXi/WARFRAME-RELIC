@@ -11,7 +11,6 @@ import time
 import numpy as np
 
 from recognizers.base_ocr import BaseOCR
-from core.constants import OCR_TEXT_SCORE, OCR_BOX_THRESH
 
 # 英文纪元 → 中文纪元映射
 _EN_TIER_MAP = {

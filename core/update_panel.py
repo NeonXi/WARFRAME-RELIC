@@ -107,6 +107,9 @@ class UpdatePanel(QObject):
         self._trans_updating = False
         self._log_panel_auto_show = False
 
+        # 保存原始日志记录，用于主题切换时重新着色
+        self._log_records = []  # [(log_type, msg, source), ...]
+
         # 统计标签
         self._stat_labels = {}
 
@@ -161,7 +164,7 @@ class UpdatePanel(QObject):
         self._log_detail = log_detail
         self._dl_progress = dl_progress
         self._btn_close_log = btn_close_log
-
+    
     def set_trans_widgets(self, stat_labels: dict, cat_label, btn_update, progress):
         """注入翻译数据库 UI 组件引用。"""
         self._trans_stat_labels = stat_labels
@@ -399,6 +402,9 @@ class UpdatePanel(QObject):
         t = theme
 
         self._log_panel.setStyleSheet(f"background-color: {t.panel_darkest};")
+
+        # 重新渲染所有旧日志，应用新主题颜色
+        self._refresh_log_colors()
         self._step_label.setStyleSheet(f"color: {t.text_dim}; font-size: 13px;")
         self._log_detail.setStyleSheet(f"color: {t.cyber_cyan}; font-size: 11px; padding: 4px 0;")
         self._log_area.setStyleSheet(f"""
@@ -465,6 +471,8 @@ class UpdatePanel(QObject):
         """添加日志到日志面板。"""
         if not self._log_panel.isVisible() and self._log_panel_auto_show:
             self._show_log_panel()
+        # 保存原始记录，用于主题切换时重新渲染
+        self._log_records.append((log_type, msg, source))
         self._log_area.append(self._format_log_line(log_type, msg, source))
         self._log_area.verticalScrollBar().setValue(
             self._log_area.verticalScrollBar().maximum())
@@ -479,13 +487,22 @@ class UpdatePanel(QObject):
     def _show_log_panel(self):
         self._log_panel.show()
         # 通知父窗口调整宽度
-        extra_w = getattr(self._parent, '_theme_panel_width', 0) + 420
-        self._parent.resize(580 + extra_w, max(self._parent.height(), 700))
+        if hasattr(self._parent, '_adjust_window_width'):
+            self._parent._adjust_window_width()
+        else:
+            # 兼容旧逻辑
+            extra_w = getattr(self._parent, '_theme_panel_width', 0) + 420
+            self._parent.resize(580 + extra_w, max(self._parent.height(), 700))
 
     def _hide_log_panel(self):
         self._log_panel.hide()
-        extra_w = getattr(self._parent, '_theme_panel_width', 0)
-        self._parent.resize(580 + extra_w, max(self._parent.height(), 700))
+        # 通知父窗口调整宽度
+        if hasattr(self._parent, '_adjust_window_width'):
+            self._parent._adjust_window_width()
+        else:
+            # 兼容旧逻辑
+            extra_w = getattr(self._parent, '_theme_panel_width', 0)
+            self._parent.resize(580 + extra_w, max(self._parent.height(), 700))
 
     def show_log_panel(self):
         self._show_log_panel()
@@ -791,6 +808,23 @@ class UpdatePanel(QObject):
     # ============================================================
     # 工具方法
     # ============================================================
+
+    def _refresh_log_colors(self):
+        """主题切换时重新渲染所有日志，应用新配色。"""
+        if not self._log_area:
+            return
+        # 保存当前滚动位置
+        scrollbar = self._log_area.verticalScrollBar()
+        was_at_bottom = scrollbar.value() >= scrollbar.maximum() - 10
+
+        # 清空并重新渲染
+        self._log_area.clear()
+        for log_type, msg, source in self._log_records:
+            self._log_area.append(self._format_log_line(log_type, msg, source))
+
+        # 恢复滚动位置
+        if was_at_bottom:
+            scrollbar.setValue(scrollbar.maximum())
 
     def _format_log_line(self, log_type: str, msg: str, source: str = "") -> str:
         now = datetime.now().strftime("%H:%M:%S")

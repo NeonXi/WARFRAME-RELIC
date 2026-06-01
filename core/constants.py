@@ -76,6 +76,29 @@ OCR_BOX_THRESH = 0.22       # 检测框阈值
 OCR_UPSCALE_MIN_WIDTH = 900 # 图片宽度 > 此值时放大
 OCR_UPSCALE_SCALE = 1.4     # 上采样倍率（1.4x 平衡性能和精度）
 
+# 自适应上采样配置（针对全屏/大图优化）
+OCR_ADAPTIVE_UPSCALE_ENABLED = True      # 启用自适应上采样
+OCR_ADAPTIVE_BASE_WIDTH = 1200           # 基准宽度阈值
+OCR_ADAPTIVE_MAX_SCALE = 2.5             # 最大上采样倍数（防止过度放大）
+OCR_ADAPTIVE_MIN_SCALE = 1.2             # 最小上采样倍数（大图至少放大1.2倍）
+
+# 图像增强配置
+OCR_ENHANCE_CONTRAST = True              # 启用对比度增强
+OCR_CLAHE_CLIP_LIMIT = 2.0               # CLAHE对比度限制
+OCR_CLAHE_GRID_SIZE = 8                  # CLAHE网格大小
+
+# 动态OCR参数配置（针对不同尺寸图像）
+OCR_DYNAMIC_PARAMS_ENABLED = True        # 启用动态参数调整
+OCR_LARGE_IMAGE_TEXT_SCORE = 0.35        # 大图文本置信度（降低以提高召回）
+OCR_LARGE_IMAGE_BOX_THRESH = 0.20        # 大图检测框阈值（降低以检测更多候选）
+OCR_LARGE_IMAGE_THRESHOLD = 1500         # 判定为大图的宽度阈值
+
+# RapidOCR引擎配置
+RAPIDOCR_TEXT_SCORE = 0.35               # 文本置信度阈值
+RAPIDOCR_BOX_THRESH = 0.20               # 检测框阈值
+RAPIDOCR_DET_LIMIT_SIDE_LEN = 960        # 检测器最小边限制（关键！防止大图被过度缩小）
+RAPIDOCR_DET_LIMIT_TYPE = "min"          # 按最小边缩放（保持宽高比）
+
 # 按钮布局
 BTN_WIDTH = 200
 BTN_HEIGHT = 45

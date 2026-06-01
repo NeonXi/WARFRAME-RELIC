@@ -95,15 +95,14 @@ class ManagementPanel(QWidget):
     def _fix_initial_size(self):
         self.updateGeometry()
         self.layout().activate()
-        # 内容区合理最小宽度（导航栏140 + 内容区margin 20*2 + group内容至少420）
-        content_min_w = 140 + 20 * 2 + 420
         min_h = 780
-        self.setMinimumSize(content_min_w, min_h)
-        # 窗口初始宽度取 sizeHint 和最小值的较大者，避免过窄挤压功能区边框
+        self.setMinimumHeight(min_h)
+        # 根据当前内容自动调整宽度
+        self._adjust_window_width()
+        # 确保高度也足够
         hint = self.layout().sizeHint()
-        init_w = max(hint.width(), content_min_w)
-        init_h = max(hint.height(), min_h)
-        self.resize(init_w, init_h)
+        if hint.height() > self.height():
+            self.resize(self.width(), hint.height())
         # 默认显示在主屏幕左上角
         screen = QApplication.primaryScreen()
         if screen:
@@ -116,6 +115,46 @@ class ManagementPanel(QWidget):
         if self._theme_panel:
             return self._theme_panel.widget.width() if self._theme_panel.is_expanded else 0
         return 0
+
+    def _adjust_window_width(self):
+        """根据当前内容自动调整窗口宽度，确保主区域内容完整显示。
+
+        计算逻辑：导航栏宽 + 内容区实际所需宽 + 侧窗宽 + 日志面板宽 + 边距
+        """
+        # 导航栏固定宽度
+        nav_w = 140
+        # 内容区边距 (左右各 20)
+        content_margins = 40
+        # 内容区内部 group 的实际所需最小宽度
+        content_needed_w = 420
+        if self._left_widget and self._left_widget.layout():
+            # 计算所有 group 中最大的 sizeHint 宽度
+            for i in range(self._left_widget.layout().count()):
+                item = self._left_widget.layout().itemAt(i)
+                if item and item.widget():
+                    hint = item.widget().sizeHint()
+                    content_needed_w = max(content_needed_w, hint.width())
+            # 加上内容区 layout 的 margins
+            margins = self._left_widget.layout().contentsMargins()
+            content_needed_w += margins.left() + margins.right()
+        else:
+            content_needed_w += content_margins
+
+        # 侧窗宽度
+        theme_w = self._theme_panel_width
+        # 日志面板宽度
+        log_w = 420 if self._update_panel.log_panel_visible else 0
+
+        # 总宽度 = 导航栏 + 内容区 + 侧窗 + 日志面板
+        needed_w = nav_w + content_needed_w + theme_w + log_w
+
+        # 确保不小于当前最小尺寸，也不小于当前高度对应的合理比例
+        min_w = self.minimumWidth()
+        new_w = max(needed_w, min_w)
+
+        # 只在需要增宽时调整（避免缩小导致用户手动调整失效）
+        if new_w > self.width():
+            self.resize(new_w, self.height())
 
     # ============================================================
     # UI 构建
@@ -172,25 +211,37 @@ class ManagementPanel(QWidget):
                 font-weight: bold;
             }}
         """)
-        # 导航项定义：(nav_id, 图标, S_category, S_key, 默认显示名)
+        from data.icon_loader import get_icon_loader, get_nav_icon
+        
+        icon_loader = get_icon_loader()
+        
         self._nav_items = [
-            ("toggles",  "⚙", "nav", "nav_toggles",  "功能开关"),
-            ("status",   "📊", "nav", "nav_status",   "数据状态"),
-            ("relic",    "🔄", "nav", "nav_relic",    "遗物更新"),
-            ("trans",    "🌐", "nav", "nav_trans",    "翻译库"),
-            ("items",    "🔍", "nav", "nav_items",    "物品查询"),
-            ("prices",   "💰", "nav", "nav_prices",   "价格数据"),
-            ("hotkeys",  "⌨", "nav", "nav_hotkeys",  "快捷键"),
-            ("theme",    "🎨", "nav", "nav_theme",    "主题换肤"),
-            ("about",    "ℹ", "nav", "nav_about",    "关于"),
-            ("reset",    "⚠", "nav", "nav_reset",    "紧急重置"),
+            ("toggles",  "nav", "nav_toggles",  "功能开关"),
+            ("status",   "nav", "nav_status",   "数据状态"),
+            ("relic",    "nav", "nav_relic",    "遗物更新"),
+            ("trans",    "nav", "nav_trans",    "翻译库"),
+            ("items",    "nav", "nav_items",    "物品查询"),
+            ("prices",   "nav", "nav_prices",   "价格数据"),
+            ("hotkeys",  "nav", "nav_hotkeys",  "快捷键"),
+            ("theme",    "nav", "nav_theme",    "主题换肤"),
+            ("about",    "nav", "nav_about",    "关于"),
+            ("reset",    "nav", "nav_reset",    "紧急重置"),
+            ("preset",   "nav", "nav_preset",   "语言预设"),
         ]
-        for nav_id, icon, s_cat, s_key, default_text in self._nav_items:
-            # S() 不存在该 key 时返回 "??category.key??"，此时用默认文本
+        for nav_id, s_cat, s_key, default_text in self._nav_items:
             text = S(s_cat, s_key)
             if text.startswith("??") and text.endswith("??"):
                 text = default_text
-            item = QListWidgetItem(f"{icon}  {text}")
+            
+            # 优先尝试加载图标文件
+            qicon = icon_loader.get_icon("nav", nav_id, size=20)
+            if qicon:
+                item = QListWidgetItem(qicon, text)
+            else:
+                # 使用 Emoji 作为 fallback
+                icon = get_nav_icon(nav_id)
+                item = QListWidgetItem(f"{icon}  {text}")
+            
             item.setData(Qt.ItemDataRole.UserRole, nav_id)
             self._nav_list.addItem(item)
         self._nav_list.currentRowChanged.connect(self._on_nav_changed)
@@ -239,12 +290,7 @@ class ManagementPanel(QWidget):
         self._build_reset_group(main_layout)
         self._build_language_preset_group(main_layout)
 
-        # 底部提示 + 退出
-        self._bottom_tip = QLabel(S("hint", "bottom_tip"))
-        self._bottom_tip.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px;")
-        self._bottom_tip.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(self._bottom_tip)
-
+        # 退出按钮行
         exit_row = QHBoxLayout()
         exit_row.addStretch()
         self._btn_exit = WordWrapButton(S("button", "exit"))
@@ -268,6 +314,7 @@ class ManagementPanel(QWidget):
             ("theme",    getattr(self, '_theme_group', None)),
             ("about",    getattr(self, '_about_group', None)),
             ("reset",    getattr(self, '_reset_group', None)),
+            ("preset",   getattr(self, '_lang_preset_group', None)),
         ]:
             if group is not None:
                 self._nav_groups[nav_id] = group
@@ -316,8 +363,8 @@ class ManagementPanel(QWidget):
             lbl.setObjectName("statLabel")
             lbl.setFixedWidth(110)
             val = QLabel(S("status", "placeholder"))
-            val = QLabel(S("status", "placeholder"))
-            self._reg_text(val, "status", "placeholder")
+            # 注意：值标签不注册到 _text_registry，因为它显示的是动态数据
+            # 切换预设后由 refresh_stats() 重新填充真实数据
             val.setObjectName("statValue")
             row.addWidget(lbl); row.addWidget(val); row.addStretch()
             layout.addLayout(row)
@@ -331,12 +378,12 @@ class ManagementPanel(QWidget):
 
         # 翻译库 & 物品库概要
         self._status_trans_label = QLabel(S("status", "translation_db"))
-        self._reg_text(self._status_trans_label, "status", "translation_db")
+        # 注意：不注册到 _text_registry，因为显示的是动态格式化数据
         self._status_trans_label.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px; padding: 2px 0;")
         layout.addWidget(self._status_trans_label)
 
         self._status_items_label = QLabel(S("status", "items_db"))
-        self._reg_text(self._status_items_label, "status", "items_db")
+        # 注意：不注册到 _text_registry，因为显示的是动态格式化数据
         self._status_items_label.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px; padding: 2px 0;")
         layout.addWidget(self._status_items_label)
 
@@ -1410,6 +1457,7 @@ class ManagementPanel(QWidget):
         layout.setSpacing(6)
 
         hint = QLabel(S("hint", "recovery"))
+        self._reset_hint_label = hint
         self._reg_text(hint, "hint", "recovery")
         hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px; border: none; background: transparent;")
         hint.setWordWrap(True)
@@ -1474,11 +1522,29 @@ class ManagementPanel(QWidget):
         group = QGroupBox(S("group", "feature_toggles"))
         self._toggle_group = group
         self._reg_text(group, "group", "feature_toggles")
+        # 初始背景色与恢复时一致，避免导航高亮后背景色突变
+        group.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {theme.panel_darkest};
+                border: 1px solid {theme.border};
+                border-radius: 4px;
+                padding: 10px;
+                margin-top: 8px;
+                font-size: 12px;
+                color: {theme.text};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 12px;
+                padding: 0 6px;
+            }}
+        """)
 
         layout = QVBoxLayout(group)
 
         # 提示文字
         hint = QLabel(S("feature_toggle", "hint"))
+        self._toggle_hint_label = hint
         self._reg_text(hint, "feature_toggle", "hint")
         hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px;")
         hint.setWordWrap(True)
@@ -1560,6 +1626,29 @@ class ManagementPanel(QWidget):
                     }}
                 """)
 
+
+    def _refresh_about_inline_styles(self):
+        """刷新关于作者区内部组件的内联样式。"""
+        t = theme
+        # 版本号 label
+        if hasattr(self, '_about_version_label'):
+            self._about_version_label.setStyleSheet(f"color: {t.text_dim}; font-size: 11px;")
+        # 链接按钮
+        if hasattr(self, '_about_link_buttons'):
+            link_styles = {
+                "bilibili_home": (t.brand_bilibili, t.brand_bilibili_hover),
+                "github_repo": (t.brand_github, t.brand_github_hover),
+            }
+            for btn, s_key in self._about_link_buttons:
+                color, hover = link_styles.get(s_key, (t.text, t.cyber_yellow))
+                btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: transparent; color: {color};
+                        border: none; padding: 4px 0; font-size: 12px; text-align: left;
+                    }}
+                    QPushButton:hover {{ color: {hover}; }}
+                """)
+
     def _on_feature_toggle_changed(self, key: str, state):
         """功能开关按钮点击时保存并发射信号。"""
         self._feature_toggles[key] = bool(state)
@@ -1604,7 +1693,8 @@ class ManagementPanel(QWidget):
         orig_anim_step = self._theme_panel._on_anim_step
         def anim_step_with_resize(w):
             orig_anim_step(w)
-            self._theme_panel.on_resize(self._update_panel.log_panel_visible)
+            # 使用统一的宽度调整方法，替代硬编码的 resize
+            self._adjust_window_width()
         self._theme_panel._on_anim_step = anim_step_with_resize
         outer_layout.addWidget(self._theme_panel.widget)
 
@@ -1630,6 +1720,9 @@ class ManagementPanel(QWidget):
         if group:
             self._highlight_group_border(group)
             self._last_highlighted_group = group
+
+        # 导航切换后内容区宽度需求可能变化，自动调整窗口宽度
+        QTimer.singleShot(50, self._adjust_window_width)
 
     def _highlight_group_border(self, group: QGroupBox):
         """高亮 group 边框（荧光绿加粗效果）。"""
@@ -1703,42 +1796,94 @@ class ManagementPanel(QWidget):
         group = QGroupBox(S("group", "about_author"))
         self._about_group = group
         self._reg_text(group, "group", "about_author")
-        layout = QVBoxLayout(group); layout.setSpacing(4)
+        group.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {theme.panel_darkest};
+                border: 1px solid {theme.border};
+                border-radius: 8px;
+                padding: 16px;
+                margin-top: 8px;
+                font-size: 12px;
+                color: {theme.text};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 12px;
+                padding: 0 8px;
+                font-weight: bold;
+            }}
+        """)
+        layout = QVBoxLayout(group)
+        layout.setSpacing(12)
+        layout.setContentsMargins(8, 8, 8, 8)
 
-        author_row = QHBoxLayout()
-        about_lbl = QLabel(S("hint", "about_author"))
-        self._reg_text(about_lbl, "hint", "about_author")
-        author_row.addWidget(about_lbl)
-        author_row.addStretch()
-        layout.addLayout(author_row)
+        author_info = QLabel(S("hint", "about_author"))
+        self._reg_text(author_info, "hint", "about_author")
+        author_info.setStyleSheet(f"""
+            color: {theme.cyber_cyan};
+            font-size: 13px;
+            font-weight: bold;
+            padding: 4px 0;
+        """)
+        author_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(author_info)
 
-        for icon, label, obj_name, color, hover, handler, s_key in [
-            ("⏣", S("button", "bilibili_home"), "bilibiliBtn",
+        links_layout = QHBoxLayout()
+        links_layout.setSpacing(24)
+        links_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self._about_link_buttons = []
+        for icon, label, color, hover, handler, s_key in [
+            ("📺", S("button", "bilibili_home"),
              theme.brand_bilibili, theme.brand_bilibili_hover, self._open_bilibili, "bilibili_home"),
-            ("⏣", S("button", "github_repo"), "githubBtn",
+            ("💻", S("button", "github_repo"),
              theme.brand_github, theme.brand_github_hover, self._open_github, "github_repo"),
         ]:
-            row = QHBoxLayout()
-            row.addWidget(QLabel(icon))
+            btn_layout = QHBoxLayout()
+            btn_layout.setSpacing(6)
+            
+            icon_lbl = QLabel(icon)
+            icon_lbl.setStyleSheet("font-size: 14px;")
+            
             btn = WordWrapButton(label)
             self._reg_text(btn, "button", s_key)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: transparent; color: {color};
-                    border: none; padding: 4px 0; font-size: 12px; text-align: left;
+                    background-color: rgba(255,255,255,0.05);
+                    color: {color};
+                    border: 1px solid {color};
+                    border-radius: 4px;
+                    padding: 6px 16px;
+                    font-size: 12px;
+                    font-weight: 500;
                 }}
-                QPushButton:hover {{ color: {hover}; }}
+                QPushButton:hover {{
+                    background-color: rgba(255,255,255,0.1);
+                    color: {hover};
+                    border-color: {hover};
+                }}
             """)
             btn.clicked.connect(handler)
-            row.addWidget(btn, 1)
-            layout.addLayout(row)
+            self._about_link_buttons.append((btn, s_key))
 
-        ver = QLabel(S("hint", "version"))
+            btn_layout.addWidget(icon_lbl)
+            btn_layout.addWidget(btn)
+            links_layout.addLayout(btn_layout)
 
-        self._reg_text(ver, "hint", "version")
-        ver.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px;")
-        layout.addWidget(ver)
+        layout.addLayout(links_layout)
+
+        from data.version import PROJECT_FULL_NAME, VERSION_DESCRIPTION
+        version_label = QLabel(f"{PROJECT_FULL_NAME}\n{VERSION_DESCRIPTION}")
+        version_label.setStyleSheet(f"""
+            color: {theme.text_dim};
+            font-size: 11px;
+            font-family: 'Consolas', monospace;
+        """)
+        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        version_label.setWordWrap(True)
+        layout.addWidget(version_label)
+
         parent_layout.addWidget(group)
 
     # ---- 语言预设切换 ----
@@ -1750,6 +1895,7 @@ class ManagementPanel(QWidget):
         from data.ui_strings import get_active_preset, get_preset_info, set_language_preset
 
         group = QGroupBox("语言风格 · 文案预设")
+        self._lang_preset_group = group
         group.setStyleSheet(f"""
             QGroupBox {{
                 background-color: {theme.panel_darkest};
@@ -1768,6 +1914,7 @@ class ManagementPanel(QWidget):
         row.setSpacing(8)
 
         lbl = QLabel("当前风格：")
+        self._lang_preset_label = lbl
         lbl.setStyleSheet(f"color: {theme.text_dim}; font-size: 12px; border: none; background: transparent;")
         row.addWidget(lbl)
 
@@ -2084,6 +2231,285 @@ class ManagementPanel(QWidget):
 
         # === 功能开关按钮 ===
         self._refresh_toggle_button_styles()
+
+        # === 功能开关区 QGroupBox 样式 ===
+        if hasattr(self, '_toggle_group'):
+            self._toggle_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+        if hasattr(self, '_toggle_hint_label'):
+            self._toggle_hint_label.setStyleSheet(f"color: {t.text_dim}; font-size: 11px;")
+
+        # === 数据库健康监测区 QGroupBox 样式 ===
+        if hasattr(self, '_status_group'):
+            self._status_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 遗物更新区 QGroupBox 样式 ===
+        if hasattr(self, '_relic_group'):
+            self._relic_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 翻译库区 QGroupBox 样式 ===
+        if hasattr(self, '_trans_group'):
+            self._trans_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 物品查询区 QGroupBox 样式 ===
+        if hasattr(self, '_items_group'):
+            self._items_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 价格数据区 QGroupBox 样式 ===
+        if hasattr(self, '_price_group'):
+            self._price_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 快捷键区 QGroupBox 样式 ===
+        if hasattr(self, '_hotkey_group'):
+            self._hotkey_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 主题换肤区 QGroupBox 样式 ===
+        if hasattr(self, '_theme_group'):
+            self._theme_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 关于作者区 QGroupBox 样式 ===
+        if hasattr(self, '_about_group'):
+            self._about_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.text};
+                }}
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    left: 12px;
+                    padding: 0 6px;
+                }}
+            """)
+
+        # === 紧急恢复区 QGroupBox 样式 ===
+        if hasattr(self, '_reset_group'):
+            self._reset_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 2px solid {t.cyber_orange};
+                    border-radius: 6px;
+                    padding: 10px;
+                    margin-top: 8px;
+                    font-size: 12px;
+                    color: {t.cyber_orange};
+                    font-weight: bold;
+                }}
+            """)
+
+        # === 关于作者区内部按钮刷新 ===
+        self._refresh_about_inline_styles()
+
+        # === 紧急恢复区按钮样式 ===
+        if hasattr(self, '_btn_reset_state'):
+            self._btn_reset_state.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {t.cyber_red};
+                    color: white;
+                    border: 2px solid {t.cyber_orange};
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-size: 14px;
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{
+                    background-color: #cc3333;
+                    border-color: {t.cyber_yellow};
+                }}
+                QPushButton:pressed {{
+                    background-color: #aa2222;
+                }}
+            """)
+        if hasattr(self, '_btn_reload_hotkeys'):
+            self._btn_reload_hotkeys.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {t.panel_darkest};
+                    color: {t.cyber_orange};
+                    border: 1px solid {t.cyber_orange};
+                    border-radius: 6px;
+                    padding: 8px 16px;
+                    font-size: 13px;
+                }}
+                QPushButton:hover {{
+                    background-color: {t.card_bg};
+                    border-color: {t.cyber_yellow};
+                    color: {t.cyber_yellow};
+                }}
+            """)
+        if hasattr(self, '_reset_hint_label'):
+            self._reset_hint_label.setStyleSheet(
+                f"color: {t.text_dim}; font-size: 11px; border: none; background: transparent;")
+
+        # === 语言预设组样式 ===
+        if hasattr(self, '_lang_preset_group'):
+            self._lang_preset_group.setStyleSheet(f"""
+                QGroupBox {{
+                    background-color: {t.panel_darkest};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 8px;
+                    margin-top: 8px;
+                    font-size: 11px;
+                    color: {t.text_dim};
+                }}
+            """)
+        if hasattr(self, '_lang_preset_label'):
+            self._lang_preset_label.setStyleSheet(
+                f"color: {t.text_dim}; font-size: 12px; border: none; background: transparent;")
+        if hasattr(self, '_preset_combo'):
+            self._preset_combo.setStyleSheet(f"""
+                QComboBox {{
+                    background-color: {t.card_bg};
+                    color: {t.cyber_cyan};
+                    border: 1px solid {t.border};
+                    border-radius: 4px;
+                    padding: 4px 10px;
+                    font-size: 12px;
+                    min-width: 160px;
+                }}
+                QComboBox:hover {{ border-color: {t.cyber_yellow}; }}
+                QComboBox::drop-down {{
+                    border: none;
+                    width: 20px;
+                }}
+                QComboBox QAbstractItemView {{
+                    background-color: {t.panel_darkest};
+                    color: {t.text};
+                    border: 1px solid {t.border};
+                    selection-background-color: {t.cyber_yellow};
+                    selection-color: #000;
+                }}
+            """)
+        if hasattr(self, '_preset_desc'):
+            self._preset_desc.setStyleSheet(
+                f"color: {t.text_dim}; font-size: 10px; border: none; background: transparent; padding: 2px 0;")
+
+        # === 翻译分类标签 ===
+        if hasattr(self, '_trans_cat_label'):
+            self._trans_cat_label.setStyleSheet(f"color: {t.text_dim}; font-size: 11px; padding: 2px 0;")
 
         # === 翻译进度条 ===
         if hasattr(self, '_trans_progress'):

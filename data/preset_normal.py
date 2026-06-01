@@ -18,8 +18,8 @@ STRINGS = {
     # ── 按钮文字 ──
     "button": {
         "exit": "退出程序",
-        "reset_state": "⟳ 紧急重置 · 恢复默认状态",
-        "reload_hotkeys": "⭮ 重新注册快捷键",
+        "reset_state": "紧急重置 · 恢复默认状态",
+        "reload_hotkeys": "重新注册快捷键",
         "fetch_github": "从 GitHub 拉取最新数据",
         "browse_file": "选择本地数据文件...",
         "update_db": "更新数据库",
@@ -31,9 +31,9 @@ STRINGS = {
         "toggle_detail_collapse": "收起详情",
         "save_hotkeys": "保存快捷键设置",
         "reset_default": "恢复默认快捷键",
-        "custom_theme": "⬡ 自定义主题配色",
-        "bilibili_home": "Bilibili 主页 →",
-        "github_repo": "GitHub 仓库 →",
+        "custom_theme": "自定义主题配色",
+        "bilibili_home": "Bilibili 主页",
+        "github_repo": "GitHub 仓库",
         "close_log_panel": "关闭日志面板",
         "search_clear": "清空",
         "apply_preset": "应用预设方案",
@@ -56,20 +56,21 @@ STRINGS = {
         "nav_prices":   "价格数据",
         "nav_hotkeys":  "快捷键",
         "nav_theme":    "主题换肤",
+        "nav_preset":   "语言预设",
         "nav_about":    "关于",
         "nav_reset":    "紧急重置",
     },
 
     # ── 分组标题 ──
     "group": {
-        "recovery": "⎅ 紧急恢复（异常状态重置）",
+        "recovery": "紧急恢复（异常状态重置）",
         "db_status": "数据库健康状态",
         "relic_update": "遗物数据库同步",
         "translation_db": "翻译数据库（中英文对照）",
         "items_i18n": "全物品多语言索引库",
-        "wm_prices": "⟐ warframe.market 价格数据",
+        "wm_prices": "warframe.market 价格数据",
         "hotkey_settings": "快捷键设置",
-        "feature_toggles": "⬢ 截图后功能开关",
+        "feature_toggles": "截图后功能开关",
         "theme": "主题换肤",
         "about_author": "关于作者",
     },
@@ -207,7 +208,7 @@ STRINGS = {
 
     # ── 覆盖层 / Overlay ──
     "overlay": {
-        "mode_selected": "▸ 已选择功能: {mode}",
+        "mode_selected": "已选择功能: {mode}",
         "relics_found": "检测到 {count} 个遗物 — 请选择后续操作：",
         "screenshot_done": "截图完成 — 请选择后续操作：",
         "selection_cancelled": "框选已取消",
@@ -235,7 +236,7 @@ STRINGS = {
         "fullscreen_info": "全屏截图 ({w}x{h})",
         "item_recognizing": "正在识别物品...",
         "no_items_found": "未检测到可交易物品",
-        "price_query_title": "⟐ 市场价格查询: {total}个 | 匹配 {matched}个",
+        "price_query_title": "市场价格查询: {total}个 | 匹配 {matched}个",
         "price_na": "无价格数据",
         "price_weighted_fmt": "{weighted}p",
         "price_detail_fmt": "{name}\n  {zh}\n  加权参考价: {weighted}p | 最低: {min}p | 中位: {median}p",

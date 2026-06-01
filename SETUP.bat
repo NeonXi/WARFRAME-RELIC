@@ -6,7 +6,7 @@ title WARFRAME-RELIC 环境初始化
 
 echo.
 echo ============================================================
-echo     WARFRAME-RELIC - 首次运行环境配置
+echo     WARFRAME-RELIC v3.4 - 首次运行环境配置
 echo ============================================================
 echo.
 echo  本脚本将自动完成:
@@ -14,6 +14,9 @@ echo    1. 检测/安装 Python 3.12
 echo    2. 创建虚拟环境
 echo    3. 安装项目依赖
 echo    4. 启动程序
+echo.
+echo  提示: 建议以管理员身份运行，确保全局热键正常。
+echo         (右键 SETUP.bat → 以管理员身份运行)
 echo.
 echo ============================================================
 echo.
@@ -175,6 +178,7 @@ if not exist "venv\Scripts\python.exe" (
 echo.
 echo [3/4] 安装项目依赖...
 echo       (首次安装约需 1-3 分钟，请耐心等待)
+echo       依赖: PyQt6, dxcam, keyboard, rapidocr-onnxruntime, Pillow, numpy, pypinyin
 echo.
 
 venv\Scripts\python.exe -m pip install -r requirements.txt -i https://mirrors.cloud.tencent.com/pypi/simple --quiet
@@ -193,13 +197,15 @@ echo       [OK] 依赖安装完成
 
 :launch
 echo.
-echo [4/4] 正在启动 WARFRAME-RELIC...
+echo [4/4] 正在启动 WARFRAME-RELIC v3.4...
 echo.
 echo ============================================================
 echo.
 start "" venv\Scripts\python.exe main.py
 
 echo 程序已启动！以后直接双击 WARFRAME-RELIC.bat 即可。
+echo.
+echo 提示: 如需全局热键，请以管理员身份运行 WARFRAME-RELIC.bat。
 echo.
 timeout /t 3 >nul
 exit /b 0

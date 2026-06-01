@@ -53,6 +53,9 @@ ZH_EN_DICT_PATH = os.path.join(BASE_DIR, 'zh_en_dict.json')  # AdminRoc 中英�
 WFCD_ALL_URL = 'https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/All.json'
 WFCD_I18N_URL = 'https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/i18n.json'
 
+# ===== 数据库 Schema 版本 =====
+SCHEMA_VERSION = '2'  # v1: 初始版本, v2: 添加拼音完整性检查
+
 # ===== 数据库表结构 =====
 SCHEMA = """
 -- 全物品中英对照主表
@@ -109,36 +112,16 @@ def build_all_items_db(all_items_path: str = None,
     """
     start_time = time.time()
 
-    # ---- schema 迁移：确保 zh_pinyin 字段存在 ----
+    # ---- Schema 版本管理和自动迁移 ----
     if os.path.exists(DB_PATH):
         try:
             conn_tmp = sqlite3.connect(DB_PATH)
-            cur_tmp = conn_tmp.cursor()
-            cur_tmp.execute("PRAGMA table_info(items)")
-            cols = [row[1] for row in cur_tmp.fetchall()]
-            if 'zh_pinyin' not in cols:
-                print("[items_i18n] 数据库 schema 过时，添加 zh_pinyin 字段...")
-                cur_tmp.execute("ALTER TABLE items ADD COLUMN zh_pinyin TEXT DEFAULT ''")
-                cur_tmp.execute("CREATE INDEX IF NOT EXISTS idx_items_pinyin ON items(zh_pinyin)")
-                conn_tmp.commit()
-                print("[items_i18n] zh_pinyin 字段添加完成，开始回填已有数据拼音...")
-                # 回填已有数据的拼音
-                if _HAS_PYPINYIN:
-                    cur_tmp.execute("SELECT id, zh_name FROM items WHERE zh_pinyin = '' OR zh_pinyin IS NULL")
-                    rows = cur_tmp.fetchall()
-                    updated = 0
-                    for row_id, zh_name in rows:
-                        py = _make_pinyin(zh_name)
-                        if py:
-                            cur_tmp.execute("UPDATE items SET zh_pinyin = ? WHERE id = ?", (py, row_id))
-                            updated += 1
-                    conn_tmp.commit()
-                    print(f"[items_i18n] 拼音回填完成: {updated}/{len(rows)} 条")
-                else:
-                    print("[items_i18n] 警告: pypinyin 未安装，无法回填拼音")
+            _ensure_schema_version(conn_tmp)  # 自动检测并升级 schema
             conn_tmp.close()
         except Exception as e:
-            print(f"[items_i18n] schema 迁移失败: {e}")
+            print(f"[items_i18n] Schema 迁移失败: {e}")
+            import traceback
+            traceback.print_exc()
 
     all_path = all_items_path or ALL_ITEMS_PATH
     i18n_path = i18n_path or I18N_PATH
@@ -284,18 +267,28 @@ def build_all_items_db(all_items_path: str = None,
         print(f"[items_i18n] all_items.json 补充了 {all_supplemented} 个额外物品")
 
     # ============================================================
-    # 第6步: 写入数据库
+    # 第6步: 写入数据库（批量插入优化）
     # ============================================================
     conn = sqlite3.connect(DB_PATH)
     conn.executescript(SCHEMA)
     conn.execute("DELETE FROM items")
-    cur = conn.cursor()
-
+    
     inserted = 0
     has_cn = 0
     has_desc = 0
     category_count = {}
     type_count = {}
+    
+    # 批量插入参数
+    BATCH_SIZE = 500
+    batch_data = []
+    
+    # 预编译 SQL
+    INSERT_SQL = """INSERT OR IGNORE INTO items
+                   (unique_name, zh_name, en_name, category, item_type,
+                    is_tradable, is_prime, rarity, mr_requirement, image_name,
+                    description_zh, description_en, zh_pinyin)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
 
     for unique_name, item_info in item_map.items():
         en_name = item_info['name'].strip()
@@ -340,43 +333,49 @@ def build_all_items_db(all_items_path: str = None,
         if description_zh or description_en:
             has_desc += 1
 
-        try:
-            # 生成拼音索引
-            pinyin_str = _make_pinyin(zh_name)
+        # 生成拼音索引
+        pinyin_str = _make_pinyin(zh_name)
 
-            cur.execute(
-                """INSERT INTO items
-                   (unique_name, zh_name, en_name, category, item_type,
-                    is_tradable, is_prime, rarity, mr_requirement, image_name,
-                    description_zh, description_en, zh_pinyin)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    unique_name,
-                    zh_name,
-                    en_name,
-                    cat,
-                    itype,
-                    int(item_info['tradable']),
-                    int(item_info['is_prime']),
-                    item_info['rarity'] or '',
-                    item_info['mr_requirement'],
-                    item_info['image_name'] or '',
-                    description_zh,
-                    description_en,
-                    pinyin_str,
-                )
-            )
-            inserted += 1
-        except sqlite3.IntegrityError:
-            pass
+        # 添加到批处理
+        batch_data.append((
+            unique_name,
+            zh_name,
+            en_name,
+            cat,
+            itype,
+            int(item_info['tradable']),
+            int(item_info['is_prime']),
+            item_info['rarity'] or '',
+            item_info['mr_requirement'],
+            item_info['image_name'] or '',
+            description_zh,
+            description_en,
+            pinyin_str,
+        ))
+        
+        # 达到批次大小时提交
+        if len(batch_data) >= BATCH_SIZE:
+            conn.executemany(INSERT_SQL, batch_data)
+            inserted += len(batch_data)
+            batch_data.clear()
+            
+            # 进度提示
+            if inserted % 2000 == 0:
+                print(f"[items_i18n] 已插入: {inserted} 条...")
 
-    # 元信息
+    # 提交剩余数据
+    if batch_data:
+        conn.executemany(INSERT_SQL, batch_data)
+        inserted += len(batch_data)
+
+    # 元信息（包含 schema 版本）
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('total', ?)", (str(inserted),))
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('has_cn', ?)", (str(has_cn),))
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('has_desc', ?)", (str(has_desc),))
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('source', 'zh_en_dict.json (主) + WFCD All.json/i18n.json (补充)')")
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('updated_at', ?)", (now,))
+    conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
 
     conn.commit()
     conn.close()
@@ -410,6 +409,190 @@ def build_all_items_db(all_items_path: str = None,
         print(f"    {cat}: {count}")
 
     return stats
+
+
+# ============================================================
+# Schema 版本管理和拼音完整性检查
+# ============================================================
+
+def _get_schema_version(conn) -> str:
+    """获取当前数据库的 schema 版本"""
+    try:
+        row = conn.execute("SELECT value FROM items_meta WHERE key = 'schema_version'").fetchone()
+        return row[0] if row else '1'  # 默认为 v1（无版本号）
+    except Exception:
+        return '1'
+
+
+def _ensure_schema_version(conn):
+    """确保数据库 schema 版本是最新的，自动执行迁移"""
+    current_version = _get_schema_version(conn)
+    
+    if current_version == '1':
+        # v1 -> v2: 添加拼音完整性检查和修复
+        print("[items_i18n] 检测到旧版 schema (v1)，正在升级到 v2...")
+        
+        # 检查拼音字段是否存在
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(items)")
+        cols = [row[1] for row in cur.fetchall()]
+        
+        if 'zh_pinyin' not in cols:
+            print("[items_i18n] 添加 zh_pinyin 字段...")
+            conn.execute("ALTER TABLE items ADD COLUMN zh_pinyin TEXT DEFAULT ''")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_items_pinyin ON items(zh_pinyin)")
+        
+        # 检查并修复拼音数据
+        if _HAS_PYPINYIN:
+            missing_count = conn.execute(
+                "SELECT COUNT(*) FROM items WHERE zh_pinyin = '' OR zh_pinyin IS NULL"
+            ).fetchone()[0]
+            
+            if missing_count > 0:
+                print(f"[items_i18n] 发现 {missing_count} 条记录缺少拼音，开始修复...")
+                rows = conn.execute(
+                    "SELECT id, zh_name FROM items WHERE zh_pinyin = '' OR zh_pinyin IS NULL"
+                ).fetchall()
+                
+                updated = 0
+                for row_id, zh_name in rows:
+                    py = _make_pinyin(zh_name)
+                    if py:
+                        conn.execute("UPDATE items SET zh_pinyin = ? WHERE id = ?", (py, row_id))
+                        updated += 1
+                
+                conn.commit()
+                print(f"[items_i18n] 拼音修复完成: {updated}/{len(rows)} 条")
+        else:
+            print("[items_i18n] ⚠ pypinyin 未安装，无法修复拼音数据")
+        
+        # 更新版本号
+        conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
+        conn.commit()
+        print("[items_i18n] Schema 升级到 v2 完成")
+    
+    elif current_version != SCHEMA_VERSION:
+        print(f"[items_i18n] ⚠ 未知的 schema 版本: {current_version} (期望: {SCHEMA_VERSION})")
+
+
+def check_pinyin_integrity() -> dict:
+    """检查数据库中拼音数据的完整性。
+    
+    Returns:
+        {
+            'total': 总记录数,
+            'has_pinyin': 有拼音的记录数,
+            'missing_pinyin': 缺少拼音的记录数,
+            'integrity_rate': 完整率 (0-1),
+            'needs_repair': 是否需要修复
+        }
+    """
+    if not os.path.exists(DB_PATH):
+        return {
+            'total': 0, 'has_pinyin': 0, 'missing_pinyin': 0,
+            'integrity_rate': 0, 'needs_repair': False
+        }
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        
+        # 检查拼音字段是否存在
+        cur = conn.execute("PRAGMA table_info(items)")
+        cols = [row[1] for row in cur.fetchall()]
+        
+        if 'zh_pinyin' not in cols:
+            conn.close()
+            return {
+                'total': 0, 'has_pinyin': 0, 'missing_pinyin': 0,
+                'integrity_rate': 0, 'needs_repair': True,
+                'error': 'zh_pinyin 字段不存在'
+            }
+        
+        total = conn.execute("SELECT COUNT(*) FROM items").fetchone()[0]
+        has_pinyin = conn.execute(
+            "SELECT COUNT(*) FROM items WHERE zh_pinyin != '' AND zh_pinyin IS NOT NULL"
+        ).fetchone()[0]
+        missing_pinyin = total - has_pinyin
+        
+        conn.close()
+        
+        integrity_rate = has_pinyin / total if total > 0 else 0
+        needs_repair = missing_pinyin > 0 and _HAS_PYPINYIN
+        
+        return {
+            'total': total,
+            'has_pinyin': has_pinyin,
+            'missing_pinyin': missing_pinyin,
+            'integrity_rate': integrity_rate,
+            'needs_repair': needs_repair
+        }
+    except Exception as e:
+        return {
+            'total': 0, 'has_pinyin': 0, 'missing_pinyin': 0,
+            'integrity_rate': 0, 'needs_repair': False,
+            'error': str(e)
+        }
+
+
+def repair_pinyin_data(batch_size: int = 500) -> dict:
+    """修复数据库中缺失的拼音数据（批量处理）。
+    
+    Args:
+        batch_size: 批量更新的大小
+        
+    Returns:
+        {'repaired': 修复数量, 'total': 总数, 'elapsed': 耗时}
+    """
+    if not _HAS_PYPINYIN:
+        raise RuntimeError("pypinyin 库未安装，无法修复拼音")
+    
+    if not os.path.exists(DB_PATH):
+        raise FileNotFoundError(f"数据库不存在: {DB_PATH}")
+    
+    start_time = time.time()
+    conn = sqlite3.connect(DB_PATH)
+    
+    # 获取需要修复的记录
+    rows = conn.execute(
+        "SELECT id, zh_name FROM items WHERE zh_pinyin = '' OR zh_pinyin IS NULL"
+    ).fetchall()
+    
+    total = len(rows)
+    if total == 0:
+        conn.close()
+        return {'repaired': 0, 'total': 0, 'elapsed': 0}
+    
+    print(f"[items_i18n] 开始修复拼音数据: {total} 条记录...")
+    
+    repaired = 0
+    batch_data = []
+    
+    for row_id, zh_name in rows:
+        py = _make_pinyin(zh_name)
+        if py:
+            batch_data.append((py, row_id))
+            repaired += 1
+            
+            # 批量提交
+            if len(batch_data) >= batch_size:
+                conn.executemany(
+                    "UPDATE items SET zh_pinyin = ? WHERE id = ?",
+                    batch_data
+                )
+                batch_data.clear()
+                print(f"[items_i18n] 已修复: {repaired}/{total}")
+    
+    # 提交剩余数据
+    if batch_data:
+        conn.executemany("UPDATE items SET zh_pinyin = ? WHERE id = ?", batch_data)
+    
+    conn.commit()
+    elapsed = time.time() - start_time
+    
+    print(f"[items_i18n] 拼音修复完成: {repaired}/{total} 条 (耗时 {elapsed:.1f}s)")
+    
+    conn.close()
+    return {'repaired': repaired, 'total': total, 'elapsed': elapsed}
 
 
 # ============================================================
@@ -906,6 +1089,69 @@ def auto_rebuild_items_db(silent: bool = True) -> bool:
         return False
 
 
+def init_database_check(auto_repair: bool = True) -> dict:
+    """初始化时检查数据库完整性（建议在应用启动时调用）。
+    
+    Args:
+        auto_repair: 是否自动修复缺失的拼音数据
+        
+    Returns:
+        检查结果字典
+    """
+    if not os.path.exists(DB_PATH):
+        print("[items_i18n] ⚠ 数据库不存在，将在首次搜索时自动创建")
+        return {'status': 'missing', 'action': 'will_create_on_first_search'}
+    
+    # 检查拼音完整性
+    integrity = check_pinyin_integrity()
+    
+    if integrity.get('error'):
+        print(f"[items_i18n] ⚠ 数据库检查失败: {integrity['error']}")
+        return {'status': 'error', 'error': integrity['error']}
+    
+    total = integrity['total']
+    has_pinyin = integrity['has_pinyin']
+    missing = integrity['missing_pinyin']
+    rate = integrity['integrity_rate']
+    
+    # 输出检查结果
+    if total == 0:
+        print("[items_i18n] ⚠ 数据库为空，建议重建")
+        return {'status': 'empty', 'action': 'rebuild_recommended'}
+    
+    if rate < 0.5:  # 完整率低于50%
+        print(f"[items_i18n] ⚠ 拼音数据严重缺失: {has_pinyin}/{total} ({rate*100:.1f}%)")
+        if auto_repair and _HAS_PYPINYIN:
+            print("[items_i18n] 正在自动修复拼音数据...")
+            try:
+                result = repair_pinyin_data()
+                print(f"[items_i18n] ✅ 拼音修复完成: {result['repaired']} 条 (耗时 {result['elapsed']:.1f}s)")
+                return {'status': 'repaired', 'result': result}
+            except Exception as e:
+                print(f"[items_i18n] 拼音修复失败: {e}")
+                return {'status': 'repair_failed', 'error': str(e)}
+        else:
+            print("[items_i18n] 提示: 运行以下命令修复拼音:")
+            print("  python -c \"from data.items_i18n import repair_pinyin_data; repair_pinyin_data()\"")
+            return {'status': 'needs_repair', 'missing': missing}
+    
+    elif missing > 0:  # 有少量缺失
+        print(f"[items_i18n] 拼音数据基本完整: {has_pinyin}/{total} ({rate*100:.1f}%), 缺失 {missing} 条")
+        if auto_repair and _HAS_PYPINYIN and missing < 100:
+            # 自动修复少量缺失
+            try:
+                result = repair_pinyin_data()
+                print(f"[items_i18n] 已修复 {result['repaired']} 条拼音")
+                return {'status': 'repaired', 'result': result}
+            except Exception:
+                pass
+        return {'status': 'good_with_minor_issues', 'missing': missing}
+    
+    else:  # 完全完整
+        print(f"[items_i18n] 数据库检查通过: {total} 条记录，拼音完整率 100%")
+        return {'status': 'ok', 'total': total, 'pinyin_complete': True}
+
+
 # ============================================================
 # 命令行入口
 # ============================================================
@@ -947,17 +1193,41 @@ if __name__ == '__main__':
             print(f"物品分类 ({len(cats)} 种):")
             for c in cats:
                 print(f"  {c}")
+        elif cmd in ('--check-pinyin', '--check'):
+            # 检查拼音完整性
+            print("[items_i18n] 检查拼音数据完整性...")
+            result = init_database_check(auto_repair=False)
+            print(f"\n检查结果: {result}")
+        elif cmd in ('--repair-pinyin', '--repair'):
+            # 修复拼音数据
+            if not _HAS_PYPINYIN:
+                print("[items_i18n] ❌ pypinyin 未安装，无法修复")
+                sys.exit(1)
+            print("[items_i18n] 开始修复拼音数据...")
+            try:
+                result = repair_pinyin_data()
+                print(f"\n✅ 修复完成: {result['repaired']}/{result['total']} 条 (耗时 {result['elapsed']:.1f}s)")
+            except Exception as e:
+                print(f"\n❌ 修复失败: {e}")
+                sys.exit(1)
         else:
             print("用法:")
-            print("  python items_i18n.py --build       构建/重建全物品数据库")
-            print("  python items_i18n.py --stats       查看数据库统计")
-            print("  python items_i18n.py --search <词>  搜索物品")
-            print("  python items_i18n.py --categories  查看分类")
+            print("  python items_i18n.py --build           构建/重建全物品数据库")
+            print("  python items_i18n.py --stats           查看数据库统计")
+            print("  python items_i18n.py --search <词>      搜索物品")
+            print("  python items_i18n.py --categories       查看分类")
+            print("  python items_i18n.py --check-pinyin     检查拼音完整性")
+            print("  python items_i18n.py --repair-pinyin    修复拼音数据")
     else:
-        if not os.path.exists(DB_PATH):
-            print("全物品数据库不存在，正在构建...")
-            build_all_items_db()
+        # 默认行为：检查并初始化
+        print("[items_i18n] 启动数据库完整性检查...")
+        result = init_database_check(auto_repair=True)
+        
+        if result['status'] == 'ok':
+            print(f"[items_i18n] ✅ 数据库状态正常 ({result['total']} 条记录)")
+        elif result['status'] == 'repaired':
+            print(f"[items_i18n] ✅ 已自动修复拼音数据")
+        elif result['status'] == 'missing':
+            print("[items_i18n] ℹ 数据库将在首次使用时创建")
         else:
-            stats = get_db_stats()
-            print(f"全物品数据库已存在 ({stats['total']} 个物品): {DB_PATH}")
-            print("使用 --build 重建, --stats 查看统计")
+            print(f"[items_i18n] ⚠ 数据库状态: {result['status']}")

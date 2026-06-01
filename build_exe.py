@@ -84,7 +84,7 @@ def step_check_env(python):
         return False
 
     # 检查关键包
-    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime", "PIL", "numpy"]
+    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime", "PIL", "numpy", "pypinyin"]
     print(f"\n  Checking dependencies...")
     all_ok = True
     for pkg in pkgs:
@@ -326,6 +326,12 @@ def step_build(python):
         "--hidden-import", "onnxruntime",
         "--hidden-import", "json",
         "--hidden-import", "sqlite3",
+        "--hidden-import", "pypinyin",
+        "--hidden-import", "pypinyin.pinyin",
+        "--hidden-import", "pypinyin.style",
+        "--hidden-import", "core.bootstrap",
+        "--hidden-import", "core.hotkey_manager",
+        "--hidden-import", "core.mode_handlers",
     ]
     # 如果找到 UPX，添加压缩参数
     if upx_path:

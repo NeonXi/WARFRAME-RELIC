@@ -1,6 +1,6 @@
 # WARFRAME-RELIC 开发文档
 
-> 版本：v3.2 | 更新日期：2026-06-01
+> 版本：v3.4 | 更新日期：2026-06-02
 
 ## 一、项目概述
 
@@ -25,24 +25,27 @@ WARFRAME-RELIC 是一个 Warframe（星际战甲）游戏辅助工具，基于 O
 
 ## 二、项目架构
 
-### 2.1 文件结构
+### 2.1 文件结构（v3.4 重构后）
 
 ```
 WARFRAME-RELIC/
-├── main.py                     # 程序入口（AppCore 中央控制器）
+├── main.py                     # 程序核心：AppCore + TriggerBridge + OCRWorker
 ├── core/                       # 核心模块
+│   ├── bootstrap.py            # ★ 启动引导：单例检测、管理员检测、异常钩子、main()
+│   ├── hotkey_manager.py       # ★ 热键管理器：注册/健康检查/自动恢复/防重入
+│   ├── mode_handlers.py        # ★ 功能处理器：出入库/遗物查询/翻译/价格标注（纯函数）
 │   ├── overlay.py              # 全屏透明覆盖层（标注、按钮、流式动画）
 │   ├── region_selector.py      # ★ 独立区域框选器（封装鼠标交互）
 │   ├── management_panel.py     # 管理面板主窗口（搜索/数据库/热键/主题）
 │   ├── price_service.py        # 价格服务（三级查询 + 限速器）
-│   ├── relic_tooltip.py        # ★ 遗物内容悬浮窗
 │   ├── drop_tooltip.py         # ★ 物品掉落来源查询
-│   ├── hotkey_config.py        # 热键配置管理
+│   ├── hotkey_config.py        # 热键配置读写
 │   ├── hotkey_capture_button.py # 热键捕获按钮组件
 │   ├── stylesheet.py           # 动态 QSS 样式表
 │   ├── theme_config.py         # 主题配置引擎
 │   ├── theme_fields.py         # 主题字段定义
 │   ├── theme_panel.py          # 主题可视化编辑面板
+│   ├── theme_proxy.py          # 主题属性代理
 │   ├── update_panel.py         # 数据库更新面板
 │   ├── fetch_worker.py         # 后台下载线程
 │   ├── update_worker.py        # 后台更新线程
@@ -57,7 +60,12 @@ WARFRAME-RELIC/
 │   ├── items_i18n.py           # 全物品中英对照数据库管理
 │   ├── wfinfo_relics.py        # 遗物数据库查询
 │   ├── wm_prices.py            # WM 价格数据库管理
+│   ├── translation_db.py       # 翻译数据库（旧版）
+│   ├── db_utils.py             # 数据库工具函数
 │   ├── ui_strings.py           # UI 字符串路由器
+│   ├── icons.py                # 图标资源管理
+│   ├── icon_loader.py          # 图标加载器
+│   ├── version.py              # 版本信息
 │   ├── preset_cyberpunk2077.py # 赛博朋克2077文案预设
 │   ├── preset_santi.py         # 三体·威慑纪元文案预设
 │   ├── preset_normal.py        # 普通标准文案预设
@@ -68,15 +76,20 @@ WARFRAME-RELIC/
 │   ├── items_i18n.db           # 物品中英对照数据库（含拼音）
 │   ├── relics.db               # 遗物掉落数据库
 │   ├── wm_prices.db            # WM 价格缓存数据库
+│   ├── translation.db          # 翻译缓存（旧版）
 │   └── all_items.json          # WFInfo 全量掉落数据
+├── assets/                     # SVG 图标资源
+├── icon/                       # 图标资源
 ├── DATABASE.md                 # ★ 数据库结构详细文档
 ├── README.md                   # 用户使用文档
 ├── requirements.txt            # Python 依赖
-├── main.py                     # 入口
 ├── dev_runner.py               # 开发热重载脚本
 ├── build_exe.py                # PyInstaller 打包（文件夹模式）
 ├── build_onefile.py            # PyInstaller 打包（单文件模式）
-└── 打包.bat / 打包单文件.bat   # 打包批处理
+├── SETUP.bat                   # 零基础启动脚本
+├── WARFRAME-RELIC.bat          # 快捷启动批处理
+├── DEV_RUN.bat                 # 开发模式批处理
+└── 打包.bat / 打包单文件.bat / 一键打包.bat  # 打包批处理
 ```
 
 ### 2.2 架构分层
@@ -86,16 +99,37 @@ WARFRAME-RELIC/
 │  UI 层 (PyQt6)                                  │
 │  Overlay + ManagementPanel + RelicTooltip       │
 ├─────────────────────────────────────────────────┤
-│  业务层 (AppCore)                                │
-│  截图 → OCR → 匹配 → 查询 → 标注               │
+│  业务层                                          │
+│  AppCore (main.py) — 中央控制器                  │
+│  ├── HotkeyManager (hotkey_manager.py) — 热键   │
+│  └── mode_handlers (mode_handlers.py) — 功能    │
 ├─────────────────────────────────────────────────┤
-│  服务层                                         │
+│  服务层                                          │
 │  PriceService / RegionSelector / DropSourceIndex │
+├─────────────────────────────────────────────────┤
+│  入口层                                          │
+│  bootstrap.py — 单例/管理员/异常钩子/main()     │
 ├─────────────────────────────────────────────────┤
 │  数据层 (SQLite)                                 │
 │  items_i18n.db / relics.db / wm_prices.db       │
 └─────────────────────────────────────────────────┘
 ```
+
+### 2.3 v3.4 架构重构说明
+
+v3.4 将原本 1430 行的 `main.py` 拆分为 4 个文件：
+
+| 文件 | 行数 | 职责 |
+|------|------|------|
+| `main.py` | ~813 | `AppCore` + `TriggerBridge` + `OCRWorker`（截图/OCR线程/分发） |
+| `core/hotkey_manager.py` | ~213 | 热键注册/更新/健康检查/自动恢复/防重入 |
+| `core/mode_handlers.py` | ~242 | 四大功能：出入库查询、遗物内容查询、翻译、价格标注（纯函数） |
+| `core/bootstrap.py` | ~200 | 入口：单例检测、管理员检测、异常钩子、`main()` |
+
+**设计原则**：
+- `HotkeyManager` 封装所有热键逻辑，`AppCore` 通过委托调用
+- `mode_handlers` 作为纯函数模块，接收状态参数，避免循环依赖
+- `bootstrap` 处理所有系统级入口逻辑，与业务逻辑解耦
 
 ---
 
@@ -106,6 +140,7 @@ WARFRAME-RELIC/
 `AppCore` 是所有业务逻辑的中心协调者，管理整个生命周期。
 
 **组件持有：**
+
 | 组件 | 类型 | 作用 |
 |------|------|------|
 | `_camera` | `dxcam` | DirectX 高速截图 |
@@ -115,26 +150,10 @@ WARFRAME-RELIC/
 | `_item_ocr` | `ItemNameRecognizer` | 物品名称 OCR |
 | `_relic_db` | `RelicDB` | 遗物数据库 |
 | `_bridge` | `TriggerBridge` | 热键→Qt信号桥接 |
-
-**启动流程：**
-```
-main()
-  → 单例检测（Windows Mutex）
-  → 管理员权限检测
-  → 安装全局异常钩子（crash_log.txt）
-  → 创建 QApplication
-  → 创建 AppCore(app)
-  → core.run()
-      → _init_db()           # 加载 relics.db
-      → _bind_events()       # 绑定信号/槽
-      → _register_initial_hotkeys()  # 注册全局热键
-      → _print_startup_info()
-      → _show_panel_on_start()       # 显示管理面板
-      → _hotkey_health_timer.start() # 30秒热键心跳检测
-      → app.exec()            # 进入 Qt 事件循环
-```
+| `_hotkey_mgr` | `HotkeyManager` | ★ 热键管理器（委托） |
 
 **核心状态变量：**
+
 ```python
 self._last_frame = None       # 最近一次截图帧（numpy array）
 self._last_region = None      # 最近一次截图区域（逻辑坐标）
@@ -145,7 +164,92 @@ self._ocr_thread = None       # 当前 OCR 线程
 self._ocr_lock = threading.Lock()  # OCR 线程锁
 ```
 
-### 3.2 RegionSelector (`core/region_selector.py`) — ★ 新增模块
+**启动流程（简化）：**
+
+```
+main()
+  → bootstrap.ensure_singleton()     # Windows Mutex 单例检测
+  → bootstrap.ensure_admin()         # 管理员权限检测
+  → bootstrap.install_crash_handlers() # 全局异常钩子
+  → QApplication 创建
+  → AppCore(app) 创建
+  → core.run()
+      → _init_db()
+      → _bind_events()
+      → _hotkey_mgr.register_initial()   # ★ 委托 HotkeyManager
+      → _show_panel_on_start()
+      → _hotkey_health_timer.start()     # 30秒热键心跳
+      → app.exec()
+```
+
+### 3.2 HotkeyManager (`core/hotkey_manager.py`) — ★ 新增模块
+
+从 `AppCore` 拆分出来的热键管理逻辑，职责单一。
+
+**公开接口：**
+
+| 方法 | 说明 |
+|------|------|
+| `register_initial()` | 启动时从配置文件加载并注册热键 |
+| `on_config_changed(new_hotkeys)` | 用户修改热键后重新注册 |
+| `health_check()` → bool | 诊断热键健康状态 |
+| `auto_recover()` | 30秒心跳：检测到异常自动恢复 |
+| `force_reset()` | 紧急重置：用硬编码默认值强制重注册 |
+| `clear()` | 注销所有热键（退出时调用） |
+
+**热键注册流程（`_register()`）：**
+
+```
+1. 权限检查 → 非管理员弹 warning
+2. 逐个清除旧热键
+3. unhook_all() 兜底
+4. 逐键注册（最多3次重试，失败回退到默认值）
+5. 全部失败 → 用硬编码默认值紧急恢复
+6. health_check() 诊断
+```
+
+### 3.3 Mode Handlers (`core/mode_handlers.py`) — ★ 新增模块
+
+四大功能处理为纯函数，接收 `AppCore` 的状态作为参数，避免循环依赖。
+
+**导出函数：**
+
+| 函数 | 功能 | 参数 |
+|------|------|------|
+| `handle_check_status(last_relics, relic_db, region, dpi, overlay)` | 出入库状态查询 | 遗物列表 + 数据库 + 区域 + DPI + 覆盖层 |
+| `handle_query_parts(last_relics, relic_db, region, dpi, overlay)` | 遗物内容查询 | 同上 |
+| `handle_translate(last_items, region, dpi, overlay)` | 翻译 | 物品列表 + 区域 + DPI + 覆盖层 |
+| `handle_query_price(last_items, region, dpi, overlay)` | 价格查询 | 同上 |
+| `render_price_annotations(matched, region, dpi, overlay)` | 价格标注渲染 | 匹配结果 + 区域 + DPI + 覆盖层 |
+| `strip_refinement(name)` → str | 去除精炼标签 | 遗物名称字符串 |
+
+### 3.4 Bootstrap (`core/bootstrap.py`) — ★ 新增模块
+
+系统级入口逻辑，与业务完全解耦。
+
+**导出函数：**
+
+| 函数 | 说明 |
+|------|------|
+| `ensure_singleton()` → bool | Windows Mutex 单例检测 |
+| `ensure_admin()` → bool | 管理员权限检测 + 弹窗提示 |
+| `install_crash_handlers()` | 安装全局异常钩子 + atexit 清理 |
+| `main()` | 程序主入口函数 |
+
+**main() 执行流程：**
+
+```python
+def main():
+    ensure_singleton()        # 单例检测
+    ensure_admin()            # 管理员检测
+    install_crash_handlers()  # 异常钩子
+    app = QApplication()
+    app.setStyleSheet(...)    # 全局 ToolTip 样式
+    core = AppCore(app)
+    core.run()
+```
+
+### 3.5 RegionSelector (`core/region_selector.py`)
 
 独立的区域框选器，从 Overlay 中解耦出来，职责单一。
 
@@ -155,6 +259,7 @@ self._ocr_lock = threading.Lock()  # OCR 线程锁
 - 仅负责：显示框选界面 → 用户拖拽 → 返回区域坐标
 
 **坐标体系：**
+
 ```python
 region_info = {
     'logical':  (left, top, right, bottom),     # Qt 逻辑坐标
@@ -165,6 +270,7 @@ region_info = {
 ```
 
 **回调机制：**
+
 ```python
 selector.set_callback(
     callback=on_region_selected,   # 框选完成
@@ -176,7 +282,7 @@ selector.set_callback(
 - 默认框选截图（`AppCore._on_region_selection_for_screenshot`）
 - 物品区域设置（`AppCore._on_item_region_select`）
 
-### 3.3 Overlay (`core/overlay.py`) — 覆盖层
+### 3.6 Overlay (`core/overlay.py`) — 覆盖层
 
 全屏透明 QWidget，三种状态：
 
@@ -195,11 +301,12 @@ selector.set_callback(
 - 框选交互完全委托给 `RegionSelector`
 - `Overlay.paintEvent()` → `RegionSelector.paint()`
 
-### 3.4 ManagementPanel (`core/management_panel.py`) — 管理面板
+### 3.7 ManagementPanel (`core/management_panel.py`) — 管理面板
 
 主窗口，启动即显示，关闭面板 = 退出程序。
 
 **功能分区：**
+
 | 标签页 | 功能 |
 |--------|------|
 | 数据库 | 遗物数据库状态 / 自动更新 / 手动导入 |
@@ -212,35 +319,13 @@ selector.set_callback(
 | 文案风格 | 赛博朋克/三体/普通 一键切换 |
 | 日志 | 实时运行日志 |
 
-**★ 物品检索（新增）：**
+**★ 物品检索：**
 - 支持中文、英文、拼音三种输入方式
 - 实时联想（`suggest_items()`）
 - 单击结果复制英文名到剪贴板
 - 悬停显示掉落来源 Tooltip（`DropSourceIndex`）
 
-### 3.5 RelicTooltip (`core/relic_tooltip.py`) — ★ 新增模块
-
-遗物内容悬浮窗，在 overlay 上显示可拖动的半透明窗口。
-
-**功能：**
-- 显示识别到的遗物及其包含的部件
-- 按稀有度着色（金银铜）
-- 出入库状态标识
-- 可拖动（拖标题栏移动）
-- 赛博朋克深色风格
-- 右键清除时自动隐藏
-
-### 3.6 DropTooltip (`core/drop_tooltip.py`) — ★ 新增模块
-
-物品掉落来源查询，构建 `all.json` → 物品→掉落来源的内存索引。
-
-**功能：**
-- 查询物品的掉落来源（星球/节点/任务类型/轮次/概率）
-- 星球名中文化（如 Mercury→水星）
-- 生成 HTML 格式的 Tooltip
-- 在管理面板的物品检索中使用
-
-### 3.7 PriceService (`core/price_service.py`) — 价格服务
+### 3.8 PriceService (`core/price_service.py`) — 价格服务
 
 三级查询策略：
 
@@ -257,6 +342,7 @@ query_price(en_name)
 **限速器：** 令牌桶算法，控制 API 请求频率。
 
 **价格着色：**
+
 ```python
 def price_to_color(price, quality):
     # 精确匹配 + 高价 → 金色
@@ -264,7 +350,7 @@ def price_to_color(price, quality):
     # 无价格 → 灰色
 ```
 
-### 3.8 Matcher (`recognizers/matcher.py`) — 匹配引擎
+### 3.9 Matcher (`recognizers/matcher.py`) — 匹配引擎
 
 4 轮降级匹配策略：
 
@@ -277,13 +363,13 @@ match_items(ocr_texts)
     第4轮: 部件蓝图直通（自动补全 Prime）
 ```
 
-**★ 精炼过滤（新增）：**
+**★ 精炼过滤：**
 - 过滤遗物精炼版本（Intact/Exceptional/Flawless/Radiant）
 - 只保留基础遗物名称（如 "Lith A1 Radiant" → "Lith A1 Relic"）
 
-### 3.9 items_i18n (`data/items_i18n.py`) — 中英对照数据库
+### 3.10 items_i18n (`data/items_i18n.py`) — 中英对照数据库
 
-**★ 拼音搜索（新增）：**
+**★ 拼音搜索：**
 - 新增 `zh_pinyin` 字段
 - 使用 `pypinyin` 库生成拼音
 - 支持拼音搜索（全拼+首字母）
@@ -329,10 +415,10 @@ Ctrl+G → TriggerBridge.fired('select')
           → 缓存结果
           → callback(results)
             → _execute_mode(mode)
-              → _handle_check_status()    # 出入库
-              → _handle_query_parts()     # 部件查询
-              → _handle_query_price()     # 价格查询
-              → _handle_translate()       # 翻译
+              → mode_handlers.handle_check_status()   # 出入库
+              → mode_handlers.handle_query_parts()    # 部件查询
+              → mode_handlers.handle_query_price()    # 价格查询
+              → mode_handlers.handle_translate()      # 翻译
 ```
 
 ### 4.3 价格查询快捷键流程（Ctrl+T）
@@ -348,7 +434,7 @@ Ctrl+T → AppCore._on_hotkey('query_price')
       → numpy 切片分4份
       → 逐份 OCR 识别
       → match_and_price()  # 匹配+查价
-      → _render_price_direct()  # 直接渲染价格标注
+      → mode_handlers.render_price_annotations()  # 直接渲染价格标注
 ```
 
 ### 4.4 紧急排障流程（_on_reset）
@@ -360,7 +446,7 @@ Ctrl+T → AppCore._on_hotkey('query_price')
   3. 清除 Overlay 所有视觉元素
   4. 退出框选模式
   5. 恢复鼠标穿透
-  6. 强制重新注册快捷键（默认值）
+  6. HotkeyManager.force_reset() 强制重新注册快捷键（默认值）
   7. 重置 hotkeys.json
   8. 摄像头健康检查
   9. 同步管理面板 UI
@@ -377,11 +463,13 @@ Ctrl+T → AppCore._on_hotkey('query_price')
 | 价格查询 | `ThreadPoolExecutor` | 最多 4 路并发 |
 | 截图竞态 | `_screenshot_lock`（隐式） | 防重入 500ms 间隔 |
 | 退出清理 | `aboutToQuit` → `_shutdown()` | 统一释放资源 |
-| 热键心跳 | 30 秒定时器 | 自动检测+恢复失效热键 |
+| 热键心跳 | 30 秒定时器 → `HotkeyManager.auto_recover()` | 自动检测+恢复失效热键 |
 
 ---
 
 ## 六、文案预设系统
+
+### 6.1 架构设计
 
 三套独立文案文件，管理面板一键切换，即时生效：
 
@@ -392,7 +480,16 @@ language_preset.json → ui_strings.py (路由器)
   └── preset_normal.py         (普通标准)
 ```
 
+**核心组件：**
+
+| 组件 | 文件 | 职责 |
+|------|------|------|
+| 路由器 | `data/ui_strings.py` | 提供 `S("category", "key")` 访问接口，管理预设加载和切换 |
+| 配置文件 | `data/language_preset.json` | 保存当前激活的预设 ID |
+| 预设文件 | `data/preset_*.py` | 定义 `STRINGS` 字典，包含所有 UI 文本 |
+
 **预设文件结构：**
+
 ```python
 STRINGS = {
     "category": {
@@ -403,25 +500,118 @@ STRINGS = {
 }
 ```
 
-**自定义预设：** 创建 `data/preset_xxx.py` → 注册到 `language_preset.json` → 即时可用。
+**使用方式：**
+
+```python
+from data.ui_strings import S, set_language_preset
+
+# 获取文本
+text = S("button", "exit")  # 返回："退出程序"
+
+# 格式化文本
+text = S.format("stat", "count", number=42)  # 返回："42 个"
+
+# 切换预设
+set_language_preset("cyberpunk2077")  # 切换到赛博朋克2077版（默认）
+set_language_preset("santi")          # 切换到三体版
+set_language_preset("normal")         # 切换到普通版
+```
+
+### 6.2 工作原理
+
+1. **初始化加载**：程序启动时从 `language_preset.json` 读取当前激活的预设 ID，加载对应的 `preset_*.py` 文件中的 `STRINGS` 字典到全局变量。
+
+2. **访问文本**：通过 `S("category", "key")` 访问文本，如果 key 不存在则返回 `??category.key??` 占位符。
+
+3. **切换预设**：调用 `set_language_preset(preset_id)` 时：
+   - 加载新预设的 `STRINGS` 字典
+   - 更新全局 `STRINGS` 变量
+   - 保存新预设 ID 到 `language_preset.json`
+   - 触发 UI 刷新（通过 `_rebuild_ui_for_preset()`）
+
+4. **UI 刷新机制**：
+   - 所有需要动态更新文本的控件通过 `_reg_text(widget, category, key)` 注册到 `_text_registry`
+   - 切换预设时遍历 `_text_registry`，调用 `widget.setText(S(category, key))` 更新文本
+   - **注意**：显示动态数据的控件（如数据库统计值）不应注册，由专门的 `refresh_*()` 方法重新填充
+
+### 6.3 添加新预设
+
+1. 创建 `data/preset_xxx.py` 文件，定义 `STRINGS` 字典
+2. 在 `data/language_preset.json` 中添加预设信息：
+   ```json
+   {
+     "active": "cyberpunk2077",
+     "presets": {
+       "xxx": {
+         "name": "预设名称",
+         "desc": "预设描述"
+       }
+     }
+   }
+   ```
+3. 重启程序或手动切换即可使用
+
+### 6.4 图标与文案解耦
+
+**重要原则**：文案预设文件中**不应包含任何图标符号**（如 Unicode 字符 ⊞、◎、⟐ 等）。
+
+**原因**：
+- 图标由 `icon_loader.py` 统一管理，通过 `ICON_MAPPINGS` 配置映射关系
+- 文案只负责纯文本，图标由 UI 层从 `icon_loader` 动态获取
+- 这样切换文案预设时，图标保持不变，实现真正的解耦
 
 ---
 
 ## 七、主题系统
 
-`ThemeConfig` 单例管理 65 个配色字段：
+### 7.1 架构设计
 
-| 配色组 | 字段数 | 说明 |
-|--------|--------|------|
-| 基础色 | 6 | 主色、强调色、背景色等 |
-| 覆盖层 | 8 | 标注文字、背景、边框 |
-| 面板 | 20+ | 管理面板各组件颜色 |
-| 按钮 | 10+ | 按钮正常/悬停/按下状态 |
-| 其他 | ~20 | 滚动条、进度条等 |
+`ThemeConfig` 单例管理 65+ 个配色字段，支持多预设切换和实时预览。
 
-**切换方式：**
-- 管理面板 → 主题换肤 → 点击色块取色 → 实时预览 → 保存
-- 预设切换：赛博朋克2077 / 日光 / 自定义
+**核心组件：**
+
+| 组件 | 文件 | 职责 |
+|------|------|------|
+| 主题管理器 | `core/theme_config.py` | 单例 `ThemeConfig`，管理配色加载/保存/预设切换 |
+| 主题字段定义 | `core/theme_fields.py` | 定义所有主题字段的元数据（名称、分类、默认值） |
+| 主题编辑面板 | `core/theme_panel.py` | 可视化取色器、预设切换、实时预览 |
+| 样式表生成器 | `core/stylesheet.py` | 根据当前主题生成全局 QSS 样式表 |
+| 主题代理 | `core/theme_proxy.py` | 提供便捷的属性访问（`theme.cyber_yellow`） |
+
+**预设类型：**
+
+| 预设 ID | 名称 | 说明 |
+|---------|------|------|
+| `cyberpunk` | 赛博朋克2077 | 深色霓虹风格（默认） |
+| `daylight` | 白天模式 | 浅色明亮风格 |
+| `custom` | 自定义 | 用户自定义配色 |
+
+### 7.2 样式刷新策略
+
+**问题**：Qt 控件的样式分为**全局样式表**和**内联样式**两种，切换主题后需要分别刷新。
+
+**解决方案**：
+
+1. **全局样式表**（自动生效）：
+   ```python
+   self.setStyleSheet(build_stylesheet())  # 应用到整个窗口
+   ```
+
+2. **内联样式**（需手动刷新）：
+   ```python
+   def _refresh_inline_styles(self):
+       t = theme
+       self._nav_list.setStyleSheet(f"""
+           QListWidget {{
+               background-color: {t.panel_darkest};
+               color: {t.text_dim};
+           }}
+       """)
+   ```
+
+**最佳实践**：
+- **优先使用全局样式表**：减少内联样式的使用，降低维护成本
+- **统一刷新入口**：所有样式刷新逻辑集中在 `_refresh_inline_styles()` 方法中
 
 ---
 
@@ -501,16 +691,67 @@ python build_onefile.py
 
 ---
 
-## 十、v3.2 更新记录
+## 十、v3.4 更新记录
+
+### 架构重构（模块化拆分）
+
+| 变更 | 说明 | 文件 |
+|------|------|------|
+| **HotkeyManager** | 热键管理独立模块：注册/健康检查/自动恢复/防重入 | `core/hotkey_manager.py` |
+| **Mode Handlers** | 四大功能处理为纯函数：出入库/遗物查询/翻译/价格标注 | `core/mode_handlers.py` |
+| **Bootstrap** | 入口逻辑独立：单例检测/管理员检测/异常钩子/main() | `core/bootstrap.py` |
+| **main.py 精简** | 1430行 → 813行（减少43%），聚焦 AppCore 核心控制逻辑 | `main.py` |
+
+### 数据库性能优化（P0优先级）
+
+| 变更 | 说明 | 文件 |
+|------|------|------|
+| **Schema版本管理** | 新增 `SCHEMA_VERSION` 常量，自动检测并升级旧版数据库 | `items_i18n.py` |
+| **批量插入优化** | 使用 `executemany()` 替代逐条INSERT，每500条提交一次 | `items_i18n.py` |
+| **拼音完整性检查** | 新增 `check_pinyin_integrity()` 函数，启动时自动检测缺失拼音 | `items_i18n.py` |
+| **拼音自动修复** | 新增 `repair_pinyin_data()` 函数，批量修复缺失的拼音数据 | `items_i18n.py` |
+| **命令行工具** | 添加 `--check-pinyin` / `--repair-pinyin` 命令 | `items_i18n.py` |
+
+**性能提升：**
+- 数据库重建速度：**30-60秒 → 5-10秒**（提升5-10倍）
+- SQL调用次数：**17564次 → 36次**（批量插入）
+- 拼音完整率：**0% → 100%**（自动修复）
+
+### 框选交互修复
+
+| 变更 | 说明 | 文件 |
+|------|------|------|
+| **Overlay状态重置** | 启动框选前重置 `_right_was_down` 和 `_ignore_right_until` | `overlay.py` |
+| **RegionSelector延迟启动** | 检测到右键按下时延迟100ms启动，等待鼠标状态稳定 | `region_selector.py` |
+
+### 打包配置优化
+
+| 变更 | 说明 | 文件 |
+|------|------|------|
+| **新模块声明** | 添加 `core.bootstrap`、`core.hotkey_manager`、`core.mode_handlers` 到 hidden-import | `build_exe.py`, `build_onefile.py` |
+| **pypinyin依赖声明** | 添加hidden-import确保打包后拼音功能正常 | `build_exe.py`, `build_onefile.py` |
+
+---
+
+## 十一、v3.3 更新记录
+
+| 变更 | 说明 |
+|------|------|
+| 主题系统优化 | 修复切换预设时部分区域颜色未更新的问题 |
+| 导航顺序修正 | 调整导航栏顺序与面板模块上下顺序完全一致 |
+| 文案预设清理 | 移除所有预设文件中的硬编码图标符号，实现图标与文案完全解耦 |
+| 图标映射优化 | 为所有导航项和功能按钮分配更合适的唯一图标 |
+| 数据库状态修复 | 修复切换预设时数据库健康监测区域数据不显示的问题 |
+
+---
+
+## 十二、v3.2 更新记录
 
 | 变更 | 说明 |
 |------|------|
 | RegionSelector | 框选逻辑从 Overlay 解耦为独立模块 |
-| RelicTooltip | 新增遗物内容悬浮窗（可拖动） |
-| DropTooltip | 新增物品掉落来源查询 + Tooltip |
 | 拼音搜索 | items_i18n.db 新增 zh_pinyin 字段，支持拼音搜索 |
 | 精炼过滤 | matcher 自动过滤遗物精炼版本 |
 | 热键简化 | 移除 panel 热键，面板改为启动即显示 |
 | 价格查询热键 | `Ctrl+Shift+P` → `Ctrl+T` |
 | 面板重构 | 关闭面板 = 退出程序，新增物品检索标签页 |
-| 文案更新 | 三套预设同步更新（移除 panel 相关，新增拼音提示） |
