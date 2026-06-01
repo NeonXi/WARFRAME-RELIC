@@ -856,6 +856,11 @@ def _search_by_field(conn, q: str, search_field: str, match_field: str,
                 })
 
 
+# ---- 拼音完整性缓存（避免每次 suggest 都检查数据库）----
+_pinyin_integrity_checked = False
+_pinyin_integrity_ok = False
+
+
 def suggest_items(query: str, limit: int = 20) -> list[dict]:
     """实时输入联想：自动检测输入语言，支持中/英/拼音搜索。
 
@@ -873,6 +878,8 @@ def suggest_items(query: str, limit: int = 20) -> list[dict]:
         match_field: 'en' | 'zh' | 'py'（匹配到哪个字段，用于 UI 高亮）
         match_quality: 'exact' | 'prefix' | 'contains'
     """
+    global _pinyin_integrity_checked, _pinyin_integrity_ok
+
     if not query or not query.strip():
         return []
 
@@ -891,6 +898,26 @@ def suggest_items(query: str, limit: int = 20) -> list[dict]:
         has_pinyin_col = any(row[1] == 'zh_pinyin' for row in cur.fetchall())
     except Exception:
         pass
+
+    # ★ 自动修复缺失的拼音数据（仅首次检查，后续跳过）
+    if has_pinyin_col and not _pinyin_integrity_checked:
+        _pinyin_integrity_checked = True
+        try:
+            missing = conn.execute(
+                "SELECT COUNT(*) FROM items WHERE zh_pinyin = '' OR zh_pinyin IS NULL"
+            ).fetchone()[0]
+            if missing > 0 and _HAS_PYPINYIN:
+                print(f"[items_i18n] 检测到 {missing} 条拼音数据缺失，自动修复中...")
+                conn.close()
+                repair_pinyin_data()
+                _pinyin_integrity_ok = True
+                # 重新打开连接
+                conn = sqlite3.connect(DB_PATH)
+                conn.row_factory = sqlite3.Row
+            else:
+                _pinyin_integrity_ok = True
+        except Exception:
+            pass
 
     results = []
     seen = set()
