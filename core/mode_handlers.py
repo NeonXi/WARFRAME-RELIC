@@ -17,6 +17,7 @@ from core.constants import (
 from core.price_service import (
     price_to_color, build_display_name, format_price_annotation,
 )
+from core.annotation import Annotation
 from recognizers.item_name import match_and_price, match_and_translate
 from data.ui_strings import S
 
@@ -55,7 +56,7 @@ def handle_check_status(last_relics, relic_db, last_region, dpi, overlay):
                 color, label = COLOR_AVAILABLE, f"{base_name} [{S('overlay', 'relic_available')}]"
         else:
             color, label = COLOR_UNKNOWN, f"{base_name} [?]"
-        annotations.append((label, sx, sy, 8000, color))
+        annotations.append(Annotation.create(label, sx, sy, duration_ms=8000, color=color))
 
     overlay.show_annotations_stream(
         annotations, auto_hide_ms=8000, interval_ms=30, batch_size=2)
@@ -81,7 +82,8 @@ def handle_query_parts(last_relics, relic_db, last_region, dpi, overlay):
         if not info:
             unmatched_names.append(base_name)
             annotations.append(
-                (S.format("overlay", "relic_no_parts_info", name=base_name), sx, sy, 10000, FALLBACK_COLOR))
+                Annotation.create(S.format("overlay", "relic_no_parts_info", name=base_name),
+                                  sx, sy, duration_ms=10000, color=FALLBACK_COLOR))
             continue
 
         matched += 1
@@ -98,7 +100,7 @@ def handle_query_parts(last_relics, relic_db, last_region, dpi, overlay):
         lines.extend(extra_lines)
         line_colors.extend(extra_colors)
         label = "\n".join(lines)
-        annotations.append((label, sx, sy, 10000, status_color, line_colors))
+        annotations.append(Annotation.create(label, sx, sy, duration_ms=10000, color=status_color, line_colors=line_colors))
 
     overlay.show_annotations_stream(
         annotations, auto_hide_ms=10000, interval_ms=35, batch_size=1)
@@ -171,7 +173,7 @@ def handle_translate(last_items, last_region, dpi, overlay):
         print(f"[显示-翻译] OCR=\"{item.get('ocr_text')}\" | 匹配=\"{en_name}\" | zh=\"{zh_name}\" | "
               f"quality={quality} | 坐标=({sx},{sy}) | 显示文字=\"{label}\"", flush=True)
 
-        annotations.append((label, sx, sy, 10000, color))
+        annotations.append(Annotation.create(label, sx, sy, duration_ms=10000, color=color))
 
     overlay.show_annotations_stream(
         annotations, auto_hide_ms=10000, interval_ms=35, batch_size=1)
@@ -235,7 +237,7 @@ def render_price_annotations(matched, last_region, dpi, overlay):
               f"显示=\"{display_name}\" | quality={quality} | price={price_str} | "
               f"坐标=({sx},{sy}) | 标注=\"{label}\"", flush=True)
 
-        annotations.append((label, sx, sy, 15000, color))
+        annotations.append(Annotation.create(label, sx, sy, duration_ms=15000, color=color))
 
     overlay.show_annotations_stream(
         annotations, auto_hide_ms=15000, interval_ms=40, batch_size=1)

@@ -8,6 +8,7 @@ from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QCursor
 
 from core.word_wrap_button import WordWrapButton
 from core.region_selector import RegionSelector
+from core.annotation import Annotation
 from core.constants import (
     CYBER_YELLOW, CYBER_CYAN, CYBER_MAGENTA,
     CYBER_DARK_BG, CYBER_BORDER, CYBER_TEXT,
@@ -161,7 +162,7 @@ class Overlay(QWidget):
         """
         # 有正在显示的标注（含未过期）
         now = int(time.time() * 1000)
-        if any(a[3] > now for a in self._annotations):
+        if any(not a.is_expired(now) for a in self._annotations):
             return True
         # 有可见的功能按钮
         if any(btn.isVisible() for btn in self._mode_buttons.values()):
@@ -365,38 +366,46 @@ class Overlay(QWidget):
 
     # ========== 标注系统 ==========
 
-    def _normalize_annotations(self, annotations, auto_hide_ms=5000):
-        """预处理标注列表，统一为 (text, x, y, expire_ms, color, line_colors) 格式。
+    def _normalize_annotations(self, annotations, auto_hide_ms=5000) -> list:
+        """预处理标注列表，统一为 Annotation 对象列表。
 
-        annotations 元素格式（向后兼容）：
-          - 3元组: (text, x, y)                        → 默认金色 + auto_hide_ms
-          - 4元组: (text, x, y, color)                  → 指定颜色 + auto_hide_ms
-          - 5元组: (text, x, y, expire_ms, color)        → 完全自定义
-          - 6元组: (text, x, y, expire_ms, color, line_colors) → 多行分别着色
+        兼容两种输入格式：
+          - Annotation 对象（新格式，直接使用）
+          - 旧版元组（向后兼容）：
+            * 3元组: (text, x, y)                        → 默认金色 + auto_hide_ms
+            * 4元组: (text, x, y, color)                  → 指定颜色 + auto_hide_ms
+            * 5元组: (text, x, y, expire_ms, color)        → 完全自定义
+            * 6元组: (text, x, y, expire_ms, color, line_colors) → 多行分别着色
         """
         now_ms = int(time.time() * 1000)
         default_color = CYBER_YELLOW
         result = []
         for item in annotations:
+            if isinstance(item, Annotation):
+                # ★ 新格式：直接使用
+                result.append(item)
+                continue
+
+            # 旧格式兼容
             line_colors = None
             if len(item) >= 6:
                 text, x, y, expire_offset, color = item[:5]
                 line_colors = item[5]
-                result.append((text, int(x), int(y), now_ms + int(expire_offset), color, line_colors))
+                result.append(Annotation(text, int(x), int(y), now_ms + int(expire_offset), color, line_colors))
             elif len(item) >= 5:
                 text, x, y, expire_offset, color = item[:5]
-                result.append((text, int(x), int(y), now_ms + int(expire_offset), color, None))
+                result.append(Annotation(text, int(x), int(y), now_ms + int(expire_offset), color, None))
             elif len(item) == 4:
                 val4 = item[3]
                 if isinstance(val4, str) and val4.startswith('#'):
                     text, x, y, color = item
-                    result.append((text, int(x), int(y), now_ms + auto_hide_ms, color, None))
+                    result.append(Annotation(text, int(x), int(y), now_ms + auto_hide_ms, color, None))
                 else:
                     text, x, y, expire_offset = item
-                    result.append((text, int(x), int(y), now_ms + int(expire_offset), default_color, None))
+                    result.append(Annotation(text, int(x), int(y), now_ms + int(expire_offset), default_color, None))
             else:
                 text, x, y = item
-                result.append((text, int(x), int(y), now_ms + auto_hide_ms, default_color, None))
+                result.append(Annotation(text, int(x), int(y), now_ms + auto_hide_ms, default_color, None))
         return result
 
     def show_annotations(self, annotations, auto_hide_ms=5000):
@@ -446,49 +455,39 @@ class Overlay(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         now = int(time.time() * 1000)
-        active = [a for a in self._annotations if a[3] > now]
+        active = [a for a in self._annotations if not a.is_expired(now)]
         if active:
             painter.setFont(QFont("Microsoft YaHei", 12))
-            for item in active:
-                # 解包（兼容新旧格式）
-                if len(item) >= 6:
-                    text, x, y, _, color, line_colors = item
-                else:
-                    text, x, y, _, color = item
-                    line_colors = None
-
+            for a in active:
                 fm = painter.fontMetrics()
                 line_height = fm.height() + 4  # 行高（含行间距）
 
                 # 背景颜色：2077 深蓝黑半透明
                 bg_color = QColor(*OVERLAY_BG_COLOR)
 
-                if '\n' in text:
+                if a.is_multiline:
                     # === 多行文本 ===
-                    lines = text.split('\n')
+                    lines = a.text.split('\n')
                     max_tw = max(fm.boundingRect(line).width() for line in lines) + 16
                     total_th = line_height * len(lines) + 8
 
                     # 绘制半透明背景 + 2077 风格左边框装饰条
-                    painter.fillRect(x, y, max_tw, total_th, bg_color)
-                    painter.fillRect(x, y, 3, total_th, QColor(str(CYBER_YELLOW)))
+                    painter.fillRect(a.x, a.y, max_tw, total_th, bg_color)
+                    painter.fillRect(a.x, a.y, 3, total_th, QColor(str(CYBER_YELLOW)))
 
-                    # 逐行绘制：有 line_colors 则按行着色，否则统一用 color
+                    # 逐行绘制
                     for i, line in enumerate(lines):
-                        if line_colors and i < len(line_colors):
-                            painter.setPen(QColor(str(line_colors[i])))
-                        else:
-                            painter.setPen(QColor(str(color)))
-                        line_y = y + fm.ascent() + 2 + i * line_height
-                        painter.drawText(x + 12, line_y, line)
+                        painter.setPen(QColor(str(a.get_line_color(i))))
+                        line_y = a.y + fm.ascent() + 2 + i * line_height
+                        painter.drawText(a.x + 12, line_y, line)
                 else:
                     # === 单行文本 ===
-                    tw = fm.boundingRect(text).width() + 16
+                    tw = fm.boundingRect(a.text).width() + 16
                     th = fm.height() + 6
-                    painter.fillRect(x, y, tw, th, bg_color)
-                    painter.fillRect(x, y, 3, th, QColor(str(CYBER_YELLOW)))
-                    painter.setPen(QColor(str(color)))
-                    painter.drawText(x + 10, y + fm.ascent() + 3, text)
+                    painter.fillRect(a.x, a.y, tw, th, bg_color)
+                    painter.fillRect(a.x, a.y, 3, th, QColor(str(CYBER_YELLOW)))
+                    painter.setPen(QColor(str(a.color)))
+                    painter.drawText(a.x + 10, a.y + fm.ascent() + 3, a.text)
 
         # ★ 绘制4等分区域框线（价格查询用，物理坐标 → 需除以dpi转逻辑坐标）
         if self._split_regions:
@@ -569,7 +568,7 @@ class Overlay(QWidget):
 
         # 清理过期的标注（避免 paintEvent 每帧遍历全列表）
         if self._annotations:
-            active = [a for a in self._annotations if a[3] > now]
+            active = [a for a in self._annotations if not a.is_expired(now)]
             if len(active) != len(self._annotations):
                 self._annotations = active
                 self.update()
