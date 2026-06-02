@@ -1,5 +1,5 @@
 {
-  "cyber_yellow": "#ff0000",
+  "cyber_yellow": "#FFE600",
   "cyber_cyan": "#00FFFF",
   "cyber_magenta": "#FF0099",
   "cyber_orange": "#FF7700",
@@ -16,7 +16,7 @@
   "color_available": "#FF0055",
   "color_unknown": "#556688",
   "color_gold": "#FFD700",
-  "color_silver": "#00FFFF",
+  "color_silver": "#ffffff",
   "color_copper": "#FF7700",
   "log_ok": "#00FF99",
   "log_warn": "#FF7700",

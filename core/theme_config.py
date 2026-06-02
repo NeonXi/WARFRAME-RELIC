@@ -61,6 +61,7 @@ class ThemeConfig:
         self._bg_opacity = 0.3
         self._bg_blur = 8
         self._bg_enabled = False
+        self._panel_overlay_opacity = 180  # 面板遮罩透明度 (0-255)
         # 延迟保存机制
         self._bg_save_pending = False
         self._bg_save_timer = None  # 延迟到 add_listener 后初始化
@@ -265,6 +266,7 @@ class ThemeConfig:
                     self._bg_opacity = config.get('opacity', 0.3)
                     self._bg_blur = config.get('blur', 8)
                     self._bg_enabled = config.get('enabled', False)
+                    self._panel_overlay_opacity = config.get('panel_overlay_opacity', 180)
                     # 验证路径是否存在
                     if self._bg_image_path and not os.path.exists(self._bg_image_path):
                         self._bg_image_path = None
@@ -279,7 +281,8 @@ class ThemeConfig:
                 'image_path': self._bg_image_path,
                 'opacity': self._bg_opacity,
                 'blur': self._bg_blur,
-                'enabled': self._bg_enabled
+                'enabled': self._bg_enabled,
+                'panel_overlay_opacity': self._panel_overlay_opacity
             }
             with open(self._bg_config_path, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
@@ -421,6 +424,20 @@ class ThemeConfig:
         self._bg_blur = max(0, min(50, value))
         self._notify_listeners()
         # 延迟保存（2秒后自动保存）
+        self._bg_save_pending = True
+        if self._bg_save_timer:
+            self._bg_save_timer.start(2000)
+
+    @property
+    def panel_overlay_opacity(self) -> int:
+        """面板遮罩透明度 (0-255)，控制导航区/日志区等半透明面板的 alpha 值"""
+        return self._panel_overlay_opacity
+
+    @panel_overlay_opacity.setter
+    def panel_overlay_opacity(self, value: int):
+        """设置面板遮罩透明度（延迟保存）"""
+        self._panel_overlay_opacity = max(0, min(255, value))
+        self._notify_listeners()
         self._bg_save_pending = True
         if self._bg_save_timer:
             self._bg_save_timer.start(2000)
@@ -663,17 +680,25 @@ class ThemeConfig:
         """返回当前活动预设的显示名称。"""
         return self.PRESETS.get(self._active_preset, {}).get("name", "未知")
 
-    def get_panel_bg_color(self, alpha: int = 180) -> str:
+    def get_panel_bg_color(self, alpha: int | None = None) -> str:
         """获取面板背景色（考虑背景图是否启用）。
         
+        有背景图时返回半透明色，透明度由 panel_overlay_opacity 控制（用户可调节）。
+        无背景图时返回纯色 panel_darkest。
+        
         Args:
-            alpha: 透明度值 (0-255)，默认 180
+            alpha: 透明度值 (0-255)。不传则使用 panel_overlay_opacity 配置值。
+                  传入时会按比例缩放：实际 alpha = panel_overlay_opacity * alpha / 180
             
         Returns:
             背景色字符串，有背景图时返回半透明色，无背景图时返回纯色
         """
         if self.background_enabled and self.background_image_path:
-            return f"rgba(5, 5, 20, {alpha})"
+            actual_alpha = self._panel_overlay_opacity
+            if alpha is not None:
+                actual_alpha = int(self._panel_overlay_opacity * alpha / 180)
+            actual_alpha = max(0, min(255, actual_alpha))
+            return f"rgba(5, 5, 20, {actual_alpha})"
         return self.panel_darkest
 
     def __getattr__(self, name):

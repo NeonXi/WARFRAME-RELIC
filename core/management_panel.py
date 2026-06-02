@@ -150,6 +150,11 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
         elif change_type == "blur":
             self._apply_blur_effect()
             return
+        elif change_type == "panel_overlay":
+            # 刷新导航栏和日志区等面板遮罩样式（轻量刷新）
+            self._refresh_nav_list_style()
+            self._update_panel.refresh_inline_styles()
+            return
         elif change_type == "color":
             self._rebuild_styles_and_swatches_partial()
         else:

@@ -1,6 +1,7 @@
 {
-  "image_path": "D:\\MyProgram\\WARFRAME-RELIC\\data\\backgrounds\\DM_20250628195421_001.jpg",
-  "opacity": 0.8,
+  "image_path": "D:\\MyProgram\\WARFRAME-RELIC\\data\\backgrounds\\20230617014317163.jpg",
+  "opacity": 0.0,
   "blur": 0,
-  "enabled": true
+  "enabled": true,
+  "panel_overlay_opacity": 0
 }

@@ -154,10 +154,22 @@ class BgLayerMixin:
     # ============================================================
 
     def _apply_opacity_overlay(self):
-        """极轻量刷新：只更新遮罩层 alpha，一行 QSS 零开销。"""
+        """极轻量刷新：只更新遮罩层 alpha，一行 QSS 零开销。
+
+        遮罩颜色跟随主题 panel_darkest，白天模式用浅色，暗色模式用深色。
+        """
+        # 解析当前主题的 panel_darkest 颜色
+        base_color = theme.panel_darkest if hasattr(theme, 'panel_darkest') else "#040412"
+        if isinstance(base_color, str) and base_color.startswith('#'):
+            r = int(base_color[1:3], 16)
+            g = int(base_color[3:5], 16)
+            b = int(base_color[5:7], 16)
+        else:
+            r, g, b = 4, 4, 18
+
         alpha = int(theme.background_opacity * 200)
         self._opacity_overlay.setStyleSheet(
-            f"background-color: rgba(8, 8, 26, {alpha});"
+            f"background-color: rgba({r}, {g}, {b}, {alpha});"
         )
 
     # ============================================================

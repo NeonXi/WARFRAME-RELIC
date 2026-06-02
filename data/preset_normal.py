@@ -206,6 +206,7 @@ STRINGS = {
         "color_pick_title": "选择颜色 - {field}",
         "opacity": "透明度",
         "blur": "模糊度",
+        "panel_overlay": "面板遮罩",
         "select_bg_title": "选择背景图片",
         "bg_uploaded": "背景图上传成功",
         "bg_upload_failed": "背景图上传失败",

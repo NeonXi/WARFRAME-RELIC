@@ -1478,7 +1478,7 @@ class PanelBuilderMixin:
         self._preset_combo.wheelEvent = lambda e: e.ignore()
         self._preset_combo.setStyleSheet(f"""
             QComboBox {{
-                background-color: {theme.card_bg};
+                background-color: {theme.get_panel_bg_color(120)};
                 color: {theme.cyber_cyan};
                 border: 1px solid {theme.border};
                 border-radius: 4px;
@@ -1492,7 +1492,7 @@ class PanelBuilderMixin:
                 width: 20px;
             }}
             QComboBox QAbstractItemView {{
-                background-color: transparent;
+                background-color: {theme.panel_bg};
                 color: {theme.text};
                 border: 1px solid {theme.border};
                 selection-background-color: {theme.cyber_yellow};
@@ -1636,13 +1636,14 @@ class PanelBuilderMixin:
         log_area.setObjectName("LogArea")
         log_area.setStyleSheet(f"""
             QTextEdit#LogArea {{
+                background-color: {theme.get_panel_bg_color(160)};
                 color: {theme.text};
                 border: 1px solid {theme.border}; border-radius: 4px;
                 font-family: "Consolas", "Microsoft YaHei", monospace;
                 font-size: 11px; padding: 8px;
             }}
             QScrollBar:vertical {{
-                background: {theme.panel_bg}; width: 8px; border-radius: 4px;
+                background: transparent; width: 8px; border-radius: 4px;
             }}
             QScrollBar::handle:vertical {{
                 background: {theme.border}; border-radius: 4px; min-height: 30px;

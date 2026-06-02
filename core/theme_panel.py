@@ -170,9 +170,9 @@ class ThemePanel:
         panel_layout.addWidget(tip)
 
         # ── 自定义背景图 ──
-        bg_group = QWidget()
-        bg_group.setStyleSheet(f"background: {theme.panel_deeper}; border: 1px solid {theme.border}; border-radius: 4px;")
-        bg_group_layout = QVBoxLayout(bg_group)
+        self._bg_group = QWidget()
+        self._bg_group.setStyleSheet(f"background: {theme.panel_deeper}; border: 1px solid {theme.border}; border-radius: 4px;")
+        bg_group_layout = QVBoxLayout(self._bg_group)
         bg_group_layout.setContentsMargins(8, 8, 8, 8)
         bg_group_layout.setSpacing(6)
         
@@ -246,6 +246,32 @@ class ThemePanel:
         blur_row.addWidget(self._blur_slider)
         bg_group_layout.addLayout(blur_row)
         
+        # 面板遮罩透明度滑块（控制导航区/日志区等面板的半透明遮罩）
+        overlay_row = QHBoxLayout()
+        overlay_lbl = QLabel(S("theme", "panel_overlay"))
+        overlay_lbl.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px;")
+        overlay_row.addWidget(overlay_lbl)
+        self._panel_overlay_slider = QSlider(Qt.Orientation.Horizontal)
+        self._panel_overlay_slider.setRange(0, 255)
+        self._panel_overlay_slider.setSingleStep(5)
+        self._panel_overlay_slider.setPageStep(25)
+        self._panel_overlay_slider.setValue(theme.panel_overlay_opacity)
+        self._panel_overlay_slider.setStyleSheet(f"""
+            QSlider::groove:horizontal {{
+                height: 6px; background: {theme.panel_bg}; border-radius: 3px;
+            }}
+            QSlider::handle:horizontal {{
+                background: {theme.cyber_cyan}; width: 20px; height: 20px;
+                border-radius: 10px; margin: -7px 0;
+            }}
+            QSlider::handle:horizontal:hover {{
+                background: #00e5ff;
+            }}
+        """)
+        self._panel_overlay_slider.valueChanged.connect(self._on_panel_overlay_changed)
+        overlay_row.addWidget(self._panel_overlay_slider)
+        bg_group_layout.addLayout(overlay_row)
+        
         # 清除按钮
         self._btn_clear_bg = QPushButton(S("button", "clear_bg"))
         self._btn_clear_bg.setObjectName("dangerBtn")
@@ -260,7 +286,7 @@ class ThemePanel:
         self._btn_clear_bg.clicked.connect(self._on_clear_background)
         bg_group_layout.addWidget(self._btn_clear_bg)
         
-        panel_layout.addWidget(bg_group)
+        panel_layout.addWidget(self._bg_group)
 
         # 色块滚动区
         self._build_swatches(panel_layout)
@@ -459,6 +485,11 @@ class ThemePanel:
         theme.background_blur = max(0, min(50, value))
         self._notify_theme_changed(change_type="blur")
 
+    def _on_panel_overlay_changed(self, value):
+        """面板遮罩透明度变化 —— 刷新导航区/日志区等面板遮罩"""
+        theme.panel_overlay_opacity = max(0, min(255, value))
+        self._notify_theme_changed(change_type="panel_overlay")
+
     def _notify_theme_changed(self, change_type="full"):
         """通知 ManagementPanel 主题已变更。
         
@@ -471,6 +502,7 @@ class ThemePanel:
                 - "opacity": 只刷新透明度相关
                 - "blur": 只刷新模糊度相关
                 - "color": 颜色变更（需要刷新色块）
+                - "panel_overlay": 面板遮罩透明度变更（导航/日志区样式刷新）
         """
         self._on_theme_changed(change_type)
 
@@ -525,6 +557,11 @@ class ThemePanel:
             f"QScrollArea {{ border: 1px solid {t.border}; "
             f"border-radius: 4px; background: {t.panel_deeper}; }}")
         self._swatch_container.setStyleSheet(f"background: {t.panel_deeper};")
+
+        # 背景图区域容器
+        if hasattr(self, '_bg_group'):
+            self._bg_group.setStyleSheet(
+                f"background: {t.panel_deeper}; border: 1px solid {t.border}; border-radius: 4px;")
 
     def rebuild_swatches(self):
         """刷新所有色块颜色。"""
