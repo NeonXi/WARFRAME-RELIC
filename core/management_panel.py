@@ -132,6 +132,46 @@ class ManagementPanel(QWidget):
         self._last_bg_width = self.width()
         self._last_bg_height = self.height()
 
+    def _apply_opacity_blur_to_layers(self):
+        """★ 轻量刷新：只更新 ContentLayer 的 rgba alpha（不触发完整 QSS 重解析）
+        
+        对比之前的做法（self.setStyleSheet(build_stylesheet())），此方法：
+        - 只生成一条短 QSS 字符串（~300 字符 vs ~5000 字符）
+        - 只应用于 _content_layer 而非整个 ManagementPanel
+        - 不触发 widget 树全局重绘，仅重绘内容层
+        - 拖动滑块时不会阻塞事件循环
+        """
+        opacity = theme.background_opacity
+        blur = theme.background_blur
+
+        # 计算 alpha 值（与 _build_background_style 保持一致）
+        content_alpha = int(opacity * 200)
+        panel_alpha = int(opacity * 180)
+
+        # 构建模糊效果
+        backdrop_blur = f"backdrop-filter: blur({blur}px);" if blur > 0 else ""
+
+        # 只更新 ContentLayer 及其子控件的背景色（这是 opacity/blur 影响的全部范围）
+        self._content_layer.setStyleSheet(f"""
+            QWidget#ContentLayer {{
+                background-color: rgba(8, 8, 26, {content_alpha});
+                border: none;
+                {backdrop_blur}
+            }}
+            QWidget#ContentLayer > QWidget,
+            QWidget#ContentLayer > QFrame,
+            QWidget#ContentLayer > QScrollArea,
+            QWidget#ContentLayer > QListWidget {{
+                background-color: rgba(8, 8, 26, {panel_alpha});
+                border: none;
+            }}
+            QWidget#ContentLayer > QWidget > QGroupBox,
+            QWidget#ContentLayer > QScrollArea > QWidget > QGroupBox,
+            QWidget#ContentLayer > QWidget > QGroupBox > QWidget {{
+                background-color: rgba(5, 5, 20, {panel_alpha});
+            }}
+        """)
+
     def _update_background_size_immediate(self):
         """立即更新背景图尺寸（不带 debounce，用于主题变更时）"""
         if theme.background_enabled and theme.background_image_path:
@@ -2261,9 +2301,12 @@ class ManagementPanel(QWidget):
                 - "color": 颜色变更（需要刷新色块）
         """
         if change_type == "opacity" or change_type == "blur":
-            # 最小刷新：利用 bg_key 量化缓存，只更新 QSS（缓存命中时极快）
-            self.setStyleSheet(build_stylesheet())
-            self._update_background_size_immediate()
+            # ★ 轻量刷新：只更新 ContentLayer 的 rgba alpha，不重新解析整个 QSS
+            self._apply_opacity_blur_to_layers()
+            # 不调用 _update_background_size_immediate()（opacity/blur 不影响尺寸）
+            # 不调用 self.setStyleSheet(build_stylesheet())（避免重量级 QSS 重解析）
+            # 不 emit theme_changed（opacity/blur 不影响 overlay）
+            return
         elif change_type == "color":
             # 中等刷新：更新样式表和内联样式，不重建色块
             self._rebuild_styles_and_swatches_partial()
