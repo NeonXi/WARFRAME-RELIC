@@ -321,10 +321,7 @@ QWidget#ContentLayer > QWidget > QGroupBox > QWidget {{
 
 /* 5. 兼容 QMainWindow */
 QMainWindow#MainWindow {{
-    background-image: url("{escaped_path}");
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
+    background-color: transparent;
 }}
 """
     

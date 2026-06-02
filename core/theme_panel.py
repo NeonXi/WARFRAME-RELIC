@@ -207,11 +207,14 @@ class ThemePanel:
         self._opacity_slider.setValue(int(theme.background_opacity * 100))
         self._opacity_slider.setStyleSheet(f"""
             QSlider::groove:horizontal {{
-                height: 4px; background: {theme.panel_bg}; border-radius: 2px;
+                height: 6px; background: {theme.panel_bg}; border-radius: 3px;
             }}
             QSlider::handle:horizontal {{
-                background: {theme.cyber_cyan}; width: 12px; height: 12px;
-                border-radius: 6px; margin: -4px 0;
+                background: {theme.cyber_cyan}; width: 20px; height: 20px;
+                border-radius: 10px; margin: -7px 0;
+            }}
+            QSlider::handle:horizontal:hover {{
+                background: #00e5ff;
             }}
         """)
         # 透明度即时响应（只更新一行 QSS，无需防抖）
@@ -229,11 +232,14 @@ class ThemePanel:
         self._blur_slider.setValue(theme.background_blur)
         self._blur_slider.setStyleSheet(f"""
             QSlider::groove:horizontal {{
-                height: 4px; background: {theme.panel_bg}; border-radius: 2px;
+                height: 6px; background: {theme.panel_bg}; border-radius: 3px;
             }}
             QSlider::handle:horizontal {{
-                background: {theme.cyber_cyan}; width: 12px; height: 12px;
-                border-radius: 6px; margin: -4px 0;
+                background: {theme.cyber_cyan}; width: 20px; height: 20px;
+                border-radius: 10px; margin: -7px 0;
+            }}
+            QSlider::handle:horizontal:hover {{
+                background: #00e5ff;
             }}
         """)
         self._blur_slider.valueChanged.connect(self._on_blur_changed)
@@ -360,7 +366,7 @@ class ThemePanel:
         prev_preset = theme.active_preset
         theme.save(self._theme_draft)
         self._sync_preset_combo(prev_preset)
-        self._on_theme_changed(change_type="full")
+        self._notify_theme_changed(change_type="full")
 
     def _on_save(self):
         if not self._theme_draft:
@@ -371,7 +377,7 @@ class ThemePanel:
         if theme.save(self._theme_draft):
             self._theme_draft = {}
             self._sync_preset_combo(prev_preset)
-            self._on_theme_changed(change_type="full")
+            self._notify_theme_changed(change_type="full")
             preset_name = theme.current_preset_name()
             if prev_preset != theme.active_preset:
                 self._add_log("ok", S.format("theme", "saved_to", name=preset_name))
@@ -397,7 +403,7 @@ class ThemePanel:
             return
         theme.reset()
         self._theme_draft = {}
-        self._on_theme_changed(change_type="full")
+        self._notify_theme_changed(change_type="full")
         QMessageBox.information(self._parent, S("theme", "reset_done_title"),
             S.format("theme", "reset_done_msg", name=theme.current_preset_name()))
 
@@ -408,7 +414,7 @@ class ThemePanel:
         preset_name = ThemeConfig.PRESETS[preset_id]["name"]
         if theme.apply_preset(preset_id):
             self._theme_draft = {}
-            self._on_theme_changed(change_type="full")
+            self._notify_theme_changed(change_type="full")
             # 确保下拉框停留在当前选择的预设
             idx = self._preset_combo.findData(preset_id)
             if idx >= 0:
@@ -433,29 +439,32 @@ class ThemePanel:
         if file_path:
             if theme.set_background_image(file_path):
                 self._add_log("ok", S("theme", "bg_uploaded"))
-                self._on_theme_changed(change_type="full")
+                self._notify_theme_changed(change_type="full")
             else:
                 self._add_log("error", S("theme", "bg_upload_failed"))
 
     def _on_clear_background(self):
         """清除背景图"""
         theme.clear_background_image()
-        self._on_theme_changed(change_type="full")
+        self._notify_theme_changed(change_type="full")
         self._add_log("info", S("theme", "bg_cleared"))
 
     def _on_opacity_changed(self, value):
         """透明度变化 —— 即时响应，只更新一行 QSS，无需防抖"""
         theme.background_opacity = value / 100.0
-        self._on_theme_changed(change_type="opacity")
+        self._notify_theme_changed(change_type="opacity")
 
     def _on_blur_changed(self, value):
         """模糊度变化 —— 即时响应"""
         theme.background_blur = max(0, min(50, value))
-        self._on_theme_changed(change_type="blur")
+        self._notify_theme_changed(change_type="blur")
 
-    def _on_theme_changed(self, change_type="full"):
-        """主题变更回调
+    def _notify_theme_changed(self, change_type="full"):
+        """通知 ManagementPanel 主题已变更。
         
+        注意：方法名不能与 __init__ 中保存的 _on_theme_changed 回调属性同名，
+        否则会覆盖回调导致 AttributeError。
+
         Args:
             change_type: 变更类型
                 - "full": 完整刷新（预设切换、背景图上传）
@@ -463,7 +472,7 @@ class ThemePanel:
                 - "blur": 只刷新模糊度相关
                 - "color": 颜色变更（需要刷新色块）
         """
-        self._on_theme_changed_internal(change_type)
+        self._on_theme_changed(change_type)
 
     # ============================================================
     # 样式刷新

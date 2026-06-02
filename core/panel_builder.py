@@ -9,6 +9,7 @@ WARFRAME-RELIC UI 构建 Mixin
 
 import os
 from pathlib import Path
+from core.bg_layer import BgImageWidget
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QPushButton,
@@ -83,7 +84,7 @@ class PanelBuilderMixin:
         main_layout.setSpacing(0)
 
         # 1. 背景图占位层（最底层）
-        self._bg_image_placeholder = QWidget()
+        self._bg_image_placeholder = BgImageWidget()
         self._bg_image_placeholder.setObjectName("BgImagePlaceholder")
         self._bg_image_placeholder.setStyleSheet("background-color: transparent;")
         self._bg_blur_effect = QGraphicsBlurEffect()
