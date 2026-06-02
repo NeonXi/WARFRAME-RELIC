@@ -74,6 +74,7 @@ STRINGS = {
         "hotkey_settings": "快捷键设置",
         "feature_toggles": "截图后功能开关",
         "theme": "主题换肤",
+        "lang_preset": "语言风格 · 文案预设",
         "about_author": "关于作者",
     },
 
@@ -487,6 +488,7 @@ STRINGS = {
         "label_default": "统计标签文字",
         "panel_darkest": "最深底色（日志区）",
         "panel_deeper": "次深底色（代码框）",
+        "panel_overlay_rgb": "面板遮罩色",
         "color_vaulted": "遗物出库标注",
         "color_available": "遗物入库标注",
         "color_unknown": "遗物未知标注",

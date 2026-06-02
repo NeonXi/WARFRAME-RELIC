@@ -131,7 +131,7 @@ class PanelBuilderMixin:
                 border-radius: 6px;
                 margin: 2px 4px;
                 font-size: 13px;
-                background-color: rgba(5, 5, 20, 180);
+                background-color: {theme.get_panel_bg_color(180)};
             }}
             QListWidget::item:hover {{
                 background-color: {theme.card_bg};
@@ -1450,8 +1450,9 @@ class PanelBuilderMixin:
         from PyQt6.QtWidgets import QComboBox
         from data.ui_strings import get_active_preset, get_preset_info, set_language_preset
 
-        group = QGroupBox("语言风格 · 文案预设")
+        group = QGroupBox(S("group", "lang_preset"))
         self._lang_preset_group = group
+        self._reg_text(group, "group", "lang_preset")
         group.setStyleSheet(f"""
             QGroupBox {{
                 background-color: transparent;
@@ -1701,13 +1702,23 @@ class PanelBuilderMixin:
     def _refresh_nav_labels(self):
         if not hasattr(self, '_nav_list') or not hasattr(self, '_nav_items'):
             return
-        for i, (nav_id, icon, s_cat, s_key, default_text) in enumerate(self._nav_items):
+        from data.icon_loader import get_icon_loader, get_nav_icon
+        icon_loader = get_icon_loader()
+        for i, item_tuple in enumerate(self._nav_items):
             item = self._nav_list.item(i)
             if item:
+                nav_id, s_cat, s_key, default_text = item_tuple
                 text = S(s_cat, s_key)
                 if text.startswith("??") and text.endswith("??"):
                     text = default_text
-                item.setText(f"{icon}  {text}")
+                # 与 _build_nav 保持一致的图标处理逻辑
+                qicon = icon_loader.get_icon("nav", nav_id, size=20)
+                if qicon:
+                    item.setIcon(qicon)
+                    item.setText(text)
+                else:
+                    icon = get_nav_icon(nav_id)
+                    item.setText(f"{icon}  {text}")
 
     # ============================================================
     # 事件过滤器（滚轮转发 + tooltip）
