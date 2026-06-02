@@ -255,8 +255,10 @@ QFrame#sep {{
         """构建背景图样式（分层架构）
         
         架构设计：
-        - BackgroundLayer: 最底层，承载背景图
-        - ContentLayer: 中间层，半透明遮罩
+        - BackgroundLayer: 容器
+        - BgImagePlaceholder: 承载背景图
+        - OpacityOverlay: 纯色遮罩（opacity 变化时只更新这一层）
+        - ContentLayer: 完全透明，承载所有 UI 控件
         
         Args:
             image_path: 背景图路径
@@ -269,14 +271,11 @@ QFrame#sep {{
         # 处理路径转义
         escaped_path = os.path.normpath(image_path).replace('\\', '/')
         
-        # 计算内容层透明度
-        content_alpha = int(opacity * 200)
+        # 计算遮罩层透明度
+        overlay_alpha = int(opacity * 200)
         
         # 功能区半透明背景（略深，便于阅读）
         panel_alpha = int(opacity * 180)
-        
-        # 构建 backdrop-filter 模糊效果（Qt 5.15+ 支持）
-        backdrop_blur = f"backdrop-filter: blur({blur}px);" if blur > 0 else ""
         
         return f"""
 /* ===== 分层架构样式（有背景图时覆盖基础样式）===== */
@@ -286,19 +285,23 @@ QWidget#ManagementPanel {{
     background-color: transparent;
 }}
 
-/* 1. 背景层 - 最底层，承载背景图 */
-QWidget#BackgroundLayer {{
+/* 1. 背景图占位层 - 承载背景图 */
+QWidget#BgImagePlaceholder {{
     background-image: url("{escaped_path}");
     background-repeat: no-repeat;
     background-position: center center;
     /* background-size 由管理面板动态计算设置 */
 }}
 
-/* 2. 内容层 - 中间层，半透明遮罩 + 模糊效果 */
+/* 1.5. 不透明度遮罩层 - 纯色覆盖 */
+QWidget#OpacityOverlay {{
+    background-color: rgba(8, 8, 26, {overlay_alpha});
+}}
+
+/* 2. 内容层 - 完全透明 */
 QWidget#ContentLayer {{
-    background-color: rgba(8, 8, 26, {content_alpha});
+    background-color: transparent;
     border: none;
-    {backdrop_blur}
 }}
 
 /* 3. 内容层下的所有直接子部件 - 半透明背景 */

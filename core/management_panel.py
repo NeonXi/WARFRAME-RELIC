@@ -119,8 +119,8 @@ class ManagementPanel(QWidget):
         
         # 更新背景图尺寸
         bg_size = theme.calculate_background_size(self.width(), self.height())
-        self._background_layer.setStyleSheet(f"""
-            QWidget#BackgroundLayer {{
+        self._bg_image_placeholder.setStyleSheet(f"""
+            QWidget#BgImagePlaceholder {{
                 background-image: url("{os.path.normpath(theme.background_image_path).replace('\\', '/')}");
                 background-repeat: no-repeat;
                 background-position: center center;
@@ -133,51 +133,24 @@ class ManagementPanel(QWidget):
         self._last_bg_height = self.height()
 
     def _apply_opacity_blur_to_layers(self):
-        """★ 轻量刷新：只更新 ContentLayer 的 rgba alpha（不触发完整 QSS 重解析）
+        """★ 极轻量刷新：只更新 OpacityOverlay 的背景色 alpha（一行 QSS）
         
-        对比之前的做法（self.setStyleSheet(build_stylesheet())），此方法：
-        - 只生成一条短 QSS 字符串（~300 字符 vs ~5000 字符）
-        - 只应用于 _content_layer 而非整个 ManagementPanel
-        - 不触发 widget 树全局重绘，仅重绘内容层
-        - 拖动滑块时不会阻塞事件循环
+        通过 QStackedLayout 叠加一个纯色遮罩在背景图之上、UI 之下。
+        opacity 变化时只改这一行 CSS，不触发 widget 树全局重解析。
         """
         opacity = theme.background_opacity
-        blur = theme.background_blur
-
-        # 计算 alpha 值（与 _build_background_style 保持一致）
-        content_alpha = int(opacity * 200)
-        panel_alpha = int(opacity * 180)
-
-        # 构建模糊效果
-        backdrop_blur = f"backdrop-filter: blur({blur}px);" if blur > 0 else ""
-
-        # 只更新 ContentLayer 及其子控件的背景色（这是 opacity/blur 影响的全部范围）
-        self._content_layer.setStyleSheet(f"""
-            QWidget#ContentLayer {{
-                background-color: rgba(8, 8, 26, {content_alpha});
-                border: none;
-                {backdrop_blur}
-            }}
-            QWidget#ContentLayer > QWidget,
-            QWidget#ContentLayer > QFrame,
-            QWidget#ContentLayer > QScrollArea,
-            QWidget#ContentLayer > QListWidget {{
-                background-color: rgba(8, 8, 26, {panel_alpha});
-                border: none;
-            }}
-            QWidget#ContentLayer > QWidget > QGroupBox,
-            QWidget#ContentLayer > QScrollArea > QWidget > QGroupBox,
-            QWidget#ContentLayer > QWidget > QGroupBox > QWidget {{
-                background-color: rgba(5, 5, 20, {panel_alpha});
-            }}
-        """)
+        alpha = int(opacity * 200)
+        # ★ 只设置一行 background-color，QSS 解析成本几乎为零
+        self._opacity_overlay.setStyleSheet(
+            f"background-color: rgba(8, 8, 26, {alpha});"
+        )
 
     def _update_background_size_immediate(self):
         """立即更新背景图尺寸（不带 debounce，用于主题变更时）"""
         if theme.background_enabled and theme.background_image_path:
             bg_size = theme.calculate_background_size(self.width(), self.height())
-            self._background_layer.setStyleSheet(f"""
-                QWidget#BackgroundLayer {{
+            self._bg_image_placeholder.setStyleSheet(f"""
+                QWidget#BgImagePlaceholder {{
                     background-image: url("{os.path.normpath(theme.background_image_path).replace('\\', '/')}");
                     background-repeat: no-repeat;
                     background-position: center center;
@@ -211,8 +184,8 @@ class ManagementPanel(QWidget):
         # 更新背景图尺寸（直接调用，不使用 debounce）
         if theme.background_enabled and theme.background_image_path:
             bg_size = theme.calculate_background_size(self.width(), self.height())
-            self._background_layer.setStyleSheet(f"""
-                QWidget#BackgroundLayer {{
+            self._bg_image_placeholder.setStyleSheet(f"""
+                QWidget#BgImagePlaceholder {{
                     background-image: url("{os.path.normpath(theme.background_image_path).replace('\\', '/')}");
                     background-repeat: no-repeat;
                     background-position: center center;
@@ -297,15 +270,35 @@ class ManagementPanel(QWidget):
         background_layout.setContentsMargins(0, 0, 0, 0)
         background_layout.addWidget(self._background_layer, stretch=1)
         
-        # 2. 内容层 - 中间层，半透明遮罩
+        # ★ 1.5. 不透明度遮罩层 — 覆盖在 BackgroundLayer 上，用 QStackedLayout 叠加
+        from PyQt6.QtWidgets import QStackedLayout
+        bg_stack = QStackedLayout()
+        # 先清除 background_layout 的默认布局行为，然后用 stack 管理
+        # 把 _background_layer 作为 stack 的容器
+        bg_stack.setStackingMode(QStackedLayout.StackingMode.StackAll)
+        self._background_layer.setLayout(bg_stack)
+        
+        # 背景图占位（透明，只承载 background-image）
+        self._bg_image_placeholder = QWidget()
+        self._bg_image_placeholder.setObjectName("BgImagePlaceholder")
+        self._bg_image_placeholder.setStyleSheet("background-color: transparent;")
+        bg_stack.addWidget(self._bg_image_placeholder)
+        
+        # 不透明度遮罩（纯色，只改 background-color 的 alpha）
+        self._opacity_overlay = QWidget()
+        self._opacity_overlay.setObjectName("OpacityOverlay")
+        self._opacity_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        bg_stack.addWidget(self._opacity_overlay)
+        
+        # 2. 内容层 - 最上层，承载所有 UI 控件
         self._content_layer = QWidget()
         self._content_layer.setObjectName("ContentLayer")
-        content_layout = QVBoxLayout(self._background_layer)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.addWidget(self._content_layer, stretch=1)
+        bg_stack.addWidget(self._content_layer)
         
         # 立即设置背景图尺寸（确保等比缩放）
         self._update_background_size_immediate()
+        # 初始化不透明度遮罩（与当前 opacity 同步）
+        self._apply_opacity_blur_to_layers()
         
         # 3. 外层布局 - UI控件层
         outer_layout = QHBoxLayout(self._content_layer)
