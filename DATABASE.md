@@ -2,18 +2,17 @@
 
 ## 一、数据库结构全景
 
-本项目使用 **4 个 SQLite 数据库** + **2 个 JSON 配置文件** 作为数据存储层：
+本项目使用 **4 个 SQLite 数据库** + **3 个 JSON 配置文件** 作为数据存储层：
 
 | 数据库 / 配置文件 | 路径 | 用途 | 核心表 |
 |---|---|---|---|
 | **items_i18n.db** | `data/items_i18n.db` | 全物品中英对照（主数据） | `items`, `items_meta` |
 | **relics.db** | `data/relics.db` | 遗物掉落表 | `relics`, `relic_parts`, `relic_aliases` |
 | **wm_prices.db** | `data/wm_prices.db` | warframe.market 价格缓存 | `item_prices`, `price_meta` |
-| **translation.db** | `data/translation.db` | 中英翻译缓存（旧版） | `translations`, `translation_meta` |
-| **config.json** | `%APPDATA%/WARFRAME-RELIC/config.json` | 框选区域持久化 | — |
+| **translation.db** | `data/translation.db` | 中英翻译缓存（兜底） | `translations`, `translation_meta` |
 | **hotkeys.json** | `data/hotkeys.json` | 热键自定义配置 | — |
-
-> 注：`%APPDATA%` 通常为 `C:\Users\<用户名>\AppData\Roaming`。
+| **item_region.json** | `data/item_region.json` | 物品识别区域配置 | — |
+| **feature_toggles.json** | `data/feature_toggles.json` | 功能开关配置 | — |
 
 ---
 
@@ -702,40 +701,22 @@ CREATE TABLE IF NOT EXISTS translation_meta (
 
 ### 5.3 状态说明
 
-> ⚠️ **此数据库为旧版翻译缓存**，已被 `items_i18n.db` 取代。
+> **此数据库作为翻译缓存**，与 `items_i18n.db` 配合使用。
 >
-> 目前仅在 `price_service.py` 的 `_translate_weapon_name()` 函数中作为兜底翻译使用：
-> ```python
-> cur.execute("SELECT zh_name FROM translations WHERE en_name = ? LIMIT 1", (weapon_name,))
-> ```
+> **主要用途**：
+> 1. `wfinfo_relics.py` 的 `_translate_part()` 方法使用它翻译遗物部件名
+> 2. 作为 `items_i18n.db` 的补充翻译数据源
+> 3. 自动触发 `items_i18n.db` 的重建
+
+**数据来源**：
+- WFCD warframe-items All.json + i18n.json（主数据源）
+- AdminRoc Warframe-Chinese-English-Bilingual（补充部件翻译）
 
 ---
 
 ## 六、配置文件
 
-### 6.1 config.json — 框选区域持久化
-
-**文件路径**：`%APPDATA%/WARFRAME-RELIC/config.json`
-
-**格式**：
-```json
-{
-    "region": [left, top, right, bottom]
-}
-```
-
-**字段说明**：
-
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `region` | `[int, int, int, int]` | 上次框选的截图区域逻辑坐标 |
-
-**生命周期**：
-- 程序启动时 → `_load_region()` 读取，恢复上次框选区域
-- 框选完成后 → `_save_region()` 写入，持久化当前区域
-- 跨程序运行持久化，用户无需每次重新框选
-
-### 6.2 hotkeys.json — 热键自定义配置
+### 6.1 hotkeys.json — 热键自定义配置
 
 **文件路径**：`data/hotkeys.json`
 
@@ -1018,8 +999,11 @@ python data/wm_prices.py --search "Braton Prime Set"
 # 批量查询物品价格
 python data/wm_prices.py --search-batch "Braton Prime Set,Ash Prime Chassis"
 
-# 更新遗物掉落数据
-python data/update_db.py
+# 更新遗物掉落数据（从 all.json 迁移）
+python -m data.migrate_to_sqlite
+
+# 从 relics.json 迁移（旧版格式）
+python -m data.migrate_to_sqlite --source relics.json
 
 # 启动主程序
 python main.py
