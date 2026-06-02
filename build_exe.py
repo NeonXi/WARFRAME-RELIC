@@ -1,6 +1,13 @@
 """
 WARFRAME-RELIC 打包脚本
 带进度条的 PyInstaller 打包流程，让用户能清楚看到每个步骤的进展。
+
+更新记录：
+  - 添加 assets/ 目录打包（SVG 图标资源）
+  - 移除 PyQt6.QtSvg / QtSvgWidgets 的错误排除（程序需要 SVG 支持）
+  - 添加 cv2 (opencv-python) 的 hidden-import
+  - 添加 assets 到 --add-data
+  - step_check_env 增加 cv2 检查
 """
 import subprocess
 import sys
@@ -84,7 +91,10 @@ def step_check_env(python):
         return False
 
     # 检查关键包
-    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime", "PIL", "numpy", "pypinyin"]
+    # 注意：cv2 是 base_ocr.py 的依赖（opencv-python）
+    #       sqlite3 是内置模块，无需安装但需确认未被精简掉
+    pkgs = ["PyQt6", "dxcam", "keyboard", "rapidocr_onnxruntime",
+            "PIL", "numpy", "pypinyin", "cv2"]
     print(f"\n  Checking dependencies...")
     all_ok = True
     for pkg in pkgs:
@@ -99,7 +109,7 @@ def step_check_env(python):
             all_ok = False
 
     if not all_ok:
-        print_err("Missing dependencies! Run WARFRAME-RELIC.bat first.")
+        print_err("Missing dependencies! Run SETUP.bat first.")
         return False
 
     print_ok("Environment check passed")
@@ -248,11 +258,13 @@ def step_build(python):
         "--onedir",
         "--noconsole",
         "--name", "WARFRAME-RELIC",
+        # ===== 数据文件 =====
         "--add-data", f"data{os.pathsep}data",
         "--add-data", f"core{os.pathsep}core",
         "--add-data", f"recognizers{os.pathsep}recognizers",
+        "--add-data", f"assets{os.pathsep}assets",   # ← 新增：SVG 图标资源
         "--add-data", f"qt.conf{os.pathsep}.",
-        # 排除 rapidocr-onnxruntime 拉进来的无关大包（torch/scipy/pandas 等）
+        # ===== 排除 rapidocr-onnxruntime 拉进来的无关大包 =====
         # 注意：shapely 是 rapidocr_onnxruntime 的依赖，不能排除！
         "--exclude-module", "torch",
         "--exclude-module", "torchvision",
@@ -268,7 +280,8 @@ def step_build(python):
         "--exclude-module", "tzdata",
         "--exclude-module", "safetensors",
         "--exclude-module", "psutil",
-        # 排除用不到的 PyQt6 子模块（减小体积）
+        # ===== 排除用不到的 PyQt6 子模块（减小体积）=====
+        # 注意：QtSvg 不能排除！assets/icons/ 的 SVG 图标需要它
         "--exclude-module", "PyQt6.QtWebEngine",
         "--exclude-module", "PyQt6.QtWebEngineCore",
         "--exclude-module", "PyQt6.QtWebEngineWidgets",
@@ -279,8 +292,8 @@ def step_build(python):
         "--exclude-module", "PyQt6.QtSensors",
         "--exclude-module", "PyQt6.QtSerialPort",
         "--exclude-module", "PyQt6.QtSql",
-        "--exclude-module", "PyQt6.QtSvg",
-        "--exclude-module", "PyQt6.QtSvgWidgets",
+        # "--exclude-module", "PyQt6.QtSvg",         # ← 已删除！程序需要 SVG 支持
+        # "--exclude-module", "PyQt6.QtSvgWidgets",  # ← 已删除！程序需要 SVG 支持
         "--exclude-module", "PyQt6.QtTest",
         "--exclude-module", "PyQt6.QtPrintSupport",
         "--exclude-module", "PyQt6.QtHelp",
@@ -303,7 +316,7 @@ def step_build(python):
         "--exclude-module", "PyQt6.Qt3DInput",
         "--exclude-module", "PyQt6.Qt3DAnimation",
         "--exclude-module", "PyQt6.Qt3DLogic",
-        "--exclude-module", "PyQt6.Qt3DExtras",
+        "--exclude-module", "PyQt6.Qt3DExtra",
         "--exclude-module", "PyQt6.QtDataVisualization",
         "--exclude-module", "PyQt6.QtCharts",
         "--exclude-module", "PyQt6.QtRemoteObjects",
@@ -311,18 +324,22 @@ def step_build(python):
         "--exclude-module", "PyQt6.QtStateMachine",
         "--exclude-module", "PyQt6.QtWebSockets",
         "--exclude-module", "PyQt6.QtHttpServer",
+        # ===== collect-all =====
         "--collect-all", "rapidocr_onnxruntime",
         "--collect-all", "onnxruntime",
         "--collect-all", "dxcam",
+        # ===== hidden-import =====
         "--hidden-import", "PyQt6.QtCore",
         "--hidden-import", "PyQt6.QtGui",
         "--hidden-import", "PyQt6.QtWidgets",
+        "--hidden-import", "PyQt6.QtSvg",           # ← 新增：SVG 图标支持
         "--hidden-import", "dxcam",
         "--hidden-import", "keyboard",
         "--hidden-import", "rapidocr_onnxruntime",
         "--hidden-import", "PIL",
         "--hidden-import", "PIL.Image",
         "--hidden-import", "numpy",
+        "--hidden-import", "cv2",                     # ← 新增：base_ocr.py 依赖
         "--hidden-import", "onnxruntime",
         "--hidden-import", "json",
         "--hidden-import", "sqlite3",
@@ -467,6 +484,14 @@ def step_verify():
                 print(f"    {f.name:<40} {size_kb:>8.0f} KB")
             if len(files) > 10:
                 print(f"    ... and {len(files) - 10} more")
+
+        # 验证 assets/ 是否被打包进来
+        assets_in_dist = exe_dir / "assets" / "icons"
+        if assets_in_dist.exists():
+            icon_count = len(list(assets_in_dist.glob("*.svg")))
+            print(f"\n  [OK] assets/icons/ found ({icon_count} SVG icons)")
+        else:
+            print(f"\n  [WARN] assets/icons/ NOT found in dist! Icons may not display.")
 
         return True
     else:
