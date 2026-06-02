@@ -332,6 +332,9 @@ def step_build(python):
         "--hidden-import", "core.bootstrap",
         "--hidden-import", "core.hotkey_manager",
         "--hidden-import", "core.mode_handlers",
+        "--hidden-import", "core.bg_layer",
+        "--hidden-import", "core.panel_styles",
+        "--hidden-import", "core.panel_builder",
     ]
     # 如果找到 UPX，添加压缩参数
     if upx_path:

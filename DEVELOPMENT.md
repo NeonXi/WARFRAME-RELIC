@@ -1,6 +1,6 @@
 # WARFRAME-RELIC 开发文档
 
-> 版本：v3.4 | 更新日期：2026-06-02
+> 版本：v3.5 | 更新日期：2026-06-02
 
 ## 一、项目概述
 
@@ -25,7 +25,7 @@ WARFRAME-RELIC 是一个 Warframe（星际战甲）游戏辅助工具，基于 O
 
 ## 二、项目架构
 
-### 2.1 文件结构（v3.4 重构后）
+### 2.1 文件结构（v3.5 重构后）
 
 ```
 WARFRAME-RELIC/
@@ -36,7 +36,10 @@ WARFRAME-RELIC/
 │   ├── mode_handlers.py        # ★ 功能处理器：出入库/遗物查询/翻译/价格标注（纯函数）
 │   ├── overlay.py              # 全屏透明覆盖层（标注、按钮、流式动画）
 │   ├── region_selector.py      # ★ 独立区域框选器（封装鼠标交互）
-│   ├── management_panel.py     # 管理面板主窗口（搜索/数据库/热键/主题）
+│   ├── management_panel.py     # 管理面板主窗口（协调器，通过 Mixin 组合）★v3.5 重构
+│   ├── bg_layer.py              # ★ 背景图层管理 Mixin（模糊/透明度/尺寸）
+│   ├── panel_styles.py          # ★ 内联样式刷新 Mixin（导航高亮/GroupBox/按钮）
+│   ├── panel_builder.py         # ★ UI 构建 Mixin（_setup_ui + _build_* 方法）
 │   ├── price_service.py        # 价格服务（三级查询 + 限速器）
 │   ├── drop_tooltip.py         # ★ 物品掉落来源查询
 │   ├── hotkey_config.py        # 热键配置读写
@@ -130,6 +133,28 @@ v3.4 将原本 1430 行的 `main.py` 拆分为 4 个文件：
 - `HotkeyManager` 封装所有热键逻辑，`AppCore` 通过委托调用
 - `mode_handlers` 作为纯函数模块，接收状态参数，避免循环依赖
 - `bootstrap` 处理所有系统级入口逻辑，与业务逻辑解耦
+
+### 2.4 v3.5 ManagementPanel 重构
+
+v3.5 将原本 2873 行的 `management_panel.py` 拆分为 4 个文件（Mixin 模式）：
+
+| 文件 | 行数 | 职责 |
+|------|------|------|
+| `core/management_panel.py` | ~230 | 协调器：`__init__`、`closeEvent`、热键保存/重置、链接、退出 |
+| `core/bg_layer.py` | ~100 | 背景图层管理：模糊效果（`QGraphicsBlurEffect`）、透明度遮罩、背景图尺寸/Debounce |
+| `core/panel_styles.py` | ~350 | 内联样式刷新：导航高亮、GroupBox 边框恢复、热键按钮样式、各组件样式 |
+| `core/panel_builder.py` | ~850 | UI 构建：`_setup_ui` + 12 个 `_build_*` 方法 + 物品搜索/价格拉取/遗物tooltip |
+
+**Mixin 继承链**：
+```python
+class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget):
+```
+
+**设计原则**：
+- **Mixin 在前，QWidget 在后**：保证 `super().resizeEvent()` 等调用链正确
+- **每个 Mixin 职责单一**：背景图层、样式刷新、UI 构建各司其职
+- **通过 `self` 共享控件引用**：Mixin 方法直接访问 `self._nav_list` 等控件属性
+- **修复了重复 `closeEvent` bug**：原文件第 84 行和第 2865 行有两个 `closeEvent`，后者覆盖前者
 
 ---
 
@@ -303,7 +328,26 @@ selector.set_callback(
 
 ### 3.7 ManagementPanel (`core/management_panel.py`) — 管理面板
 
-主窗口，启动即显示，关闭面板 = 退出程序。
+主窗口，启动即显示，关闭面板 = 退出程序。v3.5 通过 Mixin 模式重构为 4 个文件。
+
+**Mixin 组成：**
+
+| Mixin | 文件 | 职责 |
+|-------|------|------|
+| `BgLayerMixin` | `core/bg_layer.py` | 背景图层管理：`QGraphicsBlurEffect` 模糊效果、`_apply_opacity_overlay()` 透明度遮罩、背景图尺寸/Debounce |
+| `PanelStylesMixin` | `core/panel_styles.py` | 内联样式刷新：`_refresh_inline_styles()`、导航高亮/恢复、热键按钮样式、GroupBox 边框 |
+| `PanelBuilderMixin` | `core/panel_builder.py` | UI 构建：`_setup_ui()` + 12 个 `_build_*` 方法 + 物品搜索/价格拉取/遗物tooltip/事件过滤器 |
+
+**背景图层架构（4 层叠加）：**
+
+```
+QGridLayout 同一格子叠加：
+  Layer 1 (底): _bg_image_placeholder — 背景图 + QGraphicsBlurEffect
+  Layer 2 (中): _opacity_overlay — 纯色遮罩 (WA_TransparentForMouseEvents)
+  Layer 3 (顶): _content_layer — 透明 UI 层
+```
+
+模糊和透明度独立控制，拖动滑块时只修改单个属性（`setBlurRadius` / 一行 QSS），零性能开销。
 
 **功能分区：**
 
@@ -691,7 +735,35 @@ python build_onefile.py
 
 ---
 
-## 十、v3.4 更新记录
+## 十、v3.5 更新记录
+
+### ManagementPanel 重构（Mixin 模式拆分）
+
+| 变更 | 说明 | 文件 |
+|------|------|------|
+| **BgLayerMixin** | 背景图层管理独立模块：模糊效果（`QGraphicsBlurEffect`）、透明度遮罩、背景图尺寸/Debounce | `core/bg_layer.py` |
+| **PanelStylesMixin** | 内联样式刷新独立模块：导航高亮/恢复、GroupBox 样式、热键按钮、各组件样式 | `core/panel_styles.py` |
+| **PanelBuilderMixin** | UI 构建独立模块：`_setup_ui` + 12 个 `_build_*` + 物品搜索/价格拉取/遗物tooltip | `core/panel_builder.py` |
+| **management_panel.py 精简** | 2873行 → 230行（减少92%），作为协调器只保留核心逻辑 | `core/management_panel.py` |
+
+### 背景图模糊效果
+
+| 变更 | 说明 | 文件 |
+|------|------|------|
+| **QGraphicsBlurEffect** | 背景图层新增 `QGraphicsBlurEffect`，与透明度独立控制 | `core/bg_layer.py` |
+| **滑块联动** | 拖动模糊滑块时只调用 `setBlurRadius()`，零 QSS 重解析 | `core/management_panel.py` |
+| **样式刷新同步** | full/color 刷新后自动重新应用模糊和透明度 | `core/panel_styles.py` |
+
+### Bug 修复
+
+| 变更 | 说明 |
+|------|------|
+| **重复 closeEvent** | 修复原文件第84行和第2865行两个 `closeEvent` 后者覆盖前者的 bug |
+| **模糊未生效** | 原 blur 分支为空操作，现已激活 `_apply_blur_effect()` |
+
+---
+
+## 十一、v3.4 更新记录
 
 ### 架构重构（模块化拆分）
 
@@ -733,7 +805,7 @@ python build_onefile.py
 
 ---
 
-## 十一、v3.3 更新记录
+## 十二、v3.3 更新记录
 
 | 变更 | 说明 |
 |------|------|
@@ -745,7 +817,7 @@ python build_onefile.py
 
 ---
 
-## 十二、v3.2 更新记录
+## 十三、v3.2 更新记录
 
 | 变更 | 说明 |
 |------|------|

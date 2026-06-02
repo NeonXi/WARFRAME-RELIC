@@ -401,7 +401,7 @@ class UpdatePanel(QObject):
         """刷新数据更新区 & 日志面板中所有颜色相关的内联样式。"""
         t = theme
 
-        self._log_panel.setStyleSheet(f"background-color: {t.panel_darkest};")
+        self._log_panel.setStyleSheet(f"background-color: transparent;")
 
         # 重新渲染所有旧日志，应用新主题颜色
         self._refresh_log_colors()
@@ -409,13 +409,13 @@ class UpdatePanel(QObject):
         self._log_detail.setStyleSheet(f"color: {t.cyber_cyan}; font-size: 11px; padding: 4px 0;")
         self._log_area.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {t.panel_deeper}; color: {t.text};
+                background-color: {t.get_panel_bg_color(160)}; color: {t.text};
                 border: 1px solid {t.border}; border-radius: 4px;
                 font-family: "Consolas", "Microsoft YaHei", monospace;
                 font-size: 11px; padding: 8px;
             }}
             QScrollBar:vertical {{
-                background: {t.panel_bg}; width: 8px; border-radius: 4px;
+                background: {t.get_panel_bg_color(180)}; width: 8px; border-radius: 4px;
             }}
             QScrollBar::handle:vertical {{
                 background: {t.border}; border-radius: 4px; min-height: 30px;

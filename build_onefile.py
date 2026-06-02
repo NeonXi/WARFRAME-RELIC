@@ -243,6 +243,9 @@ def step_build(python):
         "--hidden-import", "core.bootstrap",
         "--hidden-import", "core.hotkey_manager",
         "--hidden-import", "core.mode_handlers",
+        "--hidden-import", "core.bg_layer",
+        "--hidden-import", "core.panel_styles",
+        "--hidden-import", "core.panel_builder",
     ]
     if upx_path:
         cmd.extend(["--upx-dir", str(Path(upx_path).parent)])

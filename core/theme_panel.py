@@ -70,11 +70,6 @@ class ThemePanel:
         self._theme_draft = {}      # 未保存的颜色修改
         self._expanded = False
         self._anim = None
-        # 添加防抖定时器和防重叠标志位
-        self._opacity_debounce_timer = None
-        self._blur_debounce_timer = None
-        self._opacity_applying = False
-        self._blur_applying = False
 
         # 构建面板
         self._panel = QWidget()
@@ -219,10 +214,7 @@ class ThemePanel:
                 border-radius: 6px; margin: -4px 0;
             }}
         """)
-        # 创建防抖定时器（不传 parent，因为 ThemePanel 不是 QWidget）
-        self._opacity_debounce_timer = QTimer()
-        self._opacity_debounce_timer.setSingleShot(True)
-        self._opacity_debounce_timer.timeout.connect(self._apply_opacity_change)
+        # 透明度即时响应（只更新一行 QSS，无需防抖）
         self._opacity_slider.valueChanged.connect(self._on_opacity_changed)
         opacity_row.addWidget(self._opacity_slider)
         bg_group_layout.addLayout(opacity_row)
@@ -244,10 +236,6 @@ class ThemePanel:
                 border-radius: 6px; margin: -4px 0;
             }}
         """)
-        # 创建防抖定时器（不传 parent，因为 ThemePanel 不是 QWidget）
-        self._blur_debounce_timer = QTimer()
-        self._blur_debounce_timer.setSingleShot(True)
-        self._blur_debounce_timer.timeout.connect(self._apply_blur_change)
         self._blur_slider.valueChanged.connect(self._on_blur_changed)
         blur_row.addWidget(self._blur_slider)
         bg_group_layout.addLayout(blur_row)
@@ -456,44 +444,14 @@ class ThemePanel:
         self._add_log("info", S("theme", "bg_cleared"))
 
     def _on_opacity_changed(self, value):
-        """透明度变化（防抖）—— 值已量化为 0-100 整数"""
-        self._pending_opacity = value / 100.0
-        self._opacity_debounce_timer.start(80)           # ★ 80ms 防抖（缓存命中极快）
-
-    def _apply_opacity_change(self):
-        """应用透明度更改（防重叠）"""
-        if self._opacity_applying:
-            return
-        
-        self._opacity_applying = True
-        try:
-            if hasattr(self, '_pending_opacity'):
-                # ★ 量化为 0-100 档位（确保 bg_key 缓存命中）
-                theme._bg_opacity = round(max(0.0, min(1.0, self._pending_opacity)), 2)
-                # 使用智能刷新策略（量化缓存命中）
-                self._on_theme_changed(change_type="opacity")
-                del self._pending_opacity
-        finally:
-            self._opacity_applying = False
+        """透明度变化 —— 即时响应，只更新一行 QSS，无需防抖"""
+        theme.background_opacity = value / 100.0
+        self._on_theme_changed(change_type="opacity")
 
     def _on_blur_changed(self, value):
-        """模糊度变化（防抖）"""
-        self._pending_blur = value
-        self._blur_debounce_timer.start(80)              # ★ 80ms 防抖
-
-    def _apply_blur_change(self):
-        """应用模糊度更改（防重叠）"""
-        if self._blur_applying:
-            return
-        
-        self._blur_applying = True
-        try:
-            if hasattr(self, '_pending_blur'):
-                theme._bg_blur = max(0, min(50, self._pending_blur))
-                self._on_theme_changed(change_type="blur")
-                del self._pending_blur
-        finally:
-            self._blur_applying = False
+        """模糊度变化 —— 即时响应"""
+        theme.background_blur = max(0, min(50, value))
+        self._on_theme_changed(change_type="blur")
 
     def _on_theme_changed(self, change_type="full"):
         """主题变更回调

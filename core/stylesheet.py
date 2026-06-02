@@ -254,8 +254,7 @@ QFrame#sep {{
     def _build_background_style(cls, image_path: str, opacity: float, blur: int) -> str:
         """构建背景图样式（分层架构）
         
-        架构设计：
-        - BackgroundLayer: 容器
+        架构：ManagementPanel (QGridLayout 0,0 同格叠加)
         - BgImagePlaceholder: 承载背景图
         - OpacityOverlay: 纯色遮罩（opacity 变化时只更新这一层）
         - ContentLayer: 完全透明，承载所有 UI 控件
@@ -351,7 +350,8 @@ QPushButton:hover {{
     @classmethod
     def clear_cache(cls):
         """清除样式表缓存"""
-        cls._cache.clear()
+        cls._base_cache.clear()
+        cls._bg_cache.clear()
 
 
 # 模块级函数（保持向后兼容）
