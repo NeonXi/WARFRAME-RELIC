@@ -6,10 +6,33 @@ WARFRAME-RELIC 主题配色侧滑面板
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QSizePolicy, QColorDialog, QMessageBox,
-    QComboBox,
+    QComboBox, QSlider, QFileDialog,
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor
+
+import os
+
+
+class ColorSwatch(QLabel):
+    """可点击的颜色色块控件"""
+    color_picked = pyqtSignal(str)  # 发射 json_key
+    
+    def __init__(self, json_key: str, color: str):
+        super().__init__("　")
+        self._json_key = json_key
+        self.setStyleSheet(
+            f"background-color: {color}; border: none; border-radius: 2px;")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+    
+    def mousePressEvent(self, event):
+        """鼠标点击时发射信号"""
+        self.color_picked.emit(self._json_key)
+    
+    def update_color(self, color: str):
+        """更新颜色显示"""
+        self.setStyleSheet(
+            f"background-color: {color}; border: none; border-radius: 2px;")
 
 from core.constants import theme, ThemeConfig
 from core.theme_fields import THEME_FIELDS
@@ -47,6 +70,11 @@ class ThemePanel:
         self._theme_draft = {}      # 未保存的颜色修改
         self._expanded = False
         self._anim = None
+        # 添加防抖定时器和防重叠标志位
+        self._opacity_debounce_timer = None
+        self._blur_debounce_timer = None
+        self._opacity_applying = False
+        self._blur_applying = False
 
         # 构建面板
         self._panel = QWidget()
@@ -146,6 +174,100 @@ class ThemePanel:
         tip.setWordWrap(True)
         panel_layout.addWidget(tip)
 
+        # ── 自定义背景图 ──
+        bg_group = QWidget()
+        bg_group.setStyleSheet(f"background: {theme.panel_deeper}; border: 1px solid {theme.border}; border-radius: 4px;")
+        bg_group_layout = QVBoxLayout(bg_group)
+        bg_group_layout.setContentsMargins(8, 8, 8, 8)
+        bg_group_layout.setSpacing(6)
+        
+        # 背景图标题
+        bg_title = QLabel("自定义背景")
+        bg_title.setStyleSheet(f"color: {theme.cyber_cyan}; font-weight: bold; font-size: 12px;")
+        bg_group_layout.addWidget(bg_title)
+        
+        # 上传按钮
+        self._btn_upload_bg = QPushButton(S("button", "upload_bg"))
+        self._btn_upload_bg.setObjectName("actionBtn")
+        self._btn_upload_bg.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {theme.card_bg}; color: {theme.text};
+                border: 1px solid {theme.border}; border-radius: 3px;
+                padding: 4px 8px; font-size: 11px;
+            }}
+            QPushButton:hover {{ border-color: {theme.cyber_cyan}; }}
+        """)
+        self._btn_upload_bg.clicked.connect(self._on_upload_background)
+        bg_group_layout.addWidget(self._btn_upload_bg)
+        
+        # 透明度滑块
+        opacity_row = QHBoxLayout()
+        opacity_lbl = QLabel(S("theme", "opacity"))
+        opacity_lbl.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px;")
+        opacity_row.addWidget(opacity_lbl)
+        self._opacity_slider = QSlider(Qt.Orientation.Horizontal)
+        self._opacity_slider.setRange(0, 100)
+        self._opacity_slider.setSingleStep(1)           # ★ 步长=1，100个离散档位
+        self._opacity_slider.setPageStep(10)             # ★ 翻页步长=10
+        self._opacity_slider.setValue(int(theme.background_opacity * 100))
+        self._opacity_slider.setStyleSheet(f"""
+            QSlider::groove:horizontal {{
+                height: 4px; background: {theme.panel_bg}; border-radius: 2px;
+            }}
+            QSlider::handle:horizontal {{
+                background: {theme.cyber_cyan}; width: 12px; height: 12px;
+                border-radius: 6px; margin: -4px 0;
+            }}
+        """)
+        # 创建防抖定时器（不传 parent，因为 ThemePanel 不是 QWidget）
+        self._opacity_debounce_timer = QTimer()
+        self._opacity_debounce_timer.setSingleShot(True)
+        self._opacity_debounce_timer.timeout.connect(self._apply_opacity_change)
+        self._opacity_slider.valueChanged.connect(self._on_opacity_changed)
+        opacity_row.addWidget(self._opacity_slider)
+        bg_group_layout.addLayout(opacity_row)
+        
+        # 模糊度滑块
+        blur_row = QHBoxLayout()
+        blur_lbl = QLabel(S("theme", "blur"))
+        blur_lbl.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px;")
+        blur_row.addWidget(blur_lbl)
+        self._blur_slider = QSlider(Qt.Orientation.Horizontal)
+        self._blur_slider.setRange(0, 50)
+        self._blur_slider.setValue(theme.background_blur)
+        self._blur_slider.setStyleSheet(f"""
+            QSlider::groove:horizontal {{
+                height: 4px; background: {theme.panel_bg}; border-radius: 2px;
+            }}
+            QSlider::handle:horizontal {{
+                background: {theme.cyber_cyan}; width: 12px; height: 12px;
+                border-radius: 6px; margin: -4px 0;
+            }}
+        """)
+        # 创建防抖定时器（不传 parent，因为 ThemePanel 不是 QWidget）
+        self._blur_debounce_timer = QTimer()
+        self._blur_debounce_timer.setSingleShot(True)
+        self._blur_debounce_timer.timeout.connect(self._apply_blur_change)
+        self._blur_slider.valueChanged.connect(self._on_blur_changed)
+        blur_row.addWidget(self._blur_slider)
+        bg_group_layout.addLayout(blur_row)
+        
+        # 清除按钮
+        self._btn_clear_bg = QPushButton(S("button", "clear_bg"))
+        self._btn_clear_bg.setObjectName("dangerBtn")
+        self._btn_clear_bg.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent; color: {theme.cyber_red};
+                border: 1px solid {theme.cyber_red}; border-radius: 3px;
+                padding: 2px 8px; font-size: 10px;
+            }}
+            QPushButton:hover {{ background-color: rgba(255, 0, 0, 0.1); }}
+        """)
+        self._btn_clear_bg.clicked.connect(self._on_clear_background)
+        bg_group_layout.addWidget(self._btn_clear_bg)
+        
+        panel_layout.addWidget(bg_group)
+
         # 色块滚动区
         self._build_swatches(panel_layout)
 
@@ -201,12 +323,9 @@ class ThemePanel:
                 item_layout.setContentsMargins(2, 3, 2, 3)
                 item_layout.setSpacing(3)
 
-                swatch = QLabel("　")
+                swatch = ColorSwatch(json_key, color)
                 swatch.setFixedSize(48, 18)
-                swatch.setStyleSheet(
-                    f"background-color: {color}; border: none; border-radius: 2px;")
-                swatch.setCursor(Qt.CursorShape.PointingHandCursor)
-                swatch.mousePressEvent = lambda e, k=json_key, s=swatch: self._pick_color(k, s)
+                swatch.color_picked.connect(lambda k, s=swatch: self._pick_color(k, s))
                 item_layout.addWidget(swatch)
 
                 name_lbl = QLabel(label)
@@ -234,7 +353,7 @@ class ThemePanel:
     def _pick_color(self, json_key, swatch):
         current = theme.to_dict().get(json_key, theme.panel_deeper)
         color = QColorDialog.getColor(QColor(current), self._parent,
-            S.format("theme", "color_pick_title", key=json_key))
+            S.format("theme", "color_pick_title", field=json_key))
         if color.isValid():
             hex_color = color.name()
             self._theme_draft[json_key] = hex_color
@@ -253,7 +372,7 @@ class ThemePanel:
         prev_preset = theme.active_preset
         theme.save(self._theme_draft)
         self._sync_preset_combo(prev_preset)
-        self._on_theme_changed()
+        self._on_theme_changed(change_type="full")
 
     def _on_save(self):
         if not self._theme_draft:
@@ -264,7 +383,7 @@ class ThemePanel:
         if theme.save(self._theme_draft):
             self._theme_draft = {}
             self._sync_preset_combo(prev_preset)
-            self._on_theme_changed()
+            self._on_theme_changed(change_type="full")
             preset_name = theme.current_preset_name()
             if prev_preset != theme.active_preset:
                 self._add_log("ok", S.format("theme", "saved_to", name=preset_name))
@@ -290,7 +409,7 @@ class ThemePanel:
             return
         theme.reset()
         self._theme_draft = {}
-        self._on_theme_changed()
+        self._on_theme_changed(change_type="full")
         QMessageBox.information(self._parent, S("theme", "reset_done_title"),
             S.format("theme", "reset_done_msg", name=theme.current_preset_name()))
 
@@ -301,7 +420,7 @@ class ThemePanel:
         preset_name = ThemeConfig.PRESETS[preset_id]["name"]
         if theme.apply_preset(preset_id):
             self._theme_draft = {}
-            self._on_theme_changed()
+            self._on_theme_changed(change_type="full")
             # 确保下拉框停留在当前选择的预设
             idx = self._preset_combo.findData(preset_id)
             if idx >= 0:
@@ -309,6 +428,84 @@ class ThemePanel:
             self._add_log("ok", S.format("theme", "preset_applied", name=preset_name))
         else:
             self._add_log("error", S("theme", "preset_failed"))
+
+
+    # ============================================================
+    # 背景图处理
+    # ============================================================
+
+    def _on_upload_background(self):
+        """上传背景图"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self._parent,
+            S("theme", "select_bg_title"),
+            "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
+        )
+        if file_path:
+            if theme.set_background_image(file_path):
+                self._add_log("ok", S("theme", "bg_uploaded"))
+                self._on_theme_changed(change_type="full")
+            else:
+                self._add_log("error", S("theme", "bg_upload_failed"))
+
+    def _on_clear_background(self):
+        """清除背景图"""
+        theme.clear_background_image()
+        self._on_theme_changed(change_type="full")
+        self._add_log("info", S("theme", "bg_cleared"))
+
+    def _on_opacity_changed(self, value):
+        """透明度变化（防抖）—— 值已量化为 0-100 整数"""
+        self._pending_opacity = value / 100.0
+        self._opacity_debounce_timer.start(80)           # ★ 80ms 防抖（缓存命中极快）
+
+    def _apply_opacity_change(self):
+        """应用透明度更改（防重叠）"""
+        if self._opacity_applying:
+            return
+        
+        self._opacity_applying = True
+        try:
+            if hasattr(self, '_pending_opacity'):
+                # ★ 量化为 0-100 档位（确保 bg_key 缓存命中）
+                theme._bg_opacity = round(max(0.0, min(1.0, self._pending_opacity)), 2)
+                # 使用智能刷新策略（量化缓存命中）
+                self._on_theme_changed(change_type="opacity")
+                del self._pending_opacity
+        finally:
+            self._opacity_applying = False
+
+    def _on_blur_changed(self, value):
+        """模糊度变化（防抖）"""
+        self._pending_blur = value
+        self._blur_debounce_timer.start(80)              # ★ 80ms 防抖
+
+    def _apply_blur_change(self):
+        """应用模糊度更改（防重叠）"""
+        if self._blur_applying:
+            return
+        
+        self._blur_applying = True
+        try:
+            if hasattr(self, '_pending_blur'):
+                theme._bg_blur = max(0, min(50, self._pending_blur))
+                self._on_theme_changed(change_type="blur")
+                del self._pending_blur
+        finally:
+            self._blur_applying = False
+
+    def _on_theme_changed(self, change_type="full"):
+        """主题变更回调
+        
+        Args:
+            change_type: 变更类型
+                - "full": 完整刷新（预设切换、背景图上传）
+                - "opacity": 只刷新透明度相关
+                - "blur": 只刷新模糊度相关
+                - "color": 颜色变更（需要刷新色块）
+        """
+        self._on_theme_changed_internal(change_type)
 
     # ============================================================
     # 样式刷新

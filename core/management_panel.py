@@ -82,8 +82,68 @@ class ManagementPanel(QWidget):
 
     def closeEvent(self, event):
         """关闭面板 = 退出程序，清理所有运行缓存。"""
+        # 立即保存背景图配置
+        theme.save_background_config_now()
         QApplication.instance().quit()
         event.accept()
+
+    def resizeEvent(self, event):
+        """窗口大小变化时动态更新背景图尺寸（带 Debounce）"""
+        super().resizeEvent(event)
+        # 使用 Debounce 避免频繁更新
+        self._schedule_background_update()
+
+    def _schedule_background_update(self):
+        """延迟更新背景图尺寸（Debounce: 100ms）"""
+        if not hasattr(self, '_bg_update_timer'):
+            from PyQt6.QtCore import QTimer
+            self._bg_update_timer = QTimer()
+            self._bg_update_timer.setSingleShot(True)
+            self._bg_update_timer.timeout.connect(self._update_background_size_debounced)
+        
+        # 停止之前的定时器，重新计时
+        self._bg_update_timer.stop()
+        self._bg_update_timer.start(100)  # 100ms 延迟
+
+    def _update_background_size_debounced(self):
+        """Debounce 后的背景图尺寸更新（带阈值过滤）"""
+        if not theme.background_enabled or not theme.background_image_path:
+            return
+            
+        # 阈值过滤：只有尺寸变化超过 50px 才更新
+        if hasattr(self, '_last_bg_width') and hasattr(self, '_last_bg_height'):
+            width_diff = abs(self.width() - self._last_bg_width)
+            height_diff = abs(self.height() - self._last_bg_height)
+            if width_diff < 50 and height_diff < 50:
+                return  # 变化太小，跳过更新
+        
+        # 更新背景图尺寸
+        bg_size = theme.calculate_background_size(self.width(), self.height())
+        self._background_layer.setStyleSheet(f"""
+            QWidget#BackgroundLayer {{
+                background-image: url("{os.path.normpath(theme.background_image_path).replace('\\', '/')}");
+                background-repeat: no-repeat;
+                background-position: center center;
+                background-size: {bg_size};
+            }}
+        """)
+        
+        # 记录当前尺寸
+        self._last_bg_width = self.width()
+        self._last_bg_height = self.height()
+
+    def _update_background_size_immediate(self):
+        """立即更新背景图尺寸（不带 debounce，用于主题变更时）"""
+        if theme.background_enabled and theme.background_image_path:
+            bg_size = theme.calculate_background_size(self.width(), self.height())
+            self._background_layer.setStyleSheet(f"""
+                QWidget#BackgroundLayer {{
+                    background-image: url("{os.path.normpath(theme.background_image_path).replace('\\', '/')}");
+                    background-repeat: no-repeat;
+                    background-position: center center;
+                    background-size: {bg_size};
+                }}
+            """)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -108,6 +168,17 @@ class ManagementPanel(QWidget):
         if screen:
             screen_geom = screen.availableGeometry()
             self.move(screen_geom.left(), screen_geom.top())
+        # 更新背景图尺寸（直接调用，不使用 debounce）
+        if theme.background_enabled and theme.background_image_path:
+            bg_size = theme.calculate_background_size(self.width(), self.height())
+            self._background_layer.setStyleSheet(f"""
+                QWidget#BackgroundLayer {{
+                    background-image: url("{os.path.normpath(theme.background_image_path).replace('\\', '/')}");
+                    background-repeat: no-repeat;
+                    background-position: center center;
+                    background-size: {bg_size};
+                }}
+            """)
 
     @property
     def _theme_panel_width(self):
@@ -175,7 +246,29 @@ class ManagementPanel(QWidget):
         )
         self.setStyleSheet(build_stylesheet())
 
-        outer_layout = QHBoxLayout(self)
+        # ============================================================
+        # 分层架构：BackgroundLayer -> ContentLayer -> UI Controls
+        # ============================================================
+        
+        # 1. 背景层 - 最底层，承载背景图
+        self._background_layer = QWidget()
+        self._background_layer.setObjectName("BackgroundLayer")
+        background_layout = QVBoxLayout(self)
+        background_layout.setContentsMargins(0, 0, 0, 0)
+        background_layout.addWidget(self._background_layer, stretch=1)
+        
+        # 2. 内容层 - 中间层，半透明遮罩
+        self._content_layer = QWidget()
+        self._content_layer.setObjectName("ContentLayer")
+        content_layout = QVBoxLayout(self._background_layer)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(self._content_layer, stretch=1)
+        
+        # 立即设置背景图尺寸（确保等比缩放）
+        self._update_background_size_immediate()
+        
+        # 3. 外层布局 - UI控件层
+        outer_layout = QHBoxLayout(self._content_layer)
         outer_layout.setContentsMargins(0, 0, 0, 0)
         outer_layout.setSpacing(0)
 
@@ -188,7 +281,7 @@ class ManagementPanel(QWidget):
         self._nav_list.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._nav_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 border: none;
                 border-right: 1px solid {theme.border};
                 padding: 8px 4px;
@@ -200,6 +293,7 @@ class ManagementPanel(QWidget):
                 border-radius: 6px;
                 margin: 2px 4px;
                 font-size: 13px;
+                background-color: rgba(5, 5, 20, 180);
             }}
             QListWidget::item:hover {{
                 background-color: {theme.card_bg};
@@ -256,11 +350,11 @@ class ManagementPanel(QWidget):
         self._left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._left_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._left_scroll.setStyleSheet(
-            f"QScrollArea {{ border: none; background-color: {theme.panel_bg}; }}")
+            f"QScrollArea {{ border: none; background-color: transparent; }}")
 
 
         self._left_widget = QWidget()
-        self._left_widget.setStyleSheet(f"background-color: {theme.panel_bg};")
+        self._left_widget.setStyleSheet(f"background-color: transparent;")
         # 安装事件过滤器，让鼠标滚轮可以滚动隐藏了滚动条的 QScrollArea
         self._left_widget.installEventFilter(self)
         main_layout = QVBoxLayout(self._left_widget)
@@ -605,7 +699,7 @@ class ManagementPanel(QWidget):
         self._reg_text(self._items_search_input, "hint", "items_search_placeholder")
         self._items_search_input.setStyleSheet(f"""
             QLineEdit {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 color: {theme.cyber_cyan};
                 border: 1px solid {theme.border};
                 border-radius: 4px;
@@ -633,7 +727,7 @@ class ManagementPanel(QWidget):
         self._items_result_list.itemClicked.connect(self._on_item_result_clicked)
         self._items_result_list.setStyleSheet(f"""
             QListWidget {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 color: {theme.text};
                 border: 1px solid {theme.border};
                 border-radius: 4px;
@@ -1416,7 +1510,7 @@ class ManagementPanel(QWidget):
         """快捷键按钮通用样式。"""
         return f"""
             HotkeyCaptureButton {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 color: {theme.cyber_cyan};
                 border: 1px solid {theme.border};
                 border-radius: 3px;
@@ -1431,7 +1525,7 @@ class ManagementPanel(QWidget):
             }}
             HotkeyCaptureButton:focus {{
                 border-color: {theme.cyber_yellow};
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
             }}
         """
 
@@ -1443,7 +1537,7 @@ class ManagementPanel(QWidget):
         self._reg_text(group, "group", "recovery")
         group.setStyleSheet(f"""
             QGroupBox {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 border: 2px solid {theme.cyber_orange};
                 border-radius: 6px;
                 padding: 10px;
@@ -1494,7 +1588,7 @@ class ManagementPanel(QWidget):
         self._btn_reload_hotkeys.setMinimumHeight(40)
         self._btn_reload_hotkeys.setStyleSheet(f"""
             QPushButton {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 color: {theme.cyber_orange};
                 border: 1px solid {theme.cyber_orange};
                 border-radius: 6px;
@@ -1525,7 +1619,7 @@ class ManagementPanel(QWidget):
         # 初始背景色与恢复时一致，避免导航高亮后背景色突变
         group.setStyleSheet(f"""
             QGroupBox {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 border: 1px solid {theme.border};
                 border-radius: 4px;
                 padding: 10px;
@@ -1593,7 +1687,7 @@ class ManagementPanel(QWidget):
             if is_on:
                 btn.setStyleSheet(f"""
                     QPushButton#toggleFeatureBtn {{
-                        background-color: {theme.card_bg};
+                        background-color: {theme.get_panel_bg_color(200)};
                         color: {theme.cyber_cyan};
                         border: 2px solid {theme.cyber_yellow};
                         border-radius: 6px;
@@ -1604,14 +1698,14 @@ class ManagementPanel(QWidget):
                         min-height: 64px;
                     }}
                     QPushButton#toggleFeatureBtn:hover {{
-                        background-color: {theme.btn_hover_bg};
+                        background-color: {theme.get_panel_bg_color(220)};
                         border-color: {theme.cyber_yellow};
                     }}
                 """)
             else:
                 btn.setStyleSheet(f"""
                     QPushButton#toggleFeatureBtn {{
-                        background-color: {theme.panel_darkest};
+                        background-color: transparent;
                         color: {theme.text_dim};
                         border: 2px solid {theme.border};
                         border-radius: 6px;
@@ -1728,7 +1822,7 @@ class ManagementPanel(QWidget):
         """高亮 group 边框（荧光绿加粗效果）。"""
         group.setStyleSheet(f"""
             QGroupBox {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 border: 3px solid {theme.cyber_green};
                 border-radius: 6px;
                 padding: 10px;
@@ -1750,7 +1844,7 @@ class ManagementPanel(QWidget):
         if group is getattr(self, '_reset_group', None):
             group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {theme.panel_darkest};
+                    background-color: transparent;
                     border: 2px solid {theme.cyber_orange};
                     border-radius: 6px;
                     padding: 10px;
@@ -1763,7 +1857,7 @@ class ManagementPanel(QWidget):
         else:
             group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {theme.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {theme.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -1798,7 +1892,7 @@ class ManagementPanel(QWidget):
         self._reg_text(group, "group", "about_author")
         group.setStyleSheet(f"""
             QGroupBox {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 border: 1px solid {theme.border};
                 border-radius: 8px;
                 padding: 16px;
@@ -1898,7 +1992,7 @@ class ManagementPanel(QWidget):
         self._lang_preset_group = group
         group.setStyleSheet(f"""
             QGroupBox {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 border: 1px solid {theme.border};
                 border-radius: 4px;
                 padding: 8px;
@@ -1936,7 +2030,7 @@ class ManagementPanel(QWidget):
                 width: 20px;
             }}
             QComboBox QAbstractItemView {{
-                background-color: {theme.panel_darkest};
+                background-color: transparent;
                 color: {theme.text};
                 border: 1px solid {theme.border};
                 selection-background-color: {theme.cyber_yellow};
@@ -2046,7 +2140,7 @@ class ManagementPanel(QWidget):
 
     def _build_log_panel(self, outer_layout):
         log_panel = QWidget()
-        log_panel.setStyleSheet(f"background-color: {theme.panel_darkest};")
+        log_panel.setStyleSheet(f"background-color: transparent;")
         log_panel.setMinimumWidth(420)
         log_panel.setMaximumWidth(520)
         log_panel.hide()
@@ -2105,9 +2199,10 @@ class ManagementPanel(QWidget):
 
         log_area = QTextEdit()
         log_area.setReadOnly(True)
+        log_area.setObjectName("LogArea")
         log_area.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {theme.panel_deeper}; color: {theme.text};
+            QTextEdit#LogArea {{
+                color: {theme.text};
                 border: 1px solid {theme.border}; border-radius: 4px;
                 font-family: "Consolas", "Microsoft YaHei", monospace;
                 font-size: 11px; padding: 8px;
@@ -2128,7 +2223,7 @@ class ManagementPanel(QWidget):
         btn_close_log.clicked.connect(self._update_panel.hide_log_panel if self._update_panel else lambda: log_panel.hide())
         btn_close_log.setStyleSheet(f"""
             QPushButton {{
-                background-color: {theme.card_bg}; color: {theme.text_dim};
+                background-color: {theme.get_panel_bg_color(180)}; color: {theme.text_dim};
                 border: 1px solid {theme.border}; border-radius: 4px;
                 padding: 6px; font-size: 12px;
             }}
@@ -2155,17 +2250,46 @@ class ManagementPanel(QWidget):
     def _toggle_theme_panel(self):
         self._theme_panel.toggle()
 
-    def _on_theme_changed_internal(self):
-        """主题变更后刷新 UI。"""
-        self._rebuild_styles_and_swatches()
-        self._refresh_all_inline_styles()
+    def _on_theme_changed_internal(self, change_type="full"):
+        """主题变更后刷新 UI。
+        
+        Args:
+            change_type: 变更类型
+                - "full": 完整刷新（预设切换、背景图上传）
+                - "opacity": 只刷新透明度相关
+                - "blur": 只刷新模糊度相关
+                - "color": 颜色变更（需要刷新色块）
+        """
+        if change_type == "opacity" or change_type == "blur":
+            # 最小刷新：利用 bg_key 量化缓存，只更新 QSS（缓存命中时极快）
+            self.setStyleSheet(build_stylesheet())
+            self._update_background_size_immediate()
+        elif change_type == "color":
+            # 中等刷新：更新样式表和内联样式，不重建色块
+            self._rebuild_styles_and_swatches_partial()
+        else:  # "full"
+            # 完整刷新
+            self._rebuild_styles_and_swatches_full()
+        
         self.theme_changed.emit()
 
-    def _rebuild_styles_and_swatches(self):
-        """刷新全局样式表、内联样式和色块。"""
+    def _rebuild_styles_and_swatches_full(self):
+        """完整刷新：全局样式表、内联样式和色块。"""
         self.setStyleSheet(build_stylesheet())
         self._refresh_inline_styles()
         self._theme_panel.rebuild_swatches()
+        # 重新计算背景图尺寸（确保等比缩放）
+        self._update_background_size_immediate()
+
+    def _rebuild_styles_and_swatches_partial(self):
+        """部分刷新：只更新样式表和内联样式，不重建色块。"""
+        self.setStyleSheet(build_stylesheet())
+        self._refresh_inline_styles()
+        # 跳过 rebuild_swatches() - 颜色变化时也跳过（由色块自身更新）
+
+    def _rebuild_styles_and_swatches(self):
+        """刷新全局样式表、内联样式和色块（旧接口，转发到完整刷新）。"""
+        self._rebuild_styles_and_swatches_full()
 
     def _refresh_inline_styles(self):
         """刷新所有颜色相关的内联样式。"""
@@ -2175,7 +2299,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_nav_list'):
             self._nav_list.setStyleSheet(f"""
                 QListWidget {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: none;
                     border-right: 1px solid {t.border};
                     padding: 8px 4px;
@@ -2187,9 +2311,10 @@ class ManagementPanel(QWidget):
                     border-radius: 6px;
                     margin: 2px 4px;
                     font-size: 13px;
+                    background-color: {t.get_panel_bg_color(180)};
                 }}
                 QListWidget::item:hover {{
-                    background-color: {t.card_bg};
+                    background-color: {t.get_panel_bg_color(180)};
                     color: {t.text};
                 }}
                 QListWidget::item:selected {{
@@ -2202,8 +2327,8 @@ class ManagementPanel(QWidget):
         # === 滚动区域 & 主面板背景 ===
         if hasattr(self, '_left_scroll'):
             self._left_scroll.setStyleSheet(
-                f"QScrollArea {{ border: none; background-color: {t.panel_bg}; }}")
-            self._left_widget.setStyleSheet(f"background-color: {t.panel_bg};")
+                f"QScrollArea {{ border: none; background-color: transparent; }}")
+            self._left_widget.setStyleSheet(f"background-color: transparent;")
 
         # === 数据库状态区概要标签 ===
         if hasattr(self, '_status_trans_label'):
@@ -2236,7 +2361,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_toggle_group'):
             self._toggle_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2257,7 +2382,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_status_group'):
             self._status_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2276,7 +2401,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_relic_group'):
             self._relic_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2295,7 +2420,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_trans_group'):
             self._trans_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2314,7 +2439,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_items_group'):
             self._items_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2333,7 +2458,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_price_group'):
             self._price_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2352,7 +2477,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_hotkey_group'):
             self._hotkey_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2371,7 +2496,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_theme_group'):
             self._theme_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2390,7 +2515,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_about_group'):
             self._about_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 10px;
@@ -2409,7 +2534,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_reset_group'):
             self._reset_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 2px solid {t.cyber_orange};
                     border-radius: 6px;
                     padding: 10px;
@@ -2446,7 +2571,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_btn_reload_hotkeys'):
             self._btn_reload_hotkeys.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     color: {t.cyber_orange};
                     border: 1px solid {t.cyber_orange};
                     border-radius: 6px;
@@ -2467,7 +2592,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_lang_preset_group'):
             self._lang_preset_group.setStyleSheet(f"""
                 QGroupBox {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     border: 1px solid {t.border};
                     border-radius: 4px;
                     padding: 8px;
@@ -2496,7 +2621,7 @@ class ManagementPanel(QWidget):
                     width: 20px;
                 }}
                 QComboBox QAbstractItemView {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     color: {t.text};
                     border: 1px solid {t.border};
                     selection-background-color: {t.cyber_yellow};
@@ -2532,7 +2657,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_items_search_input'):
             self._items_search_input.setStyleSheet(f"""
                 QLineEdit {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     color: {t.cyber_cyan};
                     border: 1px solid {t.border};
                     border-radius: 4px;
@@ -2545,7 +2670,7 @@ class ManagementPanel(QWidget):
         if hasattr(self, '_items_result_list'):
             self._items_result_list.setStyleSheet(f"""
                 QTextEdit {{
-                    background-color: {t.panel_darkest};
+                    background-color: transparent;
                     color: {t.text};
                     border: 1px solid {t.border};
                     border-radius: 4px;
@@ -2569,6 +2694,7 @@ class ManagementPanel(QWidget):
 
     def _refresh_all_inline_styles(self):
         """完整刷新（含数据重新查询）。"""
+        self._refresh_inline_styles()  # 刷新基础内联样式（导航栏等）
         self._update_panel.refresh_stats()
         self._update_panel.refresh_translation_stats()
         self.refresh_items_i18n_stats()
