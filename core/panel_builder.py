@@ -211,6 +211,12 @@ class PanelBuilderMixin:
 
         # 退出按钮行
         exit_row = QHBoxLayout()
+        self._btn_reload_ui = WordWrapButton(S("button", "reload_ui"))
+        self._reg_text(self._btn_reload_ui, "button", "reload_ui")
+        self._btn_reload_ui.setObjectName("actionBtn")
+        self._btn_reload_ui.setToolTip("完全重载面板 UI")
+        self._btn_reload_ui.clicked.connect(self._on_reload_ui)
+        exit_row.addWidget(self._btn_reload_ui)
         exit_row.addStretch()
         self._btn_exit = WordWrapButton(S("button", "exit"))
         self._reg_text(self._btn_exit, "button", "exit")

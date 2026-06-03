@@ -31,6 +31,7 @@ from PIL import Image
 
 from core.overlay import Overlay
 from core.management_panel import ManagementPanel
+from core.splash_screen import SplashScreen
 from core.hotkey_config import (
     load_hotkeys, save_hotkeys, DEFAULT_HOTKEYS,
     load_feature_toggles, FEATURE_TOGGLE_REQUIRES,
@@ -211,6 +212,10 @@ class AppCore:
         panel.show()
         panel.raise_()
         panel.activateWindow()
+
+        # 启动动画
+        self._splash = SplashScreen(panel)
+        self._splash.show()
 
     # ---- 事件绑定 ----
 

@@ -295,3 +295,37 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
             QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
             QApplication.instance().quit()
+
+    def _on_reload_ui(self):
+        """完全重载面板 UI：刷新文案、样式、统计、主题。"""
+        self.setUpdatesEnabled(False)
+        try:
+            # 1. 重建所有 UI 文案
+            for widget, category, key in self._text_registry:
+                try:
+                    if hasattr(widget, 'setTitle') and type(widget).__name__ == 'QGroupBox':
+                        widget.setTitle(S(category, key))
+                    elif hasattr(widget, 'setPlaceholderText'):
+                        widget.setPlaceholderText(S(category, key))
+                    elif hasattr(widget, 'setText'):
+                        widget.setText(S(category, key))
+                except Exception:
+                    pass
+            self.setWindowTitle(S("window_title", "management_panel"))
+            self._refresh_nav_labels()
+            self._refresh_toggle_button_texts()
+            # 2. 重建全局样式表和内联样式
+            self.setStyleSheet(build_stylesheet())
+            self._refresh_inline_styles()
+            self._theme_panel.rebuild_swatches()
+            # 3. 主题面板样式
+            if self._theme_panel:
+                self._theme_panel.refresh_inline_styles()
+            # 4. 刷新背景层
+            self._apply_opacity_overlay()
+            self._bg_blur_effect.setBlurRadius(theme.background_blur)
+            # 5. 刷新数据和统计
+            self._update_panel.refresh_stats()
+            self.refresh_price_stats()
+        finally:
+            self.setUpdatesEnabled(True)

@@ -18,6 +18,7 @@ STRINGS = {
     # ── 按钮文字 ──
     "button": {
         "exit": "退出程序",
+        "reload_ui": "重载UI",
         "reset_state": "紧急重置 · 恢复默认状态",
         "reload_hotkeys": "重新注册快捷键",
         "fetch_github": "从 GitHub 拉取最新数据",
