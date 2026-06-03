@@ -131,35 +131,31 @@ class ThemeConfig:
             self._loaded = False
 
     def _create_defaults(self) -> dict:
-        """创建默认配色配置"""
+        """创建默认配色配置（精简版，合并冗余字段）"""
         return {
-            # ---- 霓虹主色 ----
+            # ---- 霓虹主色 (6) ----
             "cyber_yellow": "#FFE600", "cyber_cyan": "#00FFFF",
             "cyber_magenta": "#FF0099", "cyber_orange": "#FF7700",
             "cyber_red": "#FF0055", "cyber_green": "#00FF99",
-            "cyber_blue": "#3399FF",
-            # ---- 暗色背景 ----
-            "dark_bg": "#020208", "panel_bg": "#08081A",
-            "card_bg": "#0E0E24", "border": "#FF0055",
-            # ---- 文字 ----
-            "text": "#E8ECFF", "text_dim": "#6677AA",
-            # ---- 遗物状态 ----
-            "color_vaulted": "#00FF99", "color_available": "#FF0055",
+            # ---- 面板背景 (4) ----
+            "panel_bg": "#08081A", "card_bg": "#0E0E24",
+            "panel_darkest": "#040412", "panel_deeper": "#020210",
+            # ---- 边框 & 文字 (3) ----
+            "border": "#FF0055", "text": "#E8ECFF", "text_dim": "#6677AA",
+            # ---- 遗物状态 (1) ----
             "color_unknown": "#556688",
-            # ---- 稀有度 ----
+            # ---- 稀有度 (3) ----
             "color_gold": "#FFD700", "color_silver": "#00FFFF",
             "color_copper": "#FF7700",
-            # ---- 日志 ----
-            "log_ok": "#00FF99", "log_warn": "#FF7700",
-            "log_error": "#FF0055", "log_info": "#00FFFF",
-            "log_debug": "#556688",
-            # ---- 覆盖层 ----
+            # ---- 覆盖层 (5) ----
             "overlay_bg_rgba": [8, 8, 22, 230],
             "overlay_selection_overlay_rgba": [20, 2, 40, 120],
             "overlay_status_bg_rgba": [8, 8, 20, 210],
             "overlay_crosshair_color": "#FF0055",
             "overlay_selection_border": "#FFE600",
-            # ---- 按钮 ----
+            # ---- 面板遮罩 ----
+            "panel_overlay_rgb": [5, 5, 20],
+            # ---- 按钮：默认 (10) ----
             "btn_default_bg": "#0E0E24", "btn_default_text": "#FFE600",
             "btn_default_border": "#FFE600",
             "btn_hover_bg": "#1A1030", "btn_hover_text": "#00FFFF",
@@ -167,27 +163,23 @@ class ThemeConfig:
             "btn_pressed_bg": "#050510",
             "btn_disabled_bg": "#0A0A18", "btn_disabled_text": "#444466",
             "btn_disabled_border": "#2A2040",
-            # ---- 主要按钮 ----
+            # ---- 按钮：主要 (5) ----
             "primary_bg": "#1A0030", "primary_text": "#FFE600",
             "primary_border": "#FFE600",
             "primary_hover_bg": "#2A0048", "primary_hover_border": "#00FFFF",
-            "primary_disabled_bg": "#0A0A18", "primary_disabled_text": "#444466",
-            "primary_disabled_border": "#2A2040",
-            # ---- 危险/成功按钮 ----
+            # ---- 按钮：危险/成功 (8) ----
             "danger_text": "#FF0055", "danger_border": "#FF0055",
             "danger_hover_bg": "#200010", "danger_hover_text": "#FF3377",
             "success_text": "#00FF99", "success_border": "#00FF99",
             "success_hover_bg": "#002010", "success_hover_text": "#33FFBB",
-            # ---- 品牌色 ----
+            # ---- 品牌色 (4) ----
             "brand_bilibili": "#FB7299", "brand_bilibili_hover": "#FF8DB0",
             "brand_github": "#58A6FF", "brand_github_hover": "#79C0FF",
-            # ---- 其他 ----
+            # ---- 其他 (6) ----
             "label_default": "#99AACC",
-            "panel_darkest": "#040412", "panel_deeper": "#020210",
             "progress_gradient_start": "#FFE600",
             "progress_gradient_mid": "#FF0055",
             "progress_gradient_end": "#00FFFF",
-            "log_timestamp": "#555577",
             "fetch_manual_hint": "#FFAA33", "fetch_error_color": "#FF4455",
         }
 
@@ -483,9 +475,9 @@ class ThemeConfig:
         self.overlay_status_bg_rgba = tuple(d["overlay_status_bg_rgba"])
 
         self.log_color_map = {
-            "ok": d["log_ok"], "warn": d["log_warn"],
-            "error": d["log_error"], "info": d["log_info"],
-            "debug": d["log_debug"],
+            "ok": d["cyber_green"], "warn": d["cyber_orange"],
+            "error": d["cyber_red"], "info": d["cyber_cyan"],
+            "debug": d["color_unknown"],
         }
 
     # ---- 观察者模式 ----
@@ -607,25 +599,29 @@ class ThemeConfig:
         "cyberpunk": {},
         "custom": {},
         "daylight": {
+            # ---- 霓虹主色 (6) ----
             "cyber_yellow": "#E67E00", "cyber_cyan": "#0077CC",
             "cyber_magenta": "#C2185B", "cyber_orange": "#E65100",
             "cyber_red": "#D32F2F", "cyber_green": "#2E7D32",
-            "cyber_blue": "#1565C0",
-            "dark_bg": "#F0F2F5", "panel_bg": "#F5F6FA",
-            "card_bg": "#FFFFFF", "border": "#D1D5DB",
-            "text": "#1F2937", "text_dim": "#6B7280",
-            "color_vaulted": "#2E7D32", "color_available": "#D32F2F",
+            # ---- 面板背景 (4) ----
+            "panel_bg": "#F5F6FA", "card_bg": "#FFFFFF",
+            "panel_darkest": "#E5E7EB", "panel_deeper": "#F3F4F6",
+            # ---- 边框 & 文字 (3) ----
+            "border": "#D1D5DB", "text": "#1F2937", "text_dim": "#6B7280",
+            # ---- 遗物状态 (1) ----
             "color_unknown": "#9CA3AF",
+            # ---- 稀有度 (3) ----
             "color_gold": "#D4A017", "color_silver": "#5C7B9E",
             "color_copper": "#B8631F",
-            "log_ok": "#2E7D32", "log_warn": "#E65100",
-            "log_error": "#D32F2F", "log_info": "#1565C0",
-            "log_debug": "#9CA3AF",
+            # ---- 覆盖层 (5) ----
             "overlay_bg_rgba": [30, 30, 36, 230],
             "overlay_selection_overlay_rgba": [50, 50, 60, 100],
             "overlay_status_bg_rgba": [30, 30, 36, 210],
             "overlay_crosshair_color": "#D32F2F",
             "overlay_selection_border": "#E67E00",
+            # ---- 面板遮罩 ----
+            "panel_overlay_rgb": [220, 220, 230],
+            # ---- 按钮 (15) ----
             "btn_default_bg": "#FFFFFF", "btn_default_text": "#374151",
             "btn_default_border": "#D1D5DB",
             "btn_hover_bg": "#EFF6FF", "btn_hover_text": "#1565C0",
@@ -636,20 +632,18 @@ class ThemeConfig:
             "primary_bg": "#EFF6FF", "primary_text": "#1D4ED8",
             "primary_border": "#3B82F6",
             "primary_hover_bg": "#DBEAFE", "primary_hover_border": "#2563EB",
-            "primary_disabled_bg": "#F9FAFB", "primary_disabled_text": "#9CA3AF",
-            "primary_disabled_border": "#E5E7EB",
             "danger_text": "#DC2626", "danger_border": "#DC2626",
             "danger_hover_bg": "#FEF2F2", "danger_hover_text": "#B91C1C",
             "success_text": "#16A34A", "success_border": "#16A34A",
             "success_hover_bg": "#F0FDF4", "success_hover_text": "#15803D",
+            # ---- 品牌色 (4) ----
             "brand_bilibili": "#FB7299", "brand_bilibili_hover": "#FF8DB0",
             "brand_github": "#374151", "brand_github_hover": "#111827",
+            # ---- 其他 (6) ----
             "label_default": "#4B5563",
-            "panel_darkest": "#E5E7EB", "panel_deeper": "#F3F4F6",
             "progress_gradient_start": "#3B82F6",
             "progress_gradient_mid": "#0077CC",
             "progress_gradient_end": "#2E7D32",
-            "log_timestamp": "#9CA3AF",
             "fetch_manual_hint": "#E65100", "fetch_error_color": "#DC2626",
         },
     }
@@ -683,7 +677,8 @@ class ThemeConfig:
     def get_panel_bg_color(self, alpha: int | None = None) -> str:
         """获取面板背景色（考虑背景图是否启用）。
         
-        有背景图时返回半透明色，透明度由 panel_overlay_opacity 控制（用户可调节）。
+        有背景图时返回半透明色，RGB 由预设的 panel_overlay_rgb 控制，
+        透明度由 panel_overlay_opacity 控制（用户可调节）。
         无背景图时返回纯色 panel_darkest。
         
         Args:
@@ -698,7 +693,8 @@ class ThemeConfig:
             if alpha is not None:
                 actual_alpha = int(self._panel_overlay_opacity * alpha / 180)
             actual_alpha = max(0, min(255, actual_alpha))
-            return f"rgba(5, 5, 20, {actual_alpha})"
+            rgb = self._data.get("panel_overlay_rgb", [5, 5, 20])
+            return f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, {actual_alpha})"
         return self.panel_darkest
 
     def __getattr__(self, name):

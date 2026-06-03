@@ -47,7 +47,8 @@ class StyleSheetBuilder:
                 cls._bg_cache[bg_key] = cls._build_background_style(
                     theme.background_image_path, 
                     theme.background_opacity, 
-                    theme.background_blur
+                    theme.background_blur,
+                    theme
                 )
             else:
                 cls._bg_cache[bg_key] = ""
@@ -170,9 +171,9 @@ QPushButton#primaryBtn:hover {{
     border-color: {t.primary_hover_border};
 }}
 QPushButton#primaryBtn:disabled {{
-    background-color: {t.primary_disabled_bg};
-    color: {t.primary_disabled_text};
-    border-color: {t.primary_disabled_border};
+    background-color: {t.btn_disabled_bg};
+    color: {t.btn_disabled_text};
+    border-color: {t.btn_disabled_border};
 }}
 """
         
@@ -251,7 +252,7 @@ QFrame#sep {{
 """
     
     @classmethod
-    def _build_background_style(cls, image_path: str, opacity: float, blur: int) -> str:
+    def _build_background_style(cls, image_path: str, opacity: float, blur: int, t=None) -> str:
         """构建背景图样式（分层架构）
         
         架构：ManagementPanel (QGridLayout 0,0 同格叠加)
@@ -263,6 +264,7 @@ QFrame#sep {{
             image_path: 背景图路径
             opacity: 透明度 (0.0-1.0)
             blur: 模糊度 (0-50)
+            t: ThemeConfig 实例（用于获取 panel_overlay_rgb）
             
         Returns:
             背景图QSS样式
@@ -275,6 +277,12 @@ QFrame#sep {{
         
         # 功能区半透明背景（略深，便于阅读）
         panel_alpha = int(opacity * 180)
+        
+        # 面板遮罩 RGB 颜色（跟随预设）
+        if t is None:
+            t = theme
+        rgb = t._data.get("panel_overlay_rgb", [5, 5, 20])
+        overlay_rgb = f"{rgb[0]}, {rgb[1]}, {rgb[2]}"
         
         return f"""
 /* ===== 分层架构样式（有背景图时覆盖基础样式）===== */
@@ -294,7 +302,7 @@ QWidget#BgImagePlaceholder {{
 
 /* 1.5. 不透明度遮罩层 - 纯色覆盖 */
 QWidget#OpacityOverlay {{
-    background-color: rgba(8, 8, 26, {overlay_alpha});
+    background-color: rgba({overlay_rgb}, {overlay_alpha});
 }}
 
 /* 2. 内容层 - 完全透明 */
@@ -308,7 +316,7 @@ QWidget#ContentLayer > QWidget,
 QWidget#ContentLayer > QFrame,
 QWidget#ContentLayer > QScrollArea,
 QWidget#ContentLayer > QListWidget {{
-    background-color: rgba(8, 8, 26, {panel_alpha});
+    background-color: rgba({overlay_rgb}, {panel_alpha});
     border: none;
 }}
 
@@ -316,7 +324,7 @@ QWidget#ContentLayer > QListWidget {{
 QWidget#ContentLayer > QWidget > QGroupBox,
 QWidget#ContentLayer > QScrollArea > QWidget > QGroupBox,
 QWidget#ContentLayer > QWidget > QGroupBox > QWidget {{
-    background-color: rgba(5, 5, 20, {panel_alpha});
+    background-color: rgba({overlay_rgb}, {panel_alpha});
 }}
 
 /* 5. 兼容 QMainWindow */

@@ -13,34 +13,30 @@ from data.ui_strings import S
 
 THEME_FIELDS = [
     # (json_key, 通俗标签, 类别)
+    # ---- 霓虹主色 (6) ----
     ("cyber_yellow",    S("theme_field", "cyber_yellow"),    S("theme_cat", "main_color")),
     ("cyber_cyan",      S("theme_field", "cyber_cyan"),      S("theme_cat", "main_color")),
     ("cyber_magenta",   S("theme_field", "cyber_magenta"),   S("theme_cat", "main_color")),
     ("cyber_orange",    S("theme_field", "cyber_orange"),    S("theme_cat", "main_color")),
     ("cyber_red",       S("theme_field", "cyber_red"),       S("theme_cat", "main_color")),
     ("cyber_green",     S("theme_field", "cyber_green"),     S("theme_cat", "main_color")),
-    ("cyber_blue",      S("theme_field", "cyber_blue"),      S("theme_cat", "main_color")),
-    ("dark_bg",         S("theme_field", "dark_bg"),         S("theme_cat", "panel_bg")),
+    # ---- 面板背景 (9) ----
     ("panel_bg",        S("theme_field", "panel_bg"),        S("theme_cat", "panel_bg")),
     ("card_bg",         S("theme_field", "card_bg"),         S("theme_cat", "panel_bg")),
+    ("panel_darkest",   S("theme_field", "panel_darkest"),   S("theme_cat", "panel_bg")),
+    ("panel_deeper",    S("theme_field", "panel_deeper"),    S("theme_cat", "panel_bg")),
     ("border",          S("theme_field", "border"),          S("theme_cat", "panel_bg")),
     ("text",            S("theme_field", "text"),            S("theme_cat", "panel_bg")),
     ("text_dim",        S("theme_field", "text_dim"),        S("theme_cat", "panel_bg")),
     ("label_default",   S("theme_field", "label_default"),   S("theme_cat", "panel_bg")),
-    ("panel_darkest",   S("theme_field", "panel_darkest"),   S("theme_cat", "panel_bg")),
-    ("panel_deeper",    S("theme_field", "panel_deeper"),    S("theme_cat", "panel_bg")),
-    ("color_vaulted",   S("theme_field", "color_vaulted"),   S("theme_cat", "relic_status")),
-    ("color_available", S("theme_field", "color_available"), S("theme_cat", "relic_status")),
+    ("panel_overlay_rgb", S("theme_field", "panel_overlay_rgb"), S("theme_cat", "panel_bg")),
+    # ---- 遗物状态 (1) ----
     ("color_unknown",   S("theme_field", "color_unknown"),   S("theme_cat", "relic_status")),
+    # ---- 稀有度 (3) ----
     ("color_gold",      S("theme_field", "color_gold"),      S("theme_cat", "part_rarity")),
     ("color_silver",    S("theme_field", "color_silver"),    S("theme_cat", "part_rarity")),
     ("color_copper",    S("theme_field", "color_copper"),    S("theme_cat", "part_rarity")),
-    ("log_ok",          S("theme_field", "log_ok"),          S("theme_cat", "log_color")),
-    ("log_warn",        S("theme_field", "log_warn"),        S("theme_cat", "log_color")),
-    ("log_error",       S("theme_field", "log_error"),       S("theme_cat", "log_color")),
-    ("log_info",        S("theme_field", "log_info"),        S("theme_cat", "log_color")),
-    ("log_debug",       S("theme_field", "log_debug"),       S("theme_cat", "log_color")),
-    ("log_timestamp",   S("theme_field", "log_timestamp"),   S("theme_cat", "log_color")),
+    # ---- 按钮样式 (24) ----
     ("btn_default_bg",       S("theme_field", "btn_default_bg"),       S("theme_cat", "btn_style")),
     ("btn_default_text",     S("theme_field", "btn_default_text"),     S("theme_cat", "btn_style")),
     ("btn_default_border",   S("theme_field", "btn_default_border"),   S("theme_cat", "btn_style")),
@@ -56,9 +52,6 @@ THEME_FIELDS = [
     ("primary_border",       S("theme_field", "primary_border"),       S("theme_cat", "btn_style")),
     ("primary_hover_bg",     S("theme_field", "primary_hover_bg"),     S("theme_cat", "btn_style")),
     ("primary_hover_border", S("theme_field", "primary_hover_border"), S("theme_cat", "btn_style")),
-    ("primary_disabled_bg",      S("theme_field", "primary_disabled_bg"),      S("theme_cat", "btn_style")),
-    ("primary_disabled_text",    S("theme_field", "primary_disabled_text"),    S("theme_cat", "btn_style")),
-    ("primary_disabled_border",  S("theme_field", "primary_disabled_border"),  S("theme_cat", "btn_style")),
     ("danger_text",       S("theme_field", "danger_text"),       S("theme_cat", "btn_style")),
     ("danger_border",     S("theme_field", "danger_border"),     S("theme_cat", "btn_style")),
     ("danger_hover_bg",   S("theme_field", "danger_hover_bg"),   S("theme_cat", "btn_style")),
@@ -67,10 +60,12 @@ THEME_FIELDS = [
     ("success_border",    S("theme_field", "success_border"),    S("theme_cat", "btn_style")),
     ("success_hover_bg",  S("theme_field", "success_hover_bg"),  S("theme_cat", "btn_style")),
     ("success_hover_text",S("theme_field", "success_hover_text"),S("theme_cat", "btn_style")),
+    # ---- 品牌色 (4) ----
     ("brand_bilibili",       S("theme_field", "brand_bilibili"),       S("theme_cat", "brand")),
     ("brand_bilibili_hover", S("theme_field", "brand_bilibili_hover"), S("theme_cat", "brand")),
     ("brand_github",         S("theme_field", "brand_github"),         S("theme_cat", "brand")),
     ("brand_github_hover",   S("theme_field", "brand_github_hover"),   S("theme_cat", "brand")),
+    # ---- 覆盖层 (7) ----
     ("overlay_crosshair_color", S("theme_field", "overlay_crosshair_color"), S("theme_cat", "overlay")),
     ("overlay_selection_border", S("theme_field", "overlay_selection_border"), S("theme_cat", "overlay")),
     ("progress_gradient_start", S("theme_field", "progress_gradient_start"), S("theme_cat", "overlay")),

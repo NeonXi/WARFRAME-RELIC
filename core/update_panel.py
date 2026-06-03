@@ -831,9 +831,9 @@ class UpdatePanel(QObject):
         color = theme.log_color_map.get(log_type, theme.text)
         prefix_map = {"ok": "✓", "warn": "⚠", "error": "✗", "info": "  "}
         p = prefix_map.get(log_type, " ")
-        src = f' <span style="color:{theme.log_timestamp};">[{source}]</span>' if source else ""
+        src = f' <span style="color:{theme.text_dim};">[{source}]</span>' if source else ""
         return (
-            f'<span style="color:{theme.log_timestamp};">[{now}]</span>'
+            f'<span style="color:{theme.text_dim};">[{now}]</span>'
             f'{src}'
             f' <span style="color:{color};">{p} {msg}</span>')
 

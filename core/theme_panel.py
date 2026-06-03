@@ -328,6 +328,8 @@ class ThemePanel:
             categories.setdefault(cat, []).append((jk, lbl))
 
         data = theme.to_dict()
+        # 数组类型字段的 key 集合（RGB/RGBA 数组，需要特殊转换显示）
+        ARRAY_FIELDS = {"panel_overlay_rgb"}
         for cat_name, fields in categories.items():
             cat_lbl = QLabel(f"▸ {cat_name}")
             cat_lbl.setStyleSheet(
@@ -337,6 +339,9 @@ class ThemePanel:
             row = QHBoxLayout(); row.setSpacing(4); col_count = 0
             for json_key, label in fields:
                 color = data.get(json_key, theme.panel_deeper)
+                # 数组类型字段转为 rgb() 字符串显示
+                if json_key in ARRAY_FIELDS and isinstance(color, list) and len(color) >= 3:
+                    color = f"rgb({color[0]}, {color[1]}, {color[2]})"
                 item = QWidget()
                 item.setMinimumWidth(64)
                 item_layout = QVBoxLayout(item)
@@ -370,15 +375,27 @@ class ThemePanel:
     # 色块交互
     # ============================================================
 
+    # 数组类型字段的 key 集合
+    _ARRAY_FIELDS = {"panel_overlay_rgb"}
+
     def _pick_color(self, json_key, swatch):
         current = theme.to_dict().get(json_key, theme.panel_deeper)
+        # 数组类型字段转为 #RRGGBB 字符串供 QColorDialog 使用
+        if json_key in self._ARRAY_FIELDS and isinstance(current, list) and len(current) >= 3:
+            current = f"#{current[0]:02x}{current[1]:02x}{current[2]:02x}"
         color = QColorDialog.getColor(QColor(current), self._parent,
             S.format("theme", "color_pick_title", field=json_key))
         if color.isValid():
-            hex_color = color.name()
-            self._theme_draft[json_key] = hex_color
+            if json_key in self._ARRAY_FIELDS:
+                # 数组类型字段：保存为 [r, g, b] 数组
+                self._theme_draft[json_key] = [color.red(), color.green(), color.blue()]
+                display_color = f"rgb({color.red()}, {color.green()}, {color.blue()})"
+            else:
+                hex_color = color.name()
+                self._theme_draft[json_key] = hex_color
+                display_color = hex_color
             swatch.setStyleSheet(
-                f"background-color: {hex_color}; border: 1px solid {theme.border}; border-radius: 2px;")
+                f"background-color: {display_color}; border: 1px solid {theme.border}; border-radius: 2px;")
 
     # ============================================================
     # 刷新 / 保存 / 重置 / 预设
@@ -563,11 +580,25 @@ class ThemePanel:
             self._bg_group.setStyleSheet(
                 f"background: {t.panel_deeper}; border: 1px solid {t.border}; border-radius: 4px;")
 
+        # 上传背景图按钮
+        if hasattr(self, '_btn_upload_bg'):
+            self._btn_upload_bg.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {t.card_bg}; color: {t.text};
+                    border: 1px solid {t.border}; border-radius: 3px;
+                    padding: 4px 8px; font-size: 11px;
+                }}
+                QPushButton:hover {{ border-color: {t.cyber_cyan}; }}
+            """)
+
     def rebuild_swatches(self):
         """刷新所有色块颜色。"""
         data = theme.to_dict()
         for json_key, swatch in self._theme_swatches.items():
             color = data.get(json_key, theme.panel_deeper)
+            # 数组类型字段转为 rgb() 字符串显示
+            if json_key in self._ARRAY_FIELDS and isinstance(color, list) and len(color) >= 3:
+                color = f"rgb({color[0]}, {color[1]}, {color[2]})"
             swatch.setStyleSheet(
                 f"background-color: {color}; border: none; border-radius: 2px;")
 
