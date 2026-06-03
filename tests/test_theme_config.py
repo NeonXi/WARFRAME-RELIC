@@ -42,7 +42,7 @@ class TestThemeConfigDefaults(unittest.TestCase):
         """核心颜色属性存在且为字符串"""
         for attr in ('cyber_yellow', 'cyber_cyan', 'cyber_magenta', 'cyber_orange',
                      'cyber_red', 'cyber_green',
-                     'panel_bg', 'card_bg', 'panel_darkest', 'panel_deeper',
+                     'panel_bg', 'card_bg',
                      'border', 'text', 'text_dim'):
             val = getattr(self.theme, attr)
             self.assertIsInstance(val, str, f"{attr} should be str, got {type(val)}")
@@ -50,8 +50,7 @@ class TestThemeConfigDefaults(unittest.TestCase):
 
     def test_rgba_attrs_exist(self):
         """RGBA 属性存在且为元组"""
-        for attr in ('overlay_bg_rgba', 'overlay_selection_overlay_rgba',
-                     'overlay_status_bg_rgba'):
+        for attr in ('overlay_bg_rgba', 'overlay_selection_overlay_rgba'):
             val = getattr(self.theme, attr)
             self.assertIsInstance(val, tuple, f"{attr} should be tuple")
             self.assertEqual(len(val), 4)

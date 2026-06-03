@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
         """根据当前主题配色构建样式表 dict"""
         t = theme
         return {
-            "central": f"background: {t.panel_darkest};",
+            "central": f"background: {t.panel_bg};",
             "search_widget": f"""
     QWidget {{
         background: {t.card_bg};

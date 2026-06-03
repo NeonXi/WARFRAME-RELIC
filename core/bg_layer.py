@@ -101,10 +101,10 @@ class BgLayerMixin:
     def _apply_opacity_overlay(self):
         """极轻量刷新：只更新遮罩层 alpha，一行 QSS 零开销。
 
-        遮罩颜色跟随主题 panel_darkest，白天模式用浅色，暗色模式用深色。
+        遮罩颜色跟随主题 panel_bg，白天模式用浅色，暗色模式用深色。
         """
-        # 解析当前主题的 panel_darkest 颜色
-        base_color = theme.panel_darkest if hasattr(theme, 'panel_darkest') else "#040412"
+        # 解析当前主题的 panel_bg 颜色
+        base_color = theme.panel_bg if hasattr(theme, 'panel_bg') else "#040412"
         if isinstance(base_color, str) and base_color.startswith('#'):
             r = int(base_color[1:3], 16)
             g = int(base_color[3:5], 16)

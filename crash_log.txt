@@ -366,3 +366,459 @@ Traceback (most recent call last):
 AttributeError: 'UpdatePanel' object has no attribute 'set_auto_show'
 
 ============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:12:45
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'DANGER_TEXT' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py). Did you mean: 'CYBER_TEXT'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:12:47
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'DANGER_TEXT' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py). Did you mean: 'CYBER_TEXT'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:12:49
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'DANGER_TEXT' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py). Did you mean: 'CYBER_TEXT'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:06
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:10
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:12
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:14
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:16
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:18
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:20
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:17:22
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PRIMARY_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:23
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:27
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:31
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:33
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:35
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:37
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 12, in <module>
+    from core.constants import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.constants' (D:\MyProgram\WARFRAME-RELIC\core\constants.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:39
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 12, in <module>
+    from core.constants import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.constants' (D:\MyProgram\WARFRAME-RELIC\core\constants.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:41
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 12, in <module>
+    from core.constants import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.constants' (D:\MyProgram\WARFRAME-RELIC\core\constants.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:43
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 12, in <module>
+    from core.constants import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.constants' (D:\MyProgram\WARFRAME-RELIC\core\constants.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:23:45
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 12, in <module>
+    from core.constants import (
+ImportError: cannot import name 'PANEL_DARKEST' from 'core.constants' (D:\MyProgram\WARFRAME-RELIC\core\constants.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:28:58
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'OVERLAY_STATUS_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:29:00
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'OVERLAY_STATUS_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 07:29:02
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 31, in <module>
+    from core.constants import (
+  File "D:\MyProgram\WARFRAME-RELIC\core\constants.py", line 14, in <module>
+    from core.theme_proxy import (
+ImportError: cannot import name 'OVERLAY_STATUS_BG' from 'core.theme_proxy' (D:\MyProgram\WARFRAME-RELIC\core\theme_proxy.py)
+
+============================================================

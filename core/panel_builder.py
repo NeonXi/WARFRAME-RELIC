@@ -213,14 +213,13 @@ class PanelBuilderMixin:
         exit_row = QHBoxLayout()
         self._btn_reload_ui = WordWrapButton(S("button", "reload_ui"))
         self._reg_text(self._btn_reload_ui, "button", "reload_ui")
-        self._btn_reload_ui.setObjectName("actionBtn")
         self._btn_reload_ui.setToolTip("完全重载面板 UI")
         self._btn_reload_ui.clicked.connect(self._on_reload_ui)
         exit_row.addWidget(self._btn_reload_ui)
         exit_row.addStretch()
         self._btn_exit = WordWrapButton(S("button", "exit"))
         self._reg_text(self._btn_exit, "button", "exit")
-        self._btn_exit.setObjectName("dangerBtn")
+        self._btn_exit
         self._btn_exit.clicked.connect(self._on_exit)
         exit_row.addWidget(self._btn_exit)
         content_layout.addLayout(exit_row)
@@ -409,14 +408,14 @@ class PanelBuilderMixin:
         row_fetch = QHBoxLayout()
         self._btn_fetch = WordWrapButton(S("button", "fetch_github"))
         self._reg_text(self._btn_fetch, "button", "fetch_github")
-        self._btn_fetch.setObjectName("primaryBtn")
+        self._btn_fetch
         self._btn_fetch.clicked.connect(self._update_panel.on_fetch)
         self._btn_browse = WordWrapButton(S("button", "browse_file"))
         self._reg_text(self._btn_browse, "button", "browse_file")
         self._btn_browse.clicked.connect(self._update_panel.on_browse)
         self._btn_update = WordWrapButton(S("button", "update_db"))
         self._reg_text(self._btn_update, "button", "update_db")
-        self._btn_update.setObjectName("actionBtn")
+        self._btn_update
         self._btn_update.clicked.connect(self._update_panel.on_update)
         row_fetch.addWidget(self._btn_fetch)
         row_fetch.addWidget(self._btn_browse)
@@ -426,11 +425,11 @@ class PanelBuilderMixin:
         row1 = QHBoxLayout()
         self._btn_tutorial = WordWrapButton(S("button", "update_tutorial"))
         self._reg_text(self._btn_tutorial, "button", "update_tutorial")
-        self._btn_tutorial.setObjectName("actionBtn")
+        self._btn_tutorial
         self._btn_tutorial.clicked.connect(self._update_panel.show_tutorial)
         self._btn_browse_db = WordWrapButton(S("button", "open_data_dir"))
         self._reg_text(self._btn_browse_db, "button", "open_data_dir")
-        self._btn_browse_db.setObjectName("actionBtn")
+        self._btn_browse_db
         self._btn_browse_db.clicked.connect(self._open_data_dir)
         row1.addWidget(self._btn_tutorial)
         row1.addWidget(self._btn_browse_db)
@@ -857,10 +856,10 @@ class PanelBuilderMixin:
 
         region_btn_row = QHBoxLayout()
         self._btn_set_item_region = WordWrapButton("设置物品区域")
-        self._btn_set_item_region.setObjectName("actionBtn")
+        self._btn_set_item_region
         self._btn_set_item_region.clicked.connect(self._on_set_item_region)
         self._btn_clear_item_region = WordWrapButton("清除区域")
-        self._btn_clear_item_region.setObjectName("actionBtn")
+        self._btn_clear_item_region
         self._btn_clear_item_region.clicked.connect(self._on_clear_item_region)
         region_btn_row.addWidget(self._btn_set_item_region)
         region_btn_row.addWidget(self._btn_clear_item_region)
@@ -887,13 +886,13 @@ class PanelBuilderMixin:
         btn_row = QHBoxLayout()
         self._btn_fetch_prices = WordWrapButton(S("button", "fetch_prices"))
         self._reg_text(self._btn_fetch_prices, "button", "fetch_prices")
-        self._btn_fetch_prices.setObjectName("primaryBtn")
+        self._btn_fetch_prices
         self._btn_fetch_prices.clicked.connect(self._on_fetch_prices)
         btn_row.addWidget(self._btn_fetch_prices)
 
         self._btn_open_market_query = WordWrapButton(S("button", "open_market_query"))
         self._reg_text(self._btn_open_market_query, "button", "open_market_query")
-        self._btn_open_market_query.setObjectName("actionBtn")
+        self._btn_open_market_query
         self._btn_open_market_query.clicked.connect(self._open_market_query)
         btn_row.addWidget(self._btn_open_market_query)
 
@@ -1046,11 +1045,11 @@ class PanelBuilderMixin:
         btn_row = QHBoxLayout()
         self._btn_save_hotkeys = WordWrapButton(S("button", "save_hotkeys"))
         self._reg_text(self._btn_save_hotkeys, "button", "save_hotkeys")
-        self._btn_save_hotkeys.setObjectName("primaryBtn")
+        self._btn_save_hotkeys
         self._btn_save_hotkeys.clicked.connect(self._on_save_hotkeys)
         self._btn_reset_hotkeys = WordWrapButton(S("button", "reset_default"))
         self._reg_text(self._btn_reset_hotkeys, "button", "reset_default")
-        self._btn_reset_hotkeys.setObjectName("actionBtn")
+        self._btn_reset_hotkeys
         self._btn_reset_hotkeys.clicked.connect(self._on_reset_hotkeys)
         btn_row.addWidget(self._btn_save_hotkeys)
         btn_row.addWidget(self._btn_reset_hotkeys); btn_row.addStretch()
@@ -1091,7 +1090,7 @@ class PanelBuilderMixin:
         btn_row = QHBoxLayout()
         self._btn_reset_state = WordWrapButton(S("button", "reset_state"))
         self._reg_text(self._btn_reset_state, "button", "reset_state")
-        self._btn_reset_state.setObjectName("dangerBtn")
+        self._btn_reset_state
         self._btn_reset_state.setMinimumHeight(40)
         self._btn_reset_state.setStyleSheet(f"""
             QPushButton {{
@@ -1150,7 +1149,7 @@ class PanelBuilderMixin:
         btn_row = QHBoxLayout()
         self._btn_toggle_theme = WordWrapButton(S("button", "custom_theme"))
         self._reg_text(self._btn_toggle_theme, "button", "custom_theme")
-        self._btn_toggle_theme.setObjectName("primaryBtn")
+        self._btn_toggle_theme
         self._btn_toggle_theme.clicked.connect(self._toggle_theme_panel)
         btn_row.addWidget(self._btn_toggle_theme); btn_row.addStretch()
         layout.addLayout(btn_row)

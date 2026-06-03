@@ -69,7 +69,7 @@ QWidget {{
 }}
 /* 管理面板背景（无背景图时使用主题色）*/
 QWidget#ManagementPanel {{
-    background-color: {t.panel_darkest};
+    background-color: {t.panel_bg};
 }}
 /* 内容层背景（无背景图时使用主题色）*/
 QWidget#ContentLayer {{
@@ -182,76 +182,7 @@ QPushButton:disabled {{
 }}
 """
         
-        primary_btn = f"""
-QPushButton#primaryBtn {{
-    background-color: {t.primary_bg};
-    color: {t.primary_text};
-    border: 1px solid {t.primary_border};
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: bold;
-    min-height: 36px;
-    text-align: center;
-    outline: none;
-}}
-QPushButton#primaryBtn:hover {{
-    background-color: {t.primary_hover_bg};
-    color: {t.primary_text};
-    border-color: {t.primary_hover_border};
-}}
-QPushButton#primaryBtn:disabled {{
-    background-color: {t.btn_disabled_bg};
-    color: {t.btn_disabled_text};
-    border-color: {t.btn_disabled_border};
-}}
-"""
-        
-        action_btn = f"""
-QPushButton#actionBtn {{
-    background-color: {t.btn_default_bg};
-    color: {t.btn_default_text};
-    border: 1px solid {t.btn_default_border};
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: bold;
-    min-height: 36px;
-    text-align: center;
-}}
-QPushButton#actionBtn:hover {{
-    background-color: {t.btn_hover_bg};
-    color: {t.btn_hover_text};
-    border-color: {t.btn_hover_border};
-}}
-QPushButton#actionBtn:disabled {{
-    background-color: {t.btn_disabled_bg};
-    color: {t.btn_disabled_text};
-    border-color: {t.btn_disabled_border};
-}}
-"""
-        
-        danger_btn = f"""
-QPushButton#dangerBtn {{
-    border-color: {t.danger_border};
-    color: {t.danger_text};
-}}
-QPushButton#dangerBtn:hover {{
-    background-color: {t.danger_hover_bg};
-    color: {t.danger_hover_text};
-}}
-"""
-        
-        success_btn = f"""
-QPushButton#successBtn {{
-    border-color: {t.success_border};
-    color: {t.success_text};
-}}
-QPushButton#successBtn:hover {{
-    background-color: {t.success_hover_bg};
-    color: {t.success_hover_text};
-}}
-"""
-        
-        return base_btn + primary_btn + action_btn + danger_btn + success_btn
+        return base_btn
     
     @classmethod
     def _build_progress_bar(cls, t) -> str:
@@ -285,11 +216,11 @@ QFrame#sep {{
         """构建 QDialog / QMessageBox 样式"""
         return f"""
 QDialog {{
-    background-color: {t.panel_darkest};
+    background-color: {t.panel_bg};
     color: {t.text};
 }}
 QMessageBox {{
-    background-color: {t.panel_darkest};
+    background-color: {t.panel_bg};
     color: {t.text};
 }}
 QMessageBox QLabel {{
@@ -307,7 +238,7 @@ QMessageBox QPushButton {{
 }}
 QMessageBox QPushButton:hover {{
     border-color: {t.cyber_cyan};
-    background-color: {t.panel_deeper};
+    background-color: {t.card_bg};
 }}
 QMessageBox QPushButton[text="Yes"], 
 QMessageBox QPushButton[text="确定"] {{

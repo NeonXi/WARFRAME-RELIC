@@ -658,7 +658,7 @@ class UpdatePanel(QObject):
         dlg.setMinimumSize(width, height)
         dlg.resize(width, height)
         dlg.setStyleSheet(
-            f"QDialog {{ background-color: {theme.panel_darkest}; }}"
+            f"QDialog {{ background-color: {theme.panel_bg}; }}"
             + build_stylesheet())
         layout = QVBoxLayout(dlg)
         layout.setContentsMargins(16, 16, 16, 16)
@@ -675,10 +675,10 @@ class UpdatePanel(QObject):
         text.setHtml(self._urls_to_html(text_content))
         text.setStyleSheet(
             self._TEXTEDIT_STYLE.format(
-                bg=theme.panel_darkest, fg=theme.text, border=theme.border) +
-            f"\nQTextBrowser {{ background-color: {theme.panel_darkest}; }}\n"
+                bg=theme.panel_bg, fg=theme.text, border=theme.border) +
+            f"\nQTextBrowser {{ background-color: {theme.panel_bg}; }}\n"
             f"QTextBrowser QScrollBar:vertical {{"
-            f" background: {theme.panel_darkest}; width: 8px; }}\n"
+            f" background: {theme.panel_bg}; width: 8px; }}\n"
         )
         layout.addWidget(text, 1)
 

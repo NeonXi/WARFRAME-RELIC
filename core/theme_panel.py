@@ -74,7 +74,7 @@ class ThemePanel:
         # 构建面板
         self._panel = QWidget()
         self._panel.setFixedWidth(0)
-        self._panel.setStyleSheet(f"background-color: {theme.panel_darkest};")
+        self._panel.setStyleSheet(f"background-color: {theme.panel_bg};")
         self._panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
 
         self._build_ui()
@@ -159,12 +159,12 @@ class ThemePanel:
         preset_row.addWidget(self._preset_combo, 1)
 
         self._btn_apply_preset = QPushButton(S("button", "apply_preset"))
-        self._btn_apply_preset.setObjectName("primaryBtn")
+        self._btn_apply_preset
         self._btn_apply_preset.clicked.connect(self._on_apply_preset)
         preset_row.addWidget(self._btn_apply_preset)
 
         self._btn_close_panel = QPushButton("关闭")
-        self._btn_close_panel.setObjectName("actionBtn")
+        self._btn_close_panel
         self._btn_close_panel.clicked.connect(self.collapse)
         preset_row.addWidget(self._btn_close_panel)
         panel_layout.addLayout(preset_row)
@@ -176,7 +176,7 @@ class ThemePanel:
 
         # ── 自定义背景图 ──
         self._bg_group = QWidget()
-        self._bg_group.setStyleSheet(f"background: {theme.panel_deeper}; border: 1px solid {theme.border}; border-radius: 4px;")
+        self._bg_group.setStyleSheet(f"background: {theme.card_bg}; border: 1px solid {theme.border}; border-radius: 4px;")
         bg_group_layout = QVBoxLayout(self._bg_group)
         bg_group_layout.setContentsMargins(8, 8, 8, 8)
         bg_group_layout.setSpacing(6)
@@ -188,7 +188,7 @@ class ThemePanel:
         
         # 上传按钮
         self._btn_upload_bg = QPushButton(S("button", "upload_bg"))
-        self._btn_upload_bg.setObjectName("actionBtn")
+        self._btn_upload_bg
         self._btn_upload_bg.setStyleSheet(f"""
             QPushButton {{
                 background-color: {theme.card_bg}; color: {theme.text};
@@ -279,7 +279,6 @@ class ThemePanel:
         
         # 清除按钮
         self._btn_clear_bg = QPushButton(S("button", "clear_bg"))
-        self._btn_clear_bg.setObjectName("dangerBtn")
         self._btn_clear_bg.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent; color: {theme.cyber_red};
@@ -299,13 +298,13 @@ class ThemePanel:
         # 底部按钮
         btn_row = QHBoxLayout()
         self._btn_save = QPushButton(S("button", "save_theme"))
-        self._btn_save.setObjectName("primaryBtn")
+        self._btn_save
         self._btn_save.clicked.connect(self._on_save)
         self._btn_reset = QPushButton(S("button", "reset_default"))
-        self._btn_reset.setObjectName("actionBtn")
+        self._btn_reset
         self._btn_reset.clicked.connect(self._on_reset)
         self._btn_refresh = QPushButton(S("button", "refresh_preview"))
-        self._btn_refresh.setObjectName("actionBtn")
+        self._btn_refresh
         self._btn_refresh.clicked.connect(self._on_refresh_preview)
         btn_row.addWidget(self._btn_save)
         btn_row.addWidget(self._btn_reset)
@@ -318,11 +317,11 @@ class ThemePanel:
         self._swatch_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._swatch_scroll.setStyleSheet(
             f"QScrollArea {{ border: 1px solid {theme.border}; "
-            f"border-radius: 4px; background: {theme.panel_deeper}; }}")
+            f"border-radius: 4px; background: {theme.card_bg}; }}")
 
         tw = QWidget()
         self._swatch_container = tw
-        tw.setStyleSheet(f"background: {theme.panel_deeper};")
+        tw.setStyleSheet(f"background: {theme.card_bg};")
         tw_layout = QVBoxLayout(tw)
         tw_layout.setSpacing(6)
 
@@ -343,7 +342,7 @@ class ThemePanel:
 
             row = QHBoxLayout(); row.setSpacing(4); col_count = 0
             for json_key, label in fields:
-                color = data.get(json_key, theme.panel_deeper)
+                color = data.get(json_key, theme.card_bg)
                 # 数组类型字段转为 rgb() 字符串显示
                 if json_key in ARRAY_FIELDS and isinstance(color, list) and len(color) >= 3:
                     color = f"rgb({color[0]}, {color[1]}, {color[2]})"
@@ -384,7 +383,7 @@ class ThemePanel:
     _ARRAY_FIELDS = {"panel_overlay_rgb"}
 
     def _pick_color(self, json_key, swatch):
-        current = theme.to_dict().get(json_key, theme.panel_deeper)
+        current = theme.to_dict().get(json_key, theme.card_bg)
         # 数组类型字段转为 #RRGGBB 字符串供 QColorDialog 使用
         if json_key in self._ARRAY_FIELDS and isinstance(current, list) and len(current) >= 3:
             current = f"#{current[0]:02x}{current[1]:02x}{current[2]:02x}"
@@ -536,7 +535,7 @@ class ThemePanel:
         """刷新主题面板中所有颜色相关的内联样式。"""
         t = theme
 
-        self._panel.setStyleSheet(f"background-color: {t.panel_darkest};")
+        self._panel.setStyleSheet(f"background-color: {t.panel_bg};")
 
         # 标题
         self._title_lbl.setStyleSheet(f"color: {t.cyber_yellow}; font-size: 14px; font-weight: bold;")
@@ -577,13 +576,13 @@ class ThemePanel:
         # 色块滚动区
         self._swatch_scroll.setStyleSheet(
             f"QScrollArea {{ border: 1px solid {t.border}; "
-            f"border-radius: 4px; background: {t.panel_deeper}; }}")
-        self._swatch_container.setStyleSheet(f"background: {t.panel_deeper};")
+            f"border-radius: 4px; background: {t.card_bg}; }}")
+        self._swatch_container.setStyleSheet(f"background: {t.card_bg};")
 
         # 背景图区域容器
         if hasattr(self, '_bg_group'):
             self._bg_group.setStyleSheet(
-                f"background: {t.panel_deeper}; border: 1px solid {t.border}; border-radius: 4px;")
+                f"background: {t.card_bg}; border: 1px solid {t.border}; border-radius: 4px;")
 
         # 上传背景图按钮
         if hasattr(self, '_btn_upload_bg'):
@@ -600,7 +599,7 @@ class ThemePanel:
         """刷新所有色块颜色。"""
         data = theme.to_dict()
         for json_key, swatch in self._theme_swatches.items():
-            color = data.get(json_key, theme.panel_deeper)
+            color = data.get(json_key, theme.card_bg)
             # 数组类型字段转为 rgb() 字符串显示
             if json_key in self._ARRAY_FIELDS and isinstance(color, list) and len(color) >= 3:
                 color = f"rgb({color[0]}, {color[1]}, {color[2]})"

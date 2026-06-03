@@ -29,9 +29,8 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPainter, QPen, QColor, QFont, QCursor
 
 from core.constants import (
-    CYBER_YELLOW, CYBER_CYAN,
-    OVERLAY_SELECTION_OVERLAY, OVERLAY_STATUS_BG,
-    OVERLAY_CROSSHAIR_COLOR, OVERLAY_SELECTION_BORDER,
+    CYBER_YELLOW, CYBER_CYAN, CYBER_RED,
+    OVERLAY_SELECTION_OVERLAY, OVERLAY_BG_COLOR,
 )
 from data.ui_strings import S
 
@@ -290,7 +289,7 @@ class RegionSelector:
 
         # 顶部状态栏
         if self._status_text:
-            painter.fillRect(0, 0, self._parent.width(), 36, QColor(*OVERLAY_STATUS_BG))
+            painter.fillRect(0, 0, self._parent.width(), 36, QColor(*OVERLAY_BG_COLOR))
             painter.setPen(QColor(str(CYBER_YELLOW)))
             painter.setFont(QFont("Microsoft YaHei", 12))
             painter.drawText(20, 24, self._status_text)
@@ -318,7 +317,7 @@ class RegionSelector:
         painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
 
         # 边框
-        pen = QPen(QColor(str(OVERLAY_SELECTION_BORDER)), 2)
+        pen = QPen(QColor(str(CYBER_YELLOW)), 2)
         painter.setPen(pen)
         painter.drawRect(x, y, w, h)
 
@@ -334,12 +333,12 @@ class RegionSelector:
         ph = painter.device().height()
         px, py = pos.x(), pos.y()
 
-        pen = QPen(QColor(str(OVERLAY_CROSSHAIR_COLOR)), 1, Qt.PenStyle.DashLine)
+        pen = QPen(QColor(str(CYBER_RED)), 1, Qt.PenStyle.DashLine)
         painter.setPen(pen)
         painter.drawLine(0, py, pw, py)
         painter.drawLine(px, 0, px, ph)
 
-        painter.setPen(QPen(QColor(str(OVERLAY_CROSSHAIR_COLOR)), 2))
+        painter.setPen(QPen(QColor(str(CYBER_RED)), 2))
         painter.drawLine(px - 12, py, px + 12, py)
         painter.drawLine(px, py - 12, px, py + 12)
 
