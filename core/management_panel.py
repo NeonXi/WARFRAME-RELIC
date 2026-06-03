@@ -94,11 +94,7 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
         hint = self.layout().sizeHint()
         if hint.height() > self.height():
             self.resize(self.width(), hint.height())
-        screen = QApplication.primaryScreen()
-        if screen:
-            screen_geom = screen.availableGeometry()
-            self.move(screen_geom.left(), screen_geom.top())
-        self._set_bg_image_style()
+        self._update_background_size_immediate()
 
     # ============================================================
     # 窗口宽度调整

@@ -22,9 +22,9 @@ if exist "venv\Scripts\python.exe" (
 )
 
 rem --- 启动 dev_runner ---
-echo [*] 自动重启模式 (文件变更时自动重载)
+echo [*] 自动重启模式 ^(文件变更时自动重载^)
 echo [*] 按 Ctrl+C 退出
-echo [*] 崩溃日志: crash_log.txt
+echo [*] Crash log: crash_log.txt
 echo.
 echo ================================================
 echo.

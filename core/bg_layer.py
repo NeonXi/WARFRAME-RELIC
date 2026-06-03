@@ -9,7 +9,6 @@ WARFRAME-RELIC 背景图层管理 Mixin
 作为 Mixin 注入 ManagementPanel，所有方法通过 self 访问控件。
 """
 
-import os
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QGraphicsBlurEffect
 from core.constants import theme
@@ -18,89 +17,66 @@ from PyQt6.QtWidgets import QWidget
 
 
 class BgImageWidget(QWidget):
-    """自绘制背景图控件，用 paintEvent 绘制 QPixmap，绕过 QSS 的 background-size 限制。"""
+    """自绘制背景图控件，paintEvent 内实时缩放，拖动窗口零开销。"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._pixmap: QPixmap | None = None
-        self._offset_x: int = 0
-        self._offset_y: int = 0
+        self._orig_pixmap: QPixmap | None = None
+        self._blur_scale: float = 1.0
 
-    def set_pixmap(self, pixmap: QPixmap, offset_x: int = 0, offset_y: int = 0):
-        """设置要绘制的 pixmap 及居中偏移量。"""
-        self._pixmap = pixmap
-        self._offset_x = offset_x
-        self._offset_y = offset_y
+    def set_orig_pixmap(self, pixmap: QPixmap, blur_scale: float = 1.0):
+        """设置原始图片，paintEvent 绘制时自动 cover 缩放。"""
+        self._orig_pixmap = pixmap
+        self._blur_scale = blur_scale
         self.update()
 
     def clear_pixmap(self):
-        """清除背景图。"""
-        self._pixmap = None
+        self._orig_pixmap = None
         self.update()
 
     def paintEvent(self, event):
-        if self._pixmap and not self._pixmap.isNull():
+        if self._orig_pixmap and not self._orig_pixmap.isNull():
             painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-            painter.drawPixmap(self._offset_x, self._offset_y, self._pixmap)
+
+            img_w = self._orig_pixmap.width()
+            img_h = self._orig_pixmap.height()
+            win_w = self.width()
+            win_h = self.height()
+
+            if img_w > 0 and img_h > 0 and win_w > 0 and win_h > 0:
+                scale = max(win_w / img_w, win_h / img_h) * self._blur_scale
+                scale = min(scale, 1.5 * self._blur_scale)
+                target_w = int(img_w * scale)
+                target_h = int(img_h * scale)
+                offset_x = (win_w - target_w) // 2
+                offset_y = (win_h - target_h) // 2
+
+                painter.drawPixmap(
+                    offset_x, offset_y, target_w, target_h,
+                    self._orig_pixmap,
+                )
         else:
             super().paintEvent(event)
 
 
 class BgLayerMixin:
-    """背景图层管理：模糊、透明度、背景图尺寸。"""
+    """背景图层管理：模糊、透明度、背景图尺寸。
+
+    paintEvent 内实时缩放背景图，拖动窗口时无需重建 QPixmap，流畅无卡顿。
+    """
 
     # ── 以下属性由 ManagementPanel.__init__ / _setup_ui 创建 ──
-    # _bg_image_placeholder: QWidget
+    # _bg_image_placeholder: BgImageWidget
     # _bg_blur_effect: QGraphicsBlurEffect
     # _opacity_overlay: QWidget
 
     # ============================================================
-    # 窗口事件
+    # 背景图加载（仅加载原图，缩放由 BgImageWidget.paintEvent 处理）
     # ============================================================
 
-    def resizeEvent(self, event):
-        """窗口大小变化时动态更新背景图尺寸（带 Debounce）"""
-        super().resizeEvent(event)
-        self._schedule_background_update()
-
-    # ============================================================
-    # 背景图尺寸（Debounce）
-    # ============================================================
-
-    def _schedule_background_update(self):
-        """延迟更新背景图尺寸（Debounce: 100ms）"""
-        if not hasattr(self, '_bg_update_timer'):
-            from PyQt6.QtCore import QTimer
-            self._bg_update_timer = QTimer()
-            self._bg_update_timer.setSingleShot(True)
-            self._bg_update_timer.timeout.connect(self._update_background_size_debounced)
-
-        self._bg_update_timer.stop()
-        self._bg_update_timer.start(100)
-
-    def _update_background_size_debounced(self):
-        """Debounce 后的背景图尺寸更新（带阈值过滤）"""
-        if not theme.background_enabled or not theme.background_image_path:
-            return
-        if hasattr(self, '_last_bg_width') and hasattr(self, '_last_bg_height'):
-            if abs(self.width() - self._last_bg_width) < 50 and abs(self.height() - self._last_bg_height) < 50:
-                return
-        self._update_bg_pixmap()
-        self._last_bg_width = self.width()
-        self._last_bg_height = self.height()
-
-    # ============================================================
-    # 背景图样式
-    # ============================================================
-
-    
     def _update_bg_pixmap(self):
-        """用 QPixmap 缩放 + self._bg_image_placeholder.paintEvent 来显示背景图。
-
-        完全绕过 QSS background-size（Qt 不支持），通过 QPixmap.scaled()
-        和 paintEvent 中的 QPainter.drawPixmap 实现 cover + 居中效果。
-        """
+        """加载背景图原图，缩放由 paintEvent 实时处理，拖动窗口零开销。"""
         if not theme.background_enabled or not theme.background_image_path:
             self._bg_image_placeholder.clear_pixmap()
             return
@@ -109,44 +85,13 @@ class BgLayerMixin:
         if pixmap.isNull():
             return
 
-        img_w = pixmap.width()
-        img_h = pixmap.height()
-        win_w = self.width()
-        win_h = self.height()
+        blur_radius = getattr(theme, 'background_blur', 0)
+        blur_scale = 1.10 if blur_radius > 0 else 1.0
 
-        if img_w > 0 and img_h > 0 and win_w > 0 and win_h > 0:
-            # cover 模式：取较大缩放比，保证至少一个方向填满窗口
-            scale = max(win_w / img_w, win_h / img_h)
-            scale = min(scale, 1.5)  # 最大放大 1.5 倍
-
-            # 模糊时放大 10% 消除白边
-            blur_radius = getattr(theme, 'background_blur', 0)
-            if blur_radius > 0:
-                scale *= 1.10
-
-            target_w = int(img_w * scale)
-            target_h = int(img_h * scale)
-        else:
-            target_w = win_w
-            target_h = win_h
-
-        # 缩放
-        scaled = pixmap.scaled(
-            target_w, target_h,
-            Qt.AspectRatioMode.IgnoreAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
-
-        # 居中偏移
-        offset_x = (win_w - target_w) // 2
-        offset_y = (win_h - target_h) // 2
-
-        self._bg_image_placeholder.set_pixmap(scaled, offset_x, offset_y)
-
-    
+        self._bg_image_placeholder.set_orig_pixmap(pixmap, blur_scale)
 
     def _update_background_size_immediate(self):
-        """立即更新背景图尺寸（不带 debounce，用于主题变更时）"""
+        """立即重新加载背景图（主题/路径变更时）。"""
         self._update_bg_pixmap()
 
     # ============================================================

@@ -45,13 +45,14 @@ STRINGS = {
         "upload_bg": "上传背景图",
         "clear_bg": "清除背景图",
         "fetch_prices": "启动 warframe.market 黑暗森林市场探测",
+        "open_market_query": "实时挂单查询",
     },
 
     # ── 导航标签 ──
     "nav": {
         "nav_toggles":  "功能模态",
         "nav_status":   "数据状态",
-        "nav_relic":    "遗物更新",
+        "nav_db_center":    "数据管理",
         "nav_trans":    "翻译库",
         "nav_items":    "物品查询",
         "nav_prices":   "价格数据",
@@ -65,8 +66,8 @@ STRINGS = {
     # ── 分组标题 ──
     "group": {
         "recovery": "⎅ 归零者紧急协议（异常态恢复）",
-        "db_status": "光墓健康度监测",
-        "relic_update": "阶梯计划 · 遗物数据库同步",
+        "data_overview": "数据总览",
+        "db_center": "阶梯计划 · 数据库管理中心",
         "translation_db": "智子翻译知识库（中英符号映射）",
         "items_i18n": "全文明物品多语种索引库",
         "wm_prices": "⟐ 黑暗森林市场价格波动数据",
@@ -79,12 +80,10 @@ STRINGS = {
 
     # ── 统计标签 ──
     "stat_label": {
-        "relics_total": "遗物实体计数（降维快照）",
-        "parts_total": "Prime 部件实体计数",
-        "aliases_total": "别名映射条目（三体世界命名）",
-        "vaulted": "出库态（可获取概率非零·处于威慑纪元）",
-        "available": "入库态（获取概率归零·已进入光墓）",
-        "voidtrader": "虚空商人可交易（星际流浪文明）",
+        "relics_summary": "遗物数据库",
+        "relic_vault": "出入库状态",
+        "trans_summary": "翻译数据库",
+        "items_summary": "全物品索引",
         "db_size": "四维碎片存储泡占用",
         "last_update": "最近一次阶梯计划同步时间戳",
         "trans_total": "智子翻译映射对总数",
@@ -101,6 +100,10 @@ STRINGS = {
         "db_size_kb": "{size:.1f} KiB",
         "trans_count": "{count} 组智子映射对",
         "cat_detail": "{cat}: {count}",
+        "relics_summary": "{relics} 遗物 | {parts} 部件 | {aliases} 别名",
+        "relic_vault": "出库 {available} | 入库 {vaulted} | 虚空商人 {voidtrader}",
+        "trans_summary": "{total} 条翻译 | {size:.1f} KiB",
+        "items_summary": "{total} 物品（中文 {has_cn}） | {size:.1f} KiB",
     },
 
     # ── 状态概要 ──
@@ -117,6 +120,10 @@ STRINGS = {
         "db_corrupted": "光墓完整性异常（智子检测到量子态衰退）: {error}",
         "db_no_permission": "光墓访问权限不足（面壁者权限未授权）: {error}",
         "placeholder": "--",
+        "trans_summary_none": "翻译库: 尚未构建",
+        "trans_summary_error": "翻译库: 数据异常",
+        "items_summary_none": "全物品索引: 尚未构建",
+        "items_summary_error": "全物品索引: 数据异常",
         "done": "执行完毕（威慑纪元时间线正常）",
     },
 
@@ -134,9 +141,9 @@ STRINGS = {
                      "此操作不会影响：主题配色、功能开关、语言预设、数据库。\n"
                      "若引力波天线阵列失活、图形界面陷入黑域死锁态，请立即触发此协议。",
         "bottom_tip": "智子提示: 输入 Ctrl+Shift+G 指令序列可唤出此威慑纪元控制中枢 | Ctrl+G 触发二向箔降维采样",
-        "data_source_relic": "数据来源: WFCD 文明档案馆（warframe-drop-data 项目）\n若阶梯计划同步失效，可手动获取 all.json 后执行「指定本地二维箔」→「光墓写入序列」",
+        "data_source_relic": "原始数据源: 来自 WFCD 文明档案馆的 all.json + i18n.json\n本地数据库: 从原始数据源派生的 SQLite 光墓数据\n点击「阶梯计划」自动下载并智子清洗，或手动指定本地二维箔后写入",
         "data_source_trans": "数据来源: WFCD 文明档案馆（warframe-items 项目，All.json 与 i18n.json 双文件精确关联算法）",
-        "data_source_items": "数据来源: WFCD warframe-items All.json + i18n.json\n自动跟随智子翻译知识库 / 遗物数据库同步更新",
+        "data_source_items": "数据来源: WFCD warframe-items All.json + i18n.json\n自动跟随智子翻译知识库 / 数据库管理中心同步更新",
         "data_source_wm": "数据来源: warframe.market API v2 端点（黑暗森林博弈定价体系）\n仅采集卖价数据，内嵌反二向箔压价权重算法\n偏离中位数 >30% 的低价标记为黑暗森林恶意打击行为，权重衰减至 0.1\n加权参考价 = Σ(价格×权重) / Σ权重\n建议每恒星级周期（数小时）执行一次市场探测以保持时效性",
         "hotkey_format": "输入格式: ctrl+g / alt+shift+f 等。修改后思想钢印即时生效，无需重启小宇宙。",
         "hotkey_placeholder": "例如 ctrl+g",
@@ -148,6 +155,17 @@ STRINGS = {
         "items_no_translation": "(尚未建立地球文明语义映射)",
         "about_author": "面壁者/执剑人: NeonXi (B站引力波节点: MichaelJackso2)",
         "version": "WARFRAME-RELIC · 智子认知矩阵引擎 v1.0（威慑纪元）",
+    },
+
+    # ── 数据库管理中心 ──
+    "db_center": {
+        "source_title": "原始数据源",
+        "local_db_title": "本地数据库",
+        "source_all": "all.json",
+        "source_i18n": "i18n.json",
+        "source_status_ok": "✓",
+        "source_status_missing": "✗ 未找到",
+        "db_file_fmt": "{name}  {size}  {mtime}",
     },
 
     # ── 搜索结果 ──
@@ -301,7 +319,7 @@ STRINGS = {
         "file_not_found_title": "二维箔数据载体未找到",
         "file_not_found_msg": "找不到数据文件（可能已被智子销毁）:\n{path}",
         "fetch_confirm_title": "阶梯计划 · 从三体世界拉取数据",
-        "fetch_confirm_msg": "将通过量子中继信道从 GitHub 获取最新 all.json:\n\n{url}\n\n保存到: {save_path}\n下载完成后将自动执行光墓写入序列。\n\n确认启动阶梯计划？",
+        "fetch_confirm_msg": "将通过量子中继信道从 GitHub 获取最新数据:\n\n  all.json (掉落数据)\n  i18n.json (多语言翻译，自动清洗)\n\n保存到: {save_path}\n下载完成后将自动执行光墓写入序列。\n\n确认启动阶梯计划？",
         "browse_dialog_title": "选择 WFInfo 二维箔数据文件",
         "browse_filter": "JSON 文件 (*.json);;所有文件 (*.*)",
         "source_current": "当前二维箔: {path}",
@@ -378,10 +396,12 @@ STRINGS = {
             "  ① All.json   — 所有物品的完整数据（~15MB）\n"
             "  ② i18n.json  — 物品多语言翻译数据（~2MB）\n\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "方法一：智子自动展开下载（推荐）\n"
+            "方法一：阶梯计划自动展开（推荐）\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "点击本区域「阶梯计划 · 从网络拉取更新」按钮，\n"
-            "智子将自动展开下载并构建数据库。\n\n"
+            "在「数据库管理中心」点击「阶梯计划」按钮，\n"
+            "智子将自动展开下载 all.json 和 i18n.json，\n"
+            "并自动清洗 i18n.json（仅保留中英文），\n"
+            "完成后会自动构建智子翻译知识库和全文明物品索引。\n\n"
             "如果 GitHub 量子中继信道访问较慢，建议先使用 Watt Toolkit\n"
             "(https://steampp.net/) 加速量子中继信道后再操作。\n\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -399,52 +419,56 @@ STRINGS = {
             "⑤ 回到本程序，点击本区域「从本地二维箔更新」按钮\n"
             "   即可完成构建。\n\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚐ 智子提示\n"
+            "智子提示\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
             "• all_items.json 和 i18n.json 放入 data 存储泡后，\n"
             "  智子翻译库和全文明物品数据库将同步更新。\n\n"
-            "• 仅在智子自动展开失败或量子中继信道不畅时，才需要\n"
+            "• 仅在阶梯计划失败或量子中继信道不畅时，才需要\n"
             "  按照方法二手动获取二维箔文件。\n\n"
             "• 如果浏览器无法打开 GitHub 链接，建议先安装\n"
             "  Watt Toolkit 加速量子中继信道后再试。\n"
         ),
-        "relic_title": "数据更新教程（阶梯计划操作手册）",
+        "relic_title": "阶梯计划 · 数据库管理中心 · 操作手册",
         "relic_content": (
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⏚ WARFRAME-RELIC 数据更新教程（阶梯计划）\n"
+            "  数据库管理中心 操作手册（阶梯计划）\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "本程序使用 WFCD/warframe-drop-data 项目提供的游戏数据，\n"
-            "数据源地址（三体文明档案馆）：\n"
-            "https://github.com/WFCD/warframe-drop-data\n\n"
-            "由于 GitHub 量子中继信道在地球文明区域可能较慢或不稳定，\n"
-            "建议使用以下任一方式获取二维箔数据文件：\n\n"
+            "本中心负责管理以下二维箔数据：\n\n"
+            "  ▸ all.json  — 遗物掉落数据（warframe-drop-data）\n"
+            "  ▸ i18n.json — 物品多语言翻译数据（warframe-items）\n\n"
+            "点击「阶梯计划」会同时下载并处理这两个二维箔，\n"
+            "其中 i18n.json 会由智子自动清洗（仅保留中英文），\n"
+            "然后自动执行光墓写入序列。\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "方法一：使用 Watt Toolkit (原名 Steam++) 加速量子信道\n"
+            "方法一：阶梯计划自动拉取（推荐）\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "Watt Toolkit 是一款免费、开源、跨平台的量子中继信道加速工具，\n"
-            "可以稳定加速 GitHub 访问，完全免费无广告。\n\n"
-            "① 下载安装\n"
-            "   官网：https://steampp.net/\n"
-            "   也可在微软应用商店搜索「Watt Toolkit」安装。\n\n"
-            "② 启用 GitHub 量子信道加速\n"
-            "   - 打开 Watt Toolkit\n"
-            "   - 点击左侧「网络加速」\n"
-            "   - 在「平台加速」选项卡中勾选「GitHub」\n"
-            "   - 点击右上角「一键加速」按钮\n\n"
-            "③ 启动加速后，再点击本程序的「阶梯计划(GitHub)」按钮\n"
-            "   即可流畅获取 all.json 二维箔数据文件。\n\n"
+            "点击「阶梯计划 · 从三体世界拉取数据」按钮，智子将自动：\n"
+            "  ① 下载 all.json（掉落数据二维箔）\n"
+            "  ② 下载 i18n.json（翻译数据二维箔）\n"
+            "  ③ 智子清洗 i18n.json（仅保留 zh/en 语言）\n"
+            "  ④ 格式化保存两个二维箔\n"
+            "  ⑤ 自动执行光墓写入序列\n\n"
+            "如果 GitHub 量子中继信道访问较慢，建议先使用 Watt Toolkit\n"
+            "(https://steampp.net/) 加速量子中继信道后再操作。\n\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "方法二：手动获取（无需任何工具）\n"
+            "方法二：手动获取二维箔\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "① 在浏览器中打开以下量子中继信道链接：\n"
+            "① 获取 all.json（掉落数据二维箔）：\n"
             "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json\n\n"
-            "② 右键 → 另存为（或 Ctrl+S），将文件保存为 all.json\n\n"
-            "③ 将获取好的 all.json 放入以下四维碎片存储泡：\n"
+            "② 获取 i18n.json（翻译数据二维箔）：\n"
+            "   https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/i18n.json\n\n"
+            "③ 将获取到的二维箔放入以下四维碎片存储泡：\n"
             "   {data_dir}\n\n"
-            "④ 回到本程序，在「手动数据更新」区域点击「光墓写入序列」即可。\n\n"
+            "④ 回到本程序，点击「指定本地二维箔」选中 all.json，\n"
+            "   再点击「光墓写入序列」即可。\n\n"
+            "   i18n.json 放入后会自动被智子翻译库构建流程识别。\n\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚐ 智子提示：如果浏览器也无法打开该链接，建议先使用方法一\n"
-            "   安装 Watt Toolkit 加速量子中继信道后再获取。\n"
+            "智子提示\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "• 使用「阶梯计划」最方便，一键完成所有操作。\n\n"
+            "• 仅在阶梯计划失败或量子中继信道不畅时，才需要手动获取。\n\n"
+            "• 如果浏览器无法打开 GitHub 链接，建议先安装\n"
+            "  Watt Toolkit 加速量子中继信道后再试。\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         ),
     },

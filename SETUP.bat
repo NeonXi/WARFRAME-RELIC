@@ -99,17 +99,23 @@ rem ==========================================
 rem 3. 安装项目依赖
 rem ==========================================
 echo [3/4] 安装项目依赖...
-echo   (使用腾讯云镜像加速，首次安装约 2-5 分钟)
+echo   (优先使用腾讯云镜像，失败则回退到官方源)
 echo.
 
 venv\Scripts\python.exe -m pip install -r requirements.txt -i https://mirrors.cloud.tencent.com/pypi/simple
 if %errorlevel% neq 0 (
     echo.
-    echo   [ERROR] 依赖安装失败!
-    echo   请检查网络连接后重试。
+    echo   [WARN] 腾讯云镜像失败，尝试官方源...
     echo.
-    pause
-    exit /b 1
+    venv\Scripts\python.exe -m pip install -r requirements.txt
+    if !errorlevel! neq 0 (
+        echo.
+        echo   [ERROR] 依赖安装失败!
+        echo   请检查网络连接后重试。
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
 echo.
@@ -127,7 +133,7 @@ echo   检查关键模块...
 
 set ALL_OK=1
 
-for %%m in (PyQt6 dxcam keyboard rapidocr_onnxruntime PIL numpy pypinyin) do (
+for %%m in (PyQt6 dxcam keyboard rapidocr_onnxruntime cv2 PIL numpy pypinyin) do (
     venv\Scripts\python.exe -c "import %%m" >nul 2>&1
     if !errorlevel! equ 0 (
         echo     [+] %%m
@@ -160,7 +166,7 @@ echo     2. 直接启动:       双击 WARFRAME-RELIC.bat
 echo     3. 命令行启动:     venv\Scripts\python.exe main.py
 echo.
 echo   打包发布:
-echo     双击 打包.bat  或  双击 一键打包.bat
+echo     双击 打包.bat
 echo.
 echo ============================================================
 

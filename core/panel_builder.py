@@ -104,7 +104,6 @@ class PanelBuilderMixin:
         self._content_layer.setObjectName("ContentLayer")
         main_layout.addWidget(self._content_layer, 0, 0)
 
-        self._update_background_size_immediate()
         self._apply_opacity_overlay()
 
         # 4. UI控件布局（在内容层上）

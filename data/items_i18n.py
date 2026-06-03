@@ -19,6 +19,7 @@
 
 import json
 import os
+import re
 import sqlite3
 import time
 from datetime import datetime
@@ -92,6 +93,95 @@ CREATE TABLE IF NOT EXISTS items_meta (
     value TEXT
 );
 """
+
+
+def _derive_zh_from_pattern(name_lower: str, zh_en_list: list) -> str:
+    """从 zh_en_dict.json 的 Prime 版本推导非 Prime 物品的中文翻译。
+
+    策略（按优先级）：
+      1. 对于 "X Chassis/Neuroptics/Systems Blueprint"，
+         尝试 "X Prime Chassis/Neuroptics/Systems Blueprint" → 去 "Prime" 得中文名
+      2. 对于 "X Blueprint"，尝试 "X Prime Blueprint" → 去 "Prime"
+      3. 对于资源/合金类，尝试从基础名匹配
+      4. 无法推导时返回空字符串（后续用英文名作为中文名）
+
+    Returns:
+        str: 推导出的中文名，空字符串表示无法推导
+    """
+    if not name_lower.endswith(' blueprint'):
+        return ''
+
+    # 构建 en_lower → zh_name 查找表
+    zh_en_lookup = {}
+    for entry in zh_en_list:
+        if isinstance(entry, list) and len(entry) >= 2:
+            zh_name = entry[0].strip()
+            en_name = entry[1].strip()
+            if en_name and zh_name:
+                zh_en_lookup[en_name.lower()] = zh_name
+
+    # 去掉 "blueprint" 后缀得到基础名
+    base = name_lower[:-len(' blueprint')].strip()
+    base_title = ' '.join(
+        w.capitalize() if w.lower() not in ('of', 'the', 'and', 'in', 'on', 'at', 'to', 'for')
+        else w.lower()
+        for w in base.split()
+    )
+
+    # 尝试1: 识别部件名，在部件名前插入 "Prime"
+    # zh_en_dict 格式: "Ash Prime Chassis Blueprint" → "Ash Prime 机体 蓝图"
+    # all.json 格式:   "ash chassis blueprint"
+    component_keywords = ('chassis', 'neuroptics', 'systems', 'barrel',
+                          'receiver', 'stock', 'blade', 'handle', 'link',
+                          'grip', 'gauntlet', 'string', 'upper limb', 'lower limb')
+
+    candidate_variants = []
+
+    # 变体A: 在部件词前插入 "Prime"（匹配 zh_en_dict 标准格式）
+    parts = base.split()
+    if len(parts) >= 2:
+        part_idx = None
+        for i in range(len(parts) - 1, -1, -1):
+            if parts[i] in component_keywords:
+                part_idx = i
+                break
+            if i >= 1 and f"{parts[i-1]} {parts[i]}" in component_keywords:
+                part_idx = i - 1
+                break
+        if part_idx is not None and part_idx > 0:
+            warframe_name = ' '.join(parts[:part_idx])
+            component_name = ' '.join(parts[part_idx:])
+            candidate_variants.append(
+                f"{warframe_name} prime {component_name} blueprint")
+
+    # 变体B: 在末尾加 "Prime"（简单拼接，后备）
+    candidate_variants.append(f"{base} prime blueprint")
+
+    if ' prime' not in base:
+        for variant in candidate_variants:
+            if variant in zh_en_lookup:
+                zh_prime = zh_en_lookup[variant]
+                zh_derived = zh_prime.replace(' Prime', '').replace('Prime ', '').replace('Prime', '')
+                zh_derived = zh_derived.strip()
+                if zh_derived:
+                    return zh_derived
+
+    # 尝试3: 基础名本身在 zh_en_dict 中（不带 Blueprint 的资源/物品）
+    if base in zh_en_lookup:
+        zh_base = zh_en_lookup[base]
+        return f"{zh_base} 蓝图"
+
+    # 尝试4: 如果基础名带有 "x数字" 后缀（资源蓝图）
+    # 例如: "adramal alloy x20" → 找 "adramal alloy"
+    match = re.match(r'^(.+?)\s+x\d+$', base)
+    if match:
+        resource_base = match.group(1)
+        if resource_base in zh_en_lookup:
+            zh_resource = zh_en_lookup[resource_base]
+            return f"{zh_resource} x{base.split('x')[-1]} 蓝图"
+
+    # 无法推导
+    return ''
 
 
 def build_all_items_db(all_items_path: str = None,
@@ -265,6 +355,168 @@ def build_all_items_db(all_items_path: str = None,
 
     if all_supplemented:
         print(f"[items_i18n] all_items.json 补充了 {all_supplemented} 个额外物品")
+
+    # ============================================================
+    # 第5.5步: 从掉落数据 (all.json) 补充缺失的掉落物品
+    # ============================================================
+    # all.json 是项目的掉落数据源，其中包含一些 all_items.json / zh_en_dict.json
+    # 中不存在的物品（如非 Prime 战甲部件蓝图、资源蓝图等），需要补充到数据库
+    # 以便用户在搜索时能匹配到掉落来源。
+    #
+    # 翻译策略：
+    #   1. 优先从 zh_en_dict.json 中查找 Prime 版本对应条目，去除 "Prime" 推导中文
+    #   2. 对于以 "blueprint" 结尾的物品，尝试从基础名中匹配
+    #   3. 无法翻译时使用英文名作为中文名
+    drop_supplemented = 0
+    alljson_path = os.path.join(os.path.dirname(BASE_DIR), 'data', 'all.json')
+    if os.path.exists(alljson_path):
+        with open(alljson_path, 'r', encoding='utf-8') as f:
+            drop_data = json.load(f)
+
+        # 收集所有掉落物品名
+        drop_names = set()
+
+        def _collect_drop_names(name):
+            if name:
+                n = name.strip().lower()
+                if n:
+                    drop_names.add(n)
+
+        for top_key, top_val in drop_data.items():
+            if top_key == 'relics':
+                for relic in top_val:
+                    for reward in relic.get('rewards', []):
+                        _collect_drop_names(reward.get('itemName', ''))
+            elif top_key == 'missionRewards':
+                for planet, nodes in top_val.items():
+                    if not isinstance(nodes, dict):
+                        continue
+                    for node, ndata in nodes.items():
+                        if not isinstance(ndata, dict):
+                            continue
+                        rewards = ndata.get('rewards', {})
+                        if isinstance(rewards, dict):
+                            for rot, items in rewards.items():
+                                if isinstance(items, list):
+                                    for item in items:
+                                        if isinstance(item, dict):
+                                            _collect_drop_names(item.get('itemName', ''))
+            elif top_key in ('cetusBountyRewards', 'solarisBountyRewards', 'deimosRewards',
+                             'zarimanRewards', 'entratiLabRewards', 'hexRewards'):
+                for entry in top_val:
+                    if not isinstance(entry, dict):
+                        continue
+                    rewards = entry.get('rewards', {})
+                    if isinstance(rewards, dict):
+                        for rot, items in rewards.items():
+                            if isinstance(items, list):
+                                for item in items:
+                                    if isinstance(item, dict):
+                                        _collect_drop_names(item.get('itemName', ''))
+            elif top_key in ('sortieRewards',):
+                for entry in top_val:
+                    if isinstance(entry, dict):
+                        _collect_drop_names(entry.get('itemName', ''))
+            elif top_key in ('keyRewards', 'transientRewards'):
+                for entry in top_val:
+                    if not isinstance(entry, dict):
+                        continue
+                    rewards = entry.get('rewards', {})
+                    if isinstance(rewards, list):
+                        for item in rewards:
+                            if isinstance(item, dict):
+                                _collect_drop_names(item.get('itemName', ''))
+                    elif isinstance(rewards, dict):
+                        for rot, items in rewards.items():
+                            if isinstance(items, list):
+                                for item in items:
+                                    if isinstance(item, dict):
+                                        _collect_drop_names(item.get('itemName', ''))
+            elif top_key == 'blueprintLocations':
+                for bp in top_val:
+                    if isinstance(bp, dict):
+                        _collect_drop_names(
+                            bp.get('blueprintName', bp.get('itemName', '')))
+            elif top_key == 'enemyModTables':
+                for entry in top_val:
+                    if isinstance(entry, dict):
+                        for mod in entry.get('mods', []):
+                            if isinstance(mod, dict):
+                                _collect_drop_names(mod.get('modName', ''))
+            elif top_key == 'enemyBlueprintTables':
+                for bp in top_val:
+                    if isinstance(bp, dict):
+                        _collect_drop_names(
+                            bp.get('blueprintName', bp.get('itemName', '')))
+            elif top_key == 'modLocations':
+                for mod in top_val:
+                    if isinstance(mod, dict):
+                        _collect_drop_names(mod.get('modName', mod.get('itemName', '')))
+            elif top_key == 'syndicates':
+                for faction, items in top_val.items():
+                    if isinstance(items, list):
+                        for entry in items:
+                            if isinstance(entry, dict):
+                                _collect_drop_names(entry.get('item', ''))
+            elif top_key in ('resourceByAvatar', 'sigilByAvatar', 'additionalItemByAvatar'):
+                for entry in top_val:
+                    if isinstance(entry, dict):
+                        for item in entry.get('items', []):
+                            if isinstance(item, dict):
+                                _collect_drop_names(item.get('item', ''))
+
+        # 过滤掉资源/货币类（数字+材料名的组合）
+        skip_pattern = re.compile(r'^\d+[\sx]')
+        skip_keywords = {'credit', 'credits', 'endo', 'ducat', 'ducats', 'booster',
+                         'boosters', 'relic', 'relics', 'forma', 'aya', 'cache'}
+        for name_lower in sorted(drop_names):
+            # 跳过已存在的
+            if name_lower in seen_en_lower:
+                continue
+            # 跳过资源/货币
+            if skip_pattern.match(name_lower):
+                continue
+            if name_lower.split()[-1] in skip_keywords:
+                continue
+            if any(kw in name_lower for kw in skip_keywords):
+                continue
+
+            seen_en_lower.add(name_lower)
+
+            # 生成标题大小写的英文名
+            en_name = ' '.join(
+                w.capitalize() if w.lower() not in ('of', 'the', 'and', 'in', 'on', 'at', 'to', 'for')
+                else w.lower()
+                for w in name_lower.split()
+            )
+
+            # 尝试推导中文翻译
+            zh_name = _derive_zh_from_pattern(name_lower, zh_en_list)
+
+            # 生成 unique_name
+            slug = re.sub(r"[^a-z0-9_]", '_', name_lower)
+            unique_name = f"/Lotus/Supplement/Drop/{slug}"
+
+            is_prime = 'prime' in name_lower
+            is_part = 'blueprint' in name_lower
+
+            item_map[unique_name] = {
+                'name': en_name,
+                'category': 'Warframe Parts' if is_part else 'Misc',
+                'type': '',
+                'tradable': is_part,
+                'is_prime': is_prime,
+                'rarity': 'Prime' if is_prime else '',
+                'mr_requirement': 0,
+                'image_name': '',
+                'description': '',
+                'patchlogs': [],
+                '_zh_name': zh_name,
+            }
+            drop_supplemented += 1
+
+        if drop_supplemented:
+            print(f"[items_i18n] all.json 掉落数据补充了 {drop_supplemented} 个额外物品")
 
     # ============================================================
     # 第6步: 写入数据库（批量插入优化）

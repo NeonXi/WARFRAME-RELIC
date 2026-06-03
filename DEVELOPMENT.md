@@ -92,7 +92,7 @@ WARFRAME-RELIC/
 ├── SETUP.bat                   # 零基础启动脚本
 ├── WARFRAME-RELIC.bat          # 快捷启动批处理
 ├── DEV_RUN.bat                 # 开发模式批处理
-└── 打包.bat / 打包单文件.bat / 一键打包.bat  # 打包批处理
+└── 打包.bat / 打包单文件.bat       # 打包批处理
 ```
 
 ### 2.2 架构分层

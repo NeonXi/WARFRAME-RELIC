@@ -48,7 +48,8 @@ def get_mtimes():
     for root, dirs, files in os.walk(PROJECT_DIR):
         # 跳过不需要监听的目录
         dirs[:] = [d for d in dirs if d not in (
-            'venv', '.git', '__pycache__', '.codebuddy', 'dist', 'build'
+            'venv', '.git', '__pycache__', '.codebuddy', 'dist', 'build',
+            'testvenv', 'tests',
         )]
         for f in files:
             _, ext = os.path.splitext(f)

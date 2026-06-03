@@ -208,12 +208,14 @@ class AppCore:
         self._management_panel.move(target_screen.geometry().topLeft())
 
     def _show_panel_on_start(self):
+        panel = self._management_panel
         self._position_panel_on_screen()
-        self._management_panel.show()
-        self._management_panel.raise_()
-        self._management_panel.activateWindow()
-        self._management_panel.adjustSize()
-        self._management_panel.resize(580, 840)
+        panel._fix_initial_size()          # 先定尺寸 + 背景图
+        panel._first_show = False          # 阻止 showEvent 再次触发
+        panel._update_panel.enable_auto_show()
+        panel.show()
+        panel.raise_()
+        panel.activateWindow()
 
     # ---- 事件绑定 ----
 

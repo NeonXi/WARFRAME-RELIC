@@ -30,7 +30,7 @@ ICON_MAPPINGS = {
     "nav": {
         "toggles":     "hard drive",   # 功能开关 - 硬盘图标代表功能模块
         "status":      "profile",      # 数据状态 - 个人资料图标代表状态信息
-        "relic":       "reload_right", # 遗物更新 - 右刷新图标代表更新
+        "db_center":       "reload_right", # 数据管理 - 刷新图标代表数据库管理
         "trans":       "mail",         # 翻译库 - 邮件图标代表语言转换
         "items":       "search",       # 物品查询 - 搜索图标
         "prices":      "card",         # 价格数据 - 卡片图标代表价格
@@ -59,7 +59,7 @@ FALLBACK_ICONS = {
     "nav": {
         "toggles":     "⚙",
         "status":      "📊",
-        "relic":       "🔄",
+        "db_center":       "🔄",
         "trans":       "🌐",
         "items":       "🔍",
         "prices":      "💰",

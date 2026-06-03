@@ -46,13 +46,14 @@ STRINGS = {
         "mode_query_price": "市场价格查询",
         "mode_translate": "英文翻译",
         "fetch_prices": "拉取 warframe.market 价格数据",
+        "open_market_query": "实时挂单查询",
     },
 
     # ── 导航标签 ──
     "nav": {
         "nav_toggles":  "功能开关",
         "nav_status":   "数据状态",
-        "nav_relic":    "遗物更新",
+        "nav_db_center":    "数据管理",
         "nav_trans":    "翻译库",
         "nav_items":    "物品查询",
         "nav_prices":   "价格数据",
@@ -66,8 +67,8 @@ STRINGS = {
     # ── 分组标题 ──
     "group": {
         "recovery": "紧急恢复（异常状态重置）",
-        "db_status": "数据库健康状态",
-        "relic_update": "遗物数据库同步",
+        "data_overview": "数据总览",
+        "db_center": "数据库管理中心",
         "translation_db": "翻译数据库（中英文对照）",
         "items_i18n": "全物品多语言索引库",
         "wm_prices": "warframe.market 价格数据",
@@ -80,12 +81,10 @@ STRINGS = {
 
     # ── 统计标签 ──
     "stat_label": {
-        "relics_total": "遗物总数",
-        "parts_total": "Prime 部件总数",
-        "aliases_total": "别名映射条目数",
-        "vaulted": "入库（已绝版）",
-        "available": "出库（可获取）",
-        "voidtrader": "虚空商人可交易",
+        "relics_summary": "遗物数据库",
+        "relic_vault": "出入库状态",
+        "trans_summary": "翻译数据库",
+        "items_summary": "全物品索引",
         "db_size": "数据库大小",
         "last_update": "最近更新时间",
         "trans_total": "翻译条目总数",
@@ -101,6 +100,10 @@ STRINGS = {
         "db_size_kb": "{size:.1f} KiB",
         "trans_count": "{count} 条",
         "cat_detail": "{cat}: {count}",
+        "relics_summary": "{relics} 遗物 | {parts} 部件 | {aliases} 别名",
+        "relic_vault": "出库 {available} | 入库 {vaulted} | 虚空商人 {voidtrader}",
+        "trans_summary": "{total} 条翻译 | {size:.1f} KiB",
+        "items_summary": "{total} 物品（中文 {has_cn}） | {size:.1f} KiB",
     },
 
     # ── 状态概要 ──
@@ -117,6 +120,10 @@ STRINGS = {
         "db_corrupted": "数据库异常: {error}",
         "db_no_permission": "数据库访问权限不足: {error}",
         "placeholder": "--",
+        "trans_summary_none": "翻译库: 尚未构建",
+        "trans_summary_error": "翻译库: 数据异常",
+        "items_summary_none": "全物品索引: 尚未构建",
+        "items_summary_error": "全物品索引: 数据异常",
         "done": "操作完成",
     },
 
@@ -134,7 +141,7 @@ STRINGS = {
                     "此操作不会影响：主题配色、功能开关、语言预设、数据库。\n"
                     "当快捷键失效、界面卡死或识别异常时，请立即点击此按钮。",
         "bottom_tip": "提示: 按 Ctrl+Shift+G 打开此控制台 | Ctrl+G 框选截图",
-        "data_source_relic": "数据来源: WFCD warframe-drop-data 项目\n如果自动拉取失败，可以手动下载 all.json 后点击「选择本地数据文件」→「更新数据库」",
+        "data_source_relic": "原始数据源: 来自 WFCD 项目的 all.json + i18n.json\n本地数据库: 从原始数据源派生的 SQLite 数据库文件\n点击「从 GitHub 拉取」自动下载并清洗，或手动选择本地文件后更新",
         "data_source_trans": "数据来源: WFCD warframe-items 项目（All.json + i18n.json 双文件关联算法）",
         "data_source_items": "数据来源: WFCD warframe-items All.json + i18n.json\n随翻译库 / 遗物数据库自动同步更新",
         "data_source_wm": "数据来源: warframe.market API v2\n仅采集卖价数据，内嵌反压价权重算法\n偏离中位数 >30% 的低价权重降为 0.1\n加权参考价 = Σ(价格×权重) / Σ权重\n建议每数小时拉取一次以保持数据时效性",
@@ -148,6 +155,17 @@ STRINGS = {
         "items_no_translation": "(暂无中文名)",
         "about_author": "作者: NeonXi (B站: MichaelJackso2)",
         "version": "WARFRAME-RELIC v1.0",
+    },
+
+    # ── 数据库管理中心 ──
+    "db_center": {
+        "source_title": "原始数据源",
+        "local_db_title": "本地数据库",
+        "source_all": "all.json",
+        "source_i18n": "i18n.json",
+        "source_status_ok": "✓",
+        "source_status_missing": "✗ 未找到",
+        "db_file_fmt": "{name}  {size}  {mtime}",
     },
 
     # ── 搜索结果 ──

@@ -300,6 +300,16 @@ class DropSourceIndex:
                 self._sources[stripped] = []
             self._sources[stripped].append(source)
 
+        # 如果物品名以 "blueprint" 结尾，同时注册去掉 "blueprint" 后缀的版本。
+        # 原因：all.json 中有 "acceltra blueprint" 但 items_i18n 中只有 "Acceltra"
+        # 用户从搜索结果点击 "Acceltra" 时 query("Acceltra") 无法找到掉落来源。
+        if key.endswith(' blueprint'):
+            base = key[:-len(' blueprint')].strip()
+            if base and base != key:
+                if base not in self._sources:
+                    self._sources[base] = []
+                self._sources[base].append(source)
+
     def _scan_relics(self, relics_list: list):
         """遗物及其部件掉落。"""
         for relic in relics_list:

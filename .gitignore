@@ -39,14 +39,14 @@ WARFRAME-RELIC.spec
 # Crash log
 crash_log.txt
 
+# Test / sandbox artifacts
+testvenv/
+check_imports.py
+check_startup.py
+setup_output.txt
+setup_error.txt
+
 # Temporary/test files
-nul
-_test_translations.py
-_trans_test_output.txt
-test_ocr_comparison.py
-test_ocr_optimization.py
-test_ocr_simple.py
-test_pypinyin.py
 
 # Comate
 .comate/

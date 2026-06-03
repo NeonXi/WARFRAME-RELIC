@@ -166,9 +166,8 @@ WARFRAME-RELIC/
 ├── SETUP.bat                   # 零基础启动（自动安装 Python + 依赖）
 ├── WARFRAME-RELIC.bat          # 快捷启动批处理
 ├── DEV_RUN.bat                 # 开发模式启动
-├── 打包.bat                    # 打包批处理
+├── 打包.bat                    # 一键打包+压缩批处理
 ├── 打包单文件.bat               # 单文件打包批处理
-├── 一键打包.bat                 # 一键打包+压缩批处理
 ├── git-push.bat                # Git 一键推送
 ├── qt.conf                     # Qt DPI 感知配置
 └── requirements.txt            # Python 依赖
@@ -256,16 +255,13 @@ language_preset.json ──→ ui_strings.py (路由器)
 ## 📦 打包
 
 ```bash
-# 文件夹模式（推荐，启动快）
+# 文件夹模式（推荐，启动快）+ 自动压缩为 zip
 打包.bat               # 或: python build_exe.py
-# 输出: dist/WARFRAME-RELIC/ (整个文件夹)
+# 输出: dist/WARFRAME-RELIC/ (整个文件夹) + WARFRAME-RELIC_v3.4.0.zip
 
 # 单文件模式（分发方便，启动慢10-15秒）
 打包单文件.bat          # 或: python build_onefile.py
 # 输出: dist/WARFRAME-RELIC.exe
-
-# 一键打包+压缩
-一键打包.bat            # 打包 → 压缩为 WARFRAME-RELIC_v3.4.0.zip
 ```
 
 ---

@@ -1,5 +1,5 @@
 """
-数据拉取 Worker —— 后台线程从 GitHub 下载最新 all.json，精细化进度反馈。
+数据拉取 Worker —— 后台线程从 GitHub 下载最新 all.json 和 i18n.json，精细化进度反馈。
 """
 
 import json
@@ -17,15 +17,21 @@ GITHUB_RAW_BASE = "https://raw.githubusercontent.com/WFCD/warframe-drop-data/mai
 ALLJSON_URL = f"{GITHUB_RAW_BASE}/all.json"
 RELIC_URL = f"{GITHUB_RAW_BASE}/relics.json"
 
+# i18n 多语言翻译数据（来自 warframe-items 仓库）
+I18N_URL = "https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/i18n.json"
+
+# i18n 清洗: 仅保留的语言代码
+I18N_KEEP_LANGS = {'zh', 'en'}
+
 
 class FetchWorker(QObject):
-    """后台线程：从 GitHub 下载最新 all.json，精细化进度反馈"""
+    """后台线程：从 GitHub 下载最新 all.json 和 i18n.json，精细化进度反馈"""
 
     # ---- 信号定义 ----
-    step_changed = pyqtSignal(int, str)       # 当前步骤 (1~7), 步骤描述
+    step_changed = pyqtSignal(int, str)       # 当前步骤 (1~10), 步骤描述
     log = pyqtSignal(str, str)                # 日志: (类型: ok/warn/error/info, 消息)
     progress_pct = pyqtSignal(int)             # 下载进度 0~100
-    finished = pyqtSignal(str)                # 下载完成 → 携带保存路径
+    finished = pyqtSignal(str)                # 下载完成 → 携带 all.json 保存路径
     error = pyqtSignal(str)                   # 致命错误
 
     def __init__(self, save_path: str, url: str = ALLJSON_URL, max_retries: int = 2):
@@ -218,14 +224,146 @@ class FetchWorker(QObject):
                 self.log.emit("warn", f"备份旧文件失败: {e}")
 
         try:
-            with open(save_path, 'wb') as f:
-                f.write(content)
-            self.log.emit("ok", f"文件已保存: {save_path}")
+            with open(save_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            self.log.emit("ok", f"文件已保存（已格式化）: {save_path}")
         except Exception as e:
             self.log.emit("error", f"保存文件失败: {e}")
             self.error.emit(f"保存文件失败: {e}")
             return
 
+        # ================================================================
+        # 阶段 2: 下载 i18n.json（多语言翻译数据）
+        # ================================================================
+        self._download_i18n(save_path)
+
         total_time = time.time() - start_time
         self.log.emit("ok", f"========== 全部完成 (总耗时 {total_time:.1f}s) ==========")
         self.finished.emit(str(save_path))
+
+    # ------------------------------------------------------------
+    # 下载 i18n.json 并清洗（仅保留 zh/en）
+    # ------------------------------------------------------------
+    def _download_i18n(self, alljson_save_path: str):
+        """下载 i18n.json，清洗后保存到 data/i18n.json。"""
+        save_dir = Path(alljson_save_path).parent
+        i18n_path = save_dir / 'i18n.json'
+
+        # ===== 步骤 8: 下载 i18n.json =====
+        self.step_changed.emit(8, "下载 i18n 翻译数据")
+        self.log.emit("info", "")
+        self.log.emit("info", "--- 阶段 2: 下载 i18n.json (多语言翻译) ---")
+        self.log.emit("info", f"源地址: {I18N_URL}")
+        self.log.emit("info", f"保存到: {i18n_path}")
+
+        try:
+            resp = None
+            for attempt in range(1, self.max_retries + 1):
+                if attempt > 1:
+                    self.log.emit("info", f"第 {attempt} 次重试...")
+                    time.sleep(2)
+                try:
+                    req = urllib.request.Request(
+                        I18N_URL,
+                        headers={"User-Agent": "WARFRAME-RELIC/1.0"}
+                    )
+                    resp = urllib.request.urlopen(req, timeout=30)
+                    break
+                except urllib.error.HTTPError as e:
+                    self.log.emit("warn", f"i18n.json HTTP {e.code}: {e.reason}")
+                    if e.code == 404:
+                        break
+                except urllib.error.URLError as e:
+                    self.log.emit("warn", f"i18n.json 连接失败 (第 {attempt}/{self.max_retries} 次): {e.reason}")
+            else:
+                self.log.emit("warn", "i18n.json 下载失败，将跳过翻译数据更新")
+                self.log.emit("info", "  提示: 可稍后手动下载 i18n.json 放入 data 目录")
+                return
+
+            # 下载
+            dl_start = time.time()
+            chunks = []
+            content_length = resp.headers.get("Content-Length")
+            total = int(content_length) if content_length else 0
+            if total:
+                self.log.emit("info", f"文件大小: {total/1024/1024:.1f} MB")
+
+            while True:
+                chunk = resp.read(32768)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                if total > 0:
+                    pct = min(int(sum(len(c) for c in chunks) * 100 / total), 100)
+                    self.progress_pct.emit(pct)
+
+            content = b"".join(chunks)
+            dl_time = time.time() - dl_start
+            self.log.emit("ok", f"i18n.json 下载完成 ({len(content)/1024/1024:.1f} MB, 耗时 {dl_time:.1f}s)")
+
+        except Exception as e:
+            self.log.emit("warn", f"i18n.json 下载失败: {e}")
+            self.log.emit("info", "  提示: 可稍后手动下载 i18n.json 放入 data 目录")
+            return
+        finally:
+            if resp is not None:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
+
+        # ===== 步骤 9: 清洗 i18n.json（仅保留 zh/en）=====
+        self.step_changed.emit(9, "清洗 i18n 翻译数据")
+        self.log.emit("info", "正在清洗 i18n.json，移除多余语言...")
+
+        try:
+            data = json.loads(content)
+            orig_langs = set()
+            stripped_count = 0
+            kept_langs = set()
+
+            for unique_name, translations in data.items():
+                if not isinstance(translations, dict):
+                    continue
+                for lang in translations:
+                    orig_langs.add(lang)
+
+                new_translations = {}
+                for lang in I18N_KEEP_LANGS:
+                    if lang in translations:
+                        new_translations[lang] = translations[lang]
+                        kept_langs.add(lang)
+
+                if len(new_translations) < len(translations):
+                    stripped_count += 1
+
+                data[unique_name] = new_translations
+
+            langs_removed = orig_langs - kept_langs
+            self.log.emit("ok", f"清洗完成: {len(data)} 个条目, 保留 {sorted(kept_langs)}, "
+                          f"移除 {sorted(langs_removed)}, 修改 {stripped_count} 条")
+        except Exception as e:
+            self.log.emit("error", f"i18n.json 清洗失败: {e}")
+            return
+
+        # ===== 步骤 10: 保存 i18n.json =====
+        self.step_changed.emit(10, "保存 i18n 翻译数据")
+        self.log.emit("info", "正在保存 i18n.json...")
+
+        # 备份旧文件
+        if i18n_path.exists():
+            backup = i18n_path.with_suffix('.json.bak')
+            try:
+                i18n_path.replace(backup)
+                self.log.emit("info", f"旧 i18n.json 已备份: {backup.name}")
+            except Exception as e:
+                self.log.emit("warn", f"备份旧 i18n.json 失败: {e}")
+
+        try:
+            with open(i18n_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            size = os.path.getsize(i18n_path)
+            self.log.emit("ok", f"i18n.json 已保存（已清洗+格式化）: {i18n_path} ({size/1024/1024:.1f} MB)")
+        except Exception as e:
+            self.log.emit("error", f"i18n.json 保存失败: {e}")
+            return
