@@ -202,17 +202,12 @@ class AppCore:
 
     # ---- 面板 ----
 
-    def _position_panel_on_screen(self):
-        screens = QApplication.screens()
-        target_screen = screens[-1] if len(screens) > 1 else screens[0]
-        self._management_panel.move(target_screen.geometry().topLeft())
-
     def _show_panel_on_start(self):
         panel = self._management_panel
-        self._position_panel_on_screen()
         panel._fix_initial_size()          # 先定尺寸 + 背景图
         panel._first_show = False          # 阻止 showEvent 再次触发
         panel._update_panel.enable_auto_show()
+        panel._restore_window_geometry()   # 恢复上次窗口位置
         panel.show()
         panel.raise_()
         panel.activateWindow()

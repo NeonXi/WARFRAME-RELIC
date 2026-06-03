@@ -1,1 +1,3838 @@
-=== dev_runner 崩溃日志 (启动: 2026-06-03 02:03:05) ===
+=== dev_runner 崩溃日志 (启动: 2026-06-04 04:14:25) ===
+
+============================================================
+崩溃时间: 2026-06-04 04:33:47
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 65, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 438, in _build_db_center_group
+    self._update_panel.set_source_label(source_label, i18n_source_label, db_files_label)
+TypeError: UpdatePanel.set_source_label() takes 2 positional arguments but 4 were given
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:33:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 65, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 438, in _build_db_center_group
+    self._update_panel.set_source_label(source_label, i18n_source_label, db_files_label)
+TypeError: UpdatePanel.set_source_label() takes 2 positional arguments but 4 were given
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:34:16
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._update_panel.refresh_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 277, in refresh_stats
+    self._refresh_db_files_label()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_refresh_db_files_label'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:34:20
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._update_panel.refresh_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 277, in refresh_stats
+    self._refresh_db_files_label()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_refresh_db_files_label'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:42:49
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:42:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:42:57
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:01
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:05
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:09
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:13
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 306, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:22
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 350, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:26
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 350, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:31
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 350, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:35
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 350, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:39
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 349, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:43
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 349, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:47
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 349, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:43:51
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 349, in refresh_translation_stats
+    stats = get_translation_db_stats()
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_translation_db_stats' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:15
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:19
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:23
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:27
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:46:31
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 32, in <module>
+    from core.overlay import Overlay
+  File "D:\MyProgram\WARFRAME-RELIC\core\overlay.py", line 10, in <module>
+    from core.region_selector import RegionSelector
+  File "D:\MyProgram\WARFRAME-RELIC\core\region_selector.py", line 36, in <module>
+    from data.ui_strings import S
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 71, in <module>
+    STRINGS = _load_preset(_active_preset_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\data\ui_strings.py", line 60, in _load_preset
+    exec(f.read(), namespace)
+  File "<string>", line 120
+    "items_db": "全物品索引:"translation_db": "全物品索引: --",
+                                                   ^
+SyntaxError: unterminated string literal (detected at line 120)
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:02
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 294, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:06
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 294, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:11
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 287, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:15
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 287, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 287, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:26
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 287, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:30
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 287, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:34
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 287, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:38
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 276, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:42
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 276, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:46
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 276, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:54
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:51:58
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:02
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:06
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:10
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:14
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:18
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:22
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:26
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:31
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 274, in refresh_translation_stats
+    if not self._trans_stat_labels:
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_trans_stat_labels'. Did you mean: 'set_stat_labels'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:36
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:42
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:46
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:55
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:52:59
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:03
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:07
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:11
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:15
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:19
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:23
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:27
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:31
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:35
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:39
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:46
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:54
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:53:58
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:02
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:06
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:10
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:14
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:18
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:35
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:41
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:48
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:52
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:54:57
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:01
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:05
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:09
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:13
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:26
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:30
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:34
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:38
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:42
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:49
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:55:57
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:01
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:05
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:09
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:13
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:18
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:22
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:34
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:38
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:46
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:52
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:56:56
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:00
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:04
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:12
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:16
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:20
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:24
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:28
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:32
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:37
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:43
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:47
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:51
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:57:55
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:03
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:11
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:30
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:36
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:40
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:44
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:48
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:52
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:58:56
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:00
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:04
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:13
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:33
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:37
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:41
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:45
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:49
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 04:59:56
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:00
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:04
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:13
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:33
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:37
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:41
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:45
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:49
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:00:57
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:01:01
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:01:04
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:01:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._update_panel.refresh_translation_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'refresh_translation_stats'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:06:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 809, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 68, in __init__
+    self.refresh_items_i18n_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ManagementPanel' object has no attribute 'refresh_items_i18n_stats'. Did you mean: '_refresh_item_region_status'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:07:01
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 809, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 68, in __init__
+    self.refresh_items_i18n_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ManagementPanel' object has no attribute 'refresh_items_i18n_stats'. Did you mean: '_refresh_item_region_status'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:07:07
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 809, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 68, in __init__
+    self.refresh_items_i18n_stats()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ManagementPanel' object has no attribute 'refresh_items_i18n_stats'. Did you mean: '_refresh_item_region_status'?
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:09:40
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 809, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 100, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_items_i18n_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 455, in _build_items_i18n_group
+    layout.addWidget(query_title)
+                     ^^^^^^^^^^^
+NameError: name 'query_title' is not defined
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:17:59
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:01
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:03
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:05
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:07
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:09
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:11
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:13
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:15
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:19
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:23
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 05:18:28
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 33, in <module>
+    from core.management_panel import ManagementPanel
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 25, in <module>
+    from core.panel_styles import PanelStylesMixin
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_styles.py", line 249
+    def _refresh_reset_button_styles(self, t=None):
+    ^^^
+IndentationError: expected an indented block after function definition on line 247
+
+============================================================

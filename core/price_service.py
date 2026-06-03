@@ -16,7 +16,7 @@
 
 import json
 import os
-import sqlite3
+
 import time
 import threading
 from typing import Optional
@@ -106,20 +106,14 @@ def build_display_name(item: dict) -> str:
 
 
 def _translate_weapon_name(weapon_name: str) -> Optional[str]:
-    """通过 translation.db 翻译武器名。"""
+    """通过 items_i18n.db 翻译武器名。"""
     if not weapon_name:
         return None
     try:
-        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'translation.db')
-        if not os.path.exists(db_path):
-            return None
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
-        cur.execute("SELECT zh_name FROM translations WHERE en_name = ? LIMIT 1", (weapon_name,))
-        row = cur.fetchone()
-        conn.close()
-        if row:
-            return row[0]
+        from data.items_i18n import translate_item
+        result = translate_item(weapon_name)
+        if result:
+            return result.get('zh_name')
     except Exception:
         pass
     return None

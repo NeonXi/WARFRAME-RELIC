@@ -582,7 +582,7 @@ class ThemeConfig:
 
     PRESETS = {
         "cyberpunk": {
-            "name": "赛博朋克 2077（推荐）",
+            "name": "赛博朋克",
             "description": "霓虹暗色主题，护眼且酷炫",
         },
         "daylight": {

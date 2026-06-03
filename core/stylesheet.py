@@ -88,21 +88,47 @@ QWidget#ContentLayer > QScrollArea > QWidget > QGroupBox {{
     @classmethod
     def _build_group_box(cls, t) -> str:
         """构建分组框样式"""
-        return f"""
-QGroupBox {{
+        normal = f"""
+QGroupBox#normalGroup {{
+    background-color: transparent;
     border: 1px solid {t.border};
-    border-radius: 6px;
-    margin-top: 12px;
-    padding-top: 16px;
-    font-weight: bold;
-    color: {t.cyber_yellow};
+    border-radius: 4px;
+    margin-top: 8px;
+    padding: 10px;
+    font-size: 12px;
+    color: {t.text};
+    font-weight: normal;
 }}
-QGroupBox::title {{
+QGroupBox#normalGroup::title {{
     subcontrol-origin: margin;
     left: 12px;
     padding: 0 6px;
 }}
 """
+        reset = f"""
+QGroupBox#resetGroup {{
+    background-color: transparent;
+    border: 2px solid {t.cyber_orange};
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: {t.cyber_orange};
+    font-weight: bold;
+}}
+"""
+        preset = f"""
+QGroupBox#presetGroup {{
+    background-color: transparent;
+    border: 1px solid {t.border};
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: {t.text_dim};
+}}
+"""
+        return normal + reset + preset
     
     @classmethod
     def _build_labels(cls, t) -> str:

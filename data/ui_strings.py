@@ -9,13 +9,9 @@ WARFRAME-RELIC UI 字符串集中管理（路由器）
 
 语言预设切换：
     from data.ui_strings import reload_strings, set_language_preset
-    set_language_preset("cyberpunk2077")  # 切换到赛博朋克2077版（默认）
-    set_language_preset("santi")          # 切换到三体版
     set_language_preset("normal")         # 切换到普通版
 
 预设文件位于 data/ 目录下:
-  - preset_cyberpunk2077.py  (默认，赛博朋克 2077 风格)
-  - preset_santi.py          (三体/威慑纪元风格)
   - preset_normal.py         (普通直白风格)
 """
 
@@ -42,7 +38,7 @@ def _load_config() -> dict:
                 return json.load(f)
         except (json.JSONDecodeError, Exception):
             pass
-    return {"active": "cyberpunk2077"}
+    return {"active": "normal"}
 
 def _save_config(config: dict):
     path = _config_path()
@@ -67,13 +63,13 @@ def _load_preset(preset_id: str) -> dict:
 # ============================================================
 
 _config = _load_config()
-_active_preset_id = _config.get("active", "cyberpunk2077")
+_active_preset_id = _config.get("active", "normal")
 STRINGS = _load_preset(_active_preset_id)
 
-# 如果活跃预设加载失败，回退到 cyberpunk2077
+# 如果活跃预设加载失败，回退到 normal
 if not STRINGS:
-    STRINGS = _load_preset("cyberpunk2077")
-    _active_preset_id = "cyberpunk2077"
+    STRINGS = _load_preset("normal")
+    _active_preset_id = "normal"
 
 
 # ============================================================

@@ -36,7 +36,7 @@ STRINGS = {
         "github_repo": "GitHub 仓库",
         "close_log_panel": "关闭日志面板",
         "search_clear": "清空",
-        "apply_preset": "应用预设方案",
+        "apply_preset": "应用",
         "save_theme": "保存",
         "refresh_preview": "刷新预览",
         "upload_bg": "上传背景图",
@@ -69,7 +69,6 @@ STRINGS = {
         "recovery": "紧急恢复（异常状态重置）",
         "data_overview": "数据总览",
         "db_center": "数据库管理中心",
-        "translation_db": "翻译数据库（中英文对照）",
         "items_i18n": "全物品多语言索引库",
         "wm_prices": "warframe.market 价格数据",
         "hotkey_settings": "快捷键设置",
@@ -77,23 +76,27 @@ STRINGS = {
         "theme": "主题换肤",
         "lang_preset": "语言风格 · 文案预设",
         "about_author": "关于作者",
+        "db_status": "数据库状态",
+        "relic_update": "遗物数据更新",
     },
 
     # ── 统计标签 ──
     "stat_label": {
         "relics_summary": "遗物数据库",
         "relic_vault": "出入库状态",
-        "trans_summary": "翻译数据库",
         "items_summary": "全物品索引",
         "db_size": "数据库大小",
         "last_update": "最近更新时间",
-        "trans_total": "翻译条目总数",
-        "items_total": "全物品总数",
-        "items_has_cn": "有中文名数量",
         "items_weapon": "武器分类统计",
         "price_total": "已定价物品数",
         "price_has_sell": "有效卖价条目数",
         "price_has_weighted": "检测到异常低价",
+        "relics_total": "遗物总数",
+        "parts_total": "部件总数",
+        "aliases_total": "别名总数",
+        "vaulted": "入库",
+        "available": "出库",
+        "voidtrader": "虚空商人",
     },
     "stat_fmt": {
         "count_items": "{count} 个",
@@ -102,17 +105,12 @@ STRINGS = {
         "cat_detail": "{cat}: {count}",
         "relics_summary": "{relics} 遗物 | {parts} 部件 | {aliases} 别名",
         "relic_vault": "出库 {available} | 入库 {vaulted} | 虚空商人 {voidtrader}",
-        "trans_summary": "{total} 条翻译 | {size:.1f} KiB",
         "items_summary": "{total} 物品（中文 {has_cn}） | {size:.1f} KiB",
     },
 
     # ── 状态概要 ──
     "status": {
-        "translation_db": "翻译库: --",
         "items_db": "全物品索引: --",
-        "translation_db_fmt": "翻译库: {total} 条 | {size:.1f} KiB",
-        "translation_db_none": "翻译库: 尚未构建",
-        "translation_db_error": "翻译库: 数据异常（完整性校验失败）",
         "items_db_fmt": "全物品索引: {total} 个（有中文名 {has_cn}） | {size:.1f} KiB",
         "items_db_none": "全物品索引: 尚未构建",
         "items_db_error": "全物品索引: 数据异常（完整性校验失败）",
@@ -120,8 +118,6 @@ STRINGS = {
         "db_corrupted": "数据库异常: {error}",
         "db_no_permission": "数据库访问权限不足: {error}",
         "placeholder": "--",
-        "trans_summary_none": "翻译库: 尚未构建",
-        "trans_summary_error": "翻译库: 数据异常",
         "items_summary_none": "全物品索引: 尚未构建",
         "items_summary_error": "全物品索引: 数据异常",
         "done": "操作完成",
@@ -142,6 +138,7 @@ STRINGS = {
                     "当快捷键失效、界面卡死或识别异常时，请立即点击此按钮。",
         "bottom_tip": "提示: 按 Ctrl+Shift+G 打开此控制台 | Ctrl+G 框选截图",
         "data_source_relic": "原始数据源: 来自 WFCD 项目的 all.json + i18n.json\n本地数据库: 从原始数据源派生的 SQLite 数据库文件\n点击「从 GitHub 拉取」自动下载并清洗，或手动选择本地文件后更新",
+        "data_source_db_center": "完整流水线: 拉取 all.json + i18n.json → 清洗 i18n（仅保留 zh/en）→ 格式化 JSON → 更新本地数据库\n点击「从 GitHub 拉取」自动执行全流程，或手动选择本地文件后写入",
         "data_source_trans": "数据来源: WFCD warframe-items 项目（All.json + i18n.json 双文件关联算法）",
         "data_source_items": "数据来源: WFCD warframe-items All.json + i18n.json\n随翻译库 / 遗物数据库自动同步更新",
         "data_source_wm": "数据来源: warframe.market API v2\n仅采集卖价数据，内嵌反压价权重算法\n偏离中位数 >30% 的低价权重降为 0.1\n加权参考价 = Σ(价格×权重) / Σ权重\n建议每数小时拉取一次以保持数据时效性",
@@ -150,7 +147,6 @@ STRINGS = {
         "theme_tip": "点击色块可调色 → 实时预览 → 点击保存",
         "items_search_placeholder": "输入中文/英文/拼音关键词搜索物品（单击结果复制英文名）",
         "items_search_default": "输入中文/英文/拼音关键词开始搜索...",
-        "items_query_title": "物品名称查询（中/英/拼音）",
         "items_search_error": '<span style="color:#ff4444;">查询异常，请检查数据库完整性</span>',
         "items_no_translation": "(暂无中文名)",
         "about_author": "作者: NeonXi (B站: MichaelJackso2)",
@@ -327,13 +323,6 @@ STRINGS = {
         "download_failed": "下载失败（网络连接中断）",
         "download_complete": "下载完成，正在自动更新数据库...",
         "download_starting": "正在启动下载（连接 GitHub）...",
-        "trans_confirm_title": "更新翻译数据库",
-        "trans_confirm_msg": "将重建中英文翻译数据库。\n\n数据源: {source}\n用途: 遗物部件名英→中翻译\n注: 主源失败将自动切换到备用源。\n\n确认继续？",
-        "trans_updating": "正在准备翻译数据...",
-        "trans_done": "翻译数据库更新完成！",
-        "trans_failed": "翻译数据库更新失败",
-        "trans_error": "更新失败: {msg}",
-        "trans_success_log": "翻译数据库更新成功！共 {total} 条。\n数据源: {source}",
         "waiting_start": "等待操作启动...",
         "preparing": "准备中...",
         "reading_data": "正在读取数据并写入数据库，请耐心等待...",
@@ -350,14 +339,6 @@ STRINGS = {
         "log_dropping": "出库（可获取）: {count} 个",
         "log_vaulted": "入库（不可获取）: {count} 个",
         "log_update_finished": "========== 数据库更新完成 ==========",
-        "log_trans_start": "========== 开始更新翻译数据库 ==========",
-        "log_trans_done": "  ✔ 翻译数据库更新完成",
-        "log_trans_source": "数据源: {source}",
-        "log_trans_total": "总条目: {count} 条",
-        "log_trans_cat": "{cat}: {count} 条",
-        "log_trans_finished": "========== 翻译库更新完成 ==========",
-        "log_trans_failed_line": "========== 更新失败 ==========",
-        "log_trans_error": "  ✘ 失败: {msg}",
         "log_fetch_failed_line": "========== 下载失败 ==========",
         "log_manual_guide_title": "  ━━━━━━ 手动下载指引 ━━━━━━",
         "log_manual_step1": "  ① 浏览器打开: {url}",
@@ -377,48 +358,6 @@ STRINGS = {
 
     # ── 教程文本 ──
     "tutorial": {
-        "trans_title": "翻译数据库更新教程",
-        "trans_content": (
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "  中英文翻译数据库 更新教程\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "本数据库使用 WFCD/warframe-items 项目提供的游戏数据，\n"
-            "数据源地址：\n"
-            "  https://github.com/WFCD/warframe-items\n\n"
-            "需要以下两个数据文件：\n"
-            "  ① All.json   — 所有物品的完整数据（~15MB）\n"
-            "  ② i18n.json  — 物品多语言翻译数据（~2MB）\n\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "方法一：自动下载（推荐）\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "点击本区域「从网络拉取更新」按钮，\n"
-            "程序将自动下载并构建数据库。\n\n"
-            "如果 GitHub 访问较慢，建议先使用 Watt Toolkit\n"
-            "(https://steampp.net/) 加速网络后再操作。\n\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "方法二：手动获取文件\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "① 获取 All.json（物品数据）：\n"
-            "   https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/All.json\n\n"
-            "② 获取 i18n.json（翻译数据）：\n"
-            "   https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/i18n.json\n\n"
-            "③ 将获取到的两个文件重命名为：\n"
-            "     all_items.json\n"
-            "     i18n.json\n\n"
-            "④ 放入以下目录：\n"
-            "     {data_dir}\n\n"
-            "⑤ 回到本程序，点击本区域「从本地文件更新」按钮\n"
-            "   即可完成构建。\n\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚐ 提示\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "• all_items.json 和 i18n.json 放入 data 目录后，\n"
-            "  翻译库和全物品数据库将同步更新。\n\n"
-            "• 仅在自动下载失败或网络不畅时，才需要\n"
-            "  按照方法二手动获取文件。\n\n"
-            "• 如果浏览器无法打开 GitHub 链接，建议先安装\n"
-            "  Watt Toolkit 加速网络后再试。\n"
-        ),
         "relic_title": "数据更新教程",
         "relic_content": (
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -427,8 +366,11 @@ STRINGS = {
             "本程序使用 WFCD/warframe-drop-data 项目提供的游戏数据，\n"
             "数据源地址：\n"
             "https://github.com/WFCD/warframe-drop-data\n\n"
-            "由于 GitHub 在国内可能较慢或不稳定，\n"
-            "建议使用以下任一方式获取数据文件：\n\n"
+            "程序需要两个数据文件：\n"
+            "  · all.json    — 遗物与掉落数据\n"
+            "  · i18n.json   — 多语言物品翻译\n\n"
+            "点击「从 GitHub 拉取」可自动下载以上两个文件。\n"
+            "GitHub 国内访问较慢时，可使用以下方法：\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "方法一：使用 Watt Toolkit (原名 Steam++) 加速\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -443,18 +385,20 @@ STRINGS = {
             "   - 在「平台加速」选项卡中勾选「GitHub」\n"
             "   - 点击右上角「一键加速」按钮\n\n"
             "③ 启动加速后，再点击本程序的「从 GitHub 拉取」按钮\n"
-            "   即可流畅获取 all.json 数据文件。\n\n"
+            "   即可流畅获取数据文件。\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "方法二：手动获取（无需任何工具）\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "① 在浏览器中打开以下链接：\n"
-            "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json\n\n"
-            "② 右键 → 另存为（或 Ctrl+S），将文件保存为 all.json\n\n"
-            "③ 将获取好的 all.json 放入以下目录：\n"
+            "① 在浏览器中打开以下链接并保存文件：\n"
+            "   all.json:\n"
+            "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json\n"
+            "   i18n.json:\n"
+            "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/i18n.json\n\n"
+            "② 将下载好的 all.json 和 i18n.json 放入：\n"
             "   {data_dir}\n\n"
-            "④ 回到本程序，在「手动数据更新」区域点击「更新数据库」即可。\n\n"
+            "③ 回到本程序，点击「更新数据库」即可。\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚐ 提示：如果浏览器也无法打开该链接，建议先使用方法一\n"
+            "⚐ 提示：如果浏览器也无法打开链接，建议先使用方法一\n"
             "   安装 Watt Toolkit 加速网络后再获取。\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         ),

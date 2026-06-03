@@ -162,6 +162,11 @@ class ThemePanel:
         self._btn_apply_preset.setObjectName("primaryBtn")
         self._btn_apply_preset.clicked.connect(self._on_apply_preset)
         preset_row.addWidget(self._btn_apply_preset)
+
+        self._btn_close_panel = QPushButton("关闭")
+        self._btn_close_panel.setObjectName("actionBtn")
+        self._btn_close_panel.clicked.connect(self.collapse)
+        preset_row.addWidget(self._btn_close_panel)
         panel_layout.addLayout(preset_row)
 
         tip = QLabel(S("hint", "theme_tip"))

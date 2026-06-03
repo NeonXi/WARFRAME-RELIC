@@ -146,17 +146,16 @@ class PanelBuilderMixin:
         icon_loader = get_icon_loader()
 
         self._nav_items = [
-            ("toggles",  "nav", "nav_toggles",  "功能开关"),
-            ("status",   "nav", "nav_status",   "数据状态"),
-            ("relic",    "nav", "nav_relic",    "遗物更新"),
-            ("trans",    "nav", "nav_trans",    "翻译库"),
-            ("items",    "nav", "nav_items",    "物品查询"),
-            ("prices",   "nav", "nav_prices",   "价格数据"),
-            ("hotkeys",  "nav", "nav_hotkeys",  "快捷键"),
-            ("theme",    "nav", "nav_theme",    "主题换肤"),
-            ("about",    "nav", "nav_about",    "关于"),
-            ("reset",    "nav", "nav_reset",    "紧急重置"),
-            ("preset",   "nav", "nav_preset",   "语言预设"),
+            ("toggles",     "nav", "nav_toggles",     "功能开关"),
+            ("db_overview", "nav", "nav_status",      "数据总览"),
+            ("db_center",   "nav", "nav_db_center",   "数据管理"),
+            ("items",       "nav", "nav_items",       "物品查询"),
+            ("prices",      "nav", "nav_prices",      "价格数据"),
+            ("hotkeys",     "nav", "nav_hotkeys",     "快捷键"),
+            ("theme",       "nav", "nav_theme",       "主题换肤"),
+            ("reset",       "nav", "nav_reset",       "紧急重置"),
+            ("preset",      "nav", "nav_preset",      "语言预设"),
+            ("about",       "nav", "nav_about",       "关于作者"),
         ]
         for nav_id, s_cat, s_key, default_text in self._nav_items:
             text = S(s_cat, s_key)
@@ -200,16 +199,15 @@ class PanelBuilderMixin:
 
         # 各功能区块
         self._build_feature_toggles_group(content_layout)
-        self._build_status_group(content_layout)
-        self._build_relic_update_group(content_layout)
-        self._build_translation_group(content_layout)
+        self._build_data_overview_group(content_layout)
+        self._build_db_center_group(content_layout)
         self._build_items_i18n_group(content_layout)
         self._build_price_group(content_layout)
         self._build_hotkey_group(content_layout)
         self._build_theme_group(content_layout)
-        self._build_about_group(content_layout)
         self._build_reset_group(content_layout)
         self._build_language_preset_group(content_layout)
+        self._build_about_group(content_layout)
 
         # 退出按钮行
         exit_row = QHBoxLayout()
@@ -225,17 +223,16 @@ class PanelBuilderMixin:
         # 导航映射
         self._nav_groups = {}
         for nav_id, group in [
-            ("toggles",  getattr(self, '_toggle_group', None)),
-            ("status",   getattr(self, '_status_group', None)),
-            ("relic",    getattr(self, '_relic_group', None)),
-            ("trans",    getattr(self, '_trans_group', None)),
-            ("items",    getattr(self, '_items_group', None)),
-            ("prices",   getattr(self, '_price_group', None)),
-            ("hotkeys",  getattr(self, '_hotkey_group', None)),
-            ("theme",    getattr(self, '_theme_group', None)),
-            ("about",    getattr(self, '_about_group', None)),
-            ("reset",    getattr(self, '_reset_group', None)),
-            ("preset",   getattr(self, '_lang_preset_group', None)),
+            ("toggles",     getattr(self, '_toggle_group', None)),
+            ("db_overview", getattr(self, '_data_overview_group', None)),
+            ("db_center",   getattr(self, '_db_center_group', None)),
+            ("items",       getattr(self, '_items_group', None)),
+            ("prices",      getattr(self, '_price_group', None)),
+            ("hotkeys",     getattr(self, '_hotkey_group', None)),
+            ("theme",       getattr(self, '_theme_group', None)),
+            ("reset",       getattr(self, '_reset_group', None)),
+            ("preset",      getattr(self, '_lang_preset_group', None)),
+            ("about",       getattr(self, '_about_group', None)),
         ]:
             if group is not None:
                 self._nav_groups[nav_id] = group
@@ -267,6 +264,7 @@ class PanelBuilderMixin:
         from PyQt6.QtWidgets import QGridLayout
         group = QGroupBox(S("group", "feature_toggles"))
         self._toggle_group = group
+        group.setObjectName("normalGroup")
         self._reg_text(group, "group", "feature_toggles")
         group.setStyleSheet(f"""
             QGroupBox {{
@@ -339,47 +337,31 @@ class PanelBuilderMixin:
     # 数据库状态
     # ============================================================
 
-    def _build_status_group(self, parent_layout):
-        group = QGroupBox(S("group", "db_status"))
-        self._status_group = group
-        self._reg_text(group, "group", "db_status")
+    def _build_data_overview_group(self, parent_layout):
+        """数据总览：宏观级数据库状态，一行一个维度。"""
+        group = QGroupBox(S("group", "data_overview"))
+        self._data_overview_group = group
+        group.setObjectName("normalGroup")
+        self._reg_text(group, "group", "data_overview")
         layout = QVBoxLayout(group)
         self._stat_label_refs = {}
-        stat_labels = {}
         stat_grid = [
-            (S("stat_label", "relics_total"), "relics", "relics_total"),
-            (S("stat_label", "parts_total"), "parts", "parts_total"),
-            (S("stat_label", "aliases_total"), "aliases", "aliases_total"),
-            (S("stat_label", "vaulted"), "vaulted", "vaulted"),
-            (S("stat_label", "available"), "available", "available"),
-            (S("stat_label", "voidtrader"), "voidtrader", "voidtrader"),
-            (S("stat_label", "db_size"), "db_size", "db_size"),
-            (S("stat_label", "last_update"), "db_mtime", "last_update"),
+            (S("stat_label", "relics_summary"), "relics_summary"),
+            (S("stat_label", "relic_vault"), "relic_vault"),
+            (S("stat_label", "items_summary"), "items_summary"),
+            (S("stat_label", "db_size"), "db_size"),
+            (S("stat_label", "last_update"), "last_update"),
         ]
-        for label_text, data_key, s_key in stat_grid:
+        for label_text, data_key in stat_grid:
             row = QHBoxLayout()
             lbl = QLabel(label_text)
-            self._reg_text(lbl, "stat_label", s_key)
             lbl.setObjectName("statLabel")
-            lbl.setFixedWidth(110)
+            lbl.setFixedWidth(80)
             val = QLabel(S("status", "placeholder"))
             val.setObjectName("statValue")
             row.addWidget(lbl); row.addWidget(val); row.addStretch()
             layout.addLayout(row)
-            stat_labels[data_key] = val
-
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet(f"background-color: {theme.border}; max-height: 1px;")
-        layout.addWidget(sep)
-
-        self._status_trans_label = QLabel(S("status", "translation_db"))
-        self._status_trans_label.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px; padding: 2px 0;")
-        layout.addWidget(self._status_trans_label)
-
-        self._status_items_label = QLabel(S("status", "items_db"))
-        self._status_items_label.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px; padding: 2px 0;")
-        layout.addWidget(self._status_items_label)
+            self._stat_label_refs[data_key] = val
 
         self._progress = QProgressBar()
         self._progress.setRange(0, 0); self._progress.hide()
@@ -392,22 +374,31 @@ class PanelBuilderMixin:
         layout.addWidget(self._progress_text)
         parent_layout.addWidget(group)
 
-        self._update_panel.set_stat_labels(stat_labels)
-        self._update_panel.set_status_extra_labels(self._status_trans_label, self._status_items_label)
+        self._update_panel.set_stat_labels(self._stat_label_refs)
         self._update_panel.set_progress(self._progress, self._progress_text)
 
     # ============================================================
-    # 遗物数据库更新
+    # 数据管理中心（拉取 all.json + i18n.json → 清洗 → 格式化 → 更新数据库）
     # ============================================================
 
-    def _build_relic_update_group(self, parent_layout):
-        group = QGroupBox(S("group", "relic_update"))
-        self._relic_group = group
-        self._reg_text(group, "group", "relic_update")
+    def _build_db_center_group(self, parent_layout):
+        group = QGroupBox(S("group", "db_center"))
+        self._db_center_group = group
+        group.setObjectName("normalGroup")
+        self._reg_text(group, "group", "db_center")
         layout = QVBoxLayout(group)
 
+        # ── 遗物数据源 ──
         source_label = QLabel(""); source_label.setWordWrap(True)
         layout.addWidget(source_label)
+
+        i18n_source_label = QLabel(""); i18n_source_label.setWordWrap(True)
+        layout.addWidget(i18n_source_label)
+
+        # ── 本地数据库文件 ──
+        db_files_label = QLabel(""); db_files_label.setWordWrap(True)
+        db_files_label.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px; padding: 4px 0;")
+        layout.addWidget(db_files_label)
 
         row_fetch = QHBoxLayout()
         self._btn_fetch = WordWrapButton(S("button", "fetch_github"))
@@ -440,120 +431,19 @@ class PanelBuilderMixin:
         row1.addStretch()
         layout.addLayout(row1)
 
-        hint = QLabel(S("hint", "data_source_relic"))
-        self._reg_text(hint, "hint", "data_source_relic")
+        hint = QLabel(S("hint", "data_source_db_center"))
+        self._reg_text(hint, "hint", "data_source_db_center")
         hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 10px; padding: 2px 0;")
         hint.setWordWrap(True)
         layout.addWidget(hint)
-        parent_layout.addWidget(group)
 
-        self._update_panel.set_source_label(source_label)
+        self._update_panel.set_source_label(source_label, i18n_source_label, db_files_label)
         self._update_panel.set_buttons(
             btn_update=self._btn_update, btn_fetch=self._btn_fetch,
             btn_browse=self._btn_browse,
             btn_browse_db=self._btn_browse_db, btn_tutorial=self._btn_tutorial)
 
-    # ============================================================
-    # 翻译数据库
-    # ============================================================
-
-    def _build_translation_group(self, parent_layout):
-        group = QGroupBox(S("group", "translation_db"))
-        self._trans_group = group
-        self._reg_text(group, "group", "translation_db")
-        layout = QVBoxLayout(group)
-
-        stat_grid = [
-            (S("stat_label", "trans_total"), "trans_total"),
-            (S("stat_label", "db_size"), "db_size"),
-            (S("stat_label", "last_update"), "last_update"),
-        ]
-        self._trans_stat_labels = {}
-        for label, key in stat_grid:
-            row = QHBoxLayout()
-            lbl = QLabel(label)
-            self._reg_text(lbl, "stat_label", key)
-            lbl.setObjectName("statLabel")
-            lbl.setFixedWidth(80)
-            val = QLabel(S("status", "placeholder"))
-            self._reg_text(val, "status", "placeholder")
-            val.setObjectName("statValue")
-            row.addWidget(lbl); row.addWidget(val); row.addStretch()
-            layout.addLayout(row)
-            self._trans_stat_labels[key] = val
-
-        self._trans_cat_label = QLabel("")
-        self._trans_cat_label.setWordWrap(True)
-        self._trans_cat_label.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px; padding: 2px 0;")
-        self._trans_cat_label.hide()
-        layout.addWidget(self._trans_cat_label)
-
-        source_hint = QLabel(S("hint", "data_source_trans"))
-        self._reg_text(source_hint, "hint", "data_source_trans")
-        source_hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 10px; padding: 2px 0;")
-        layout.addWidget(source_hint)
-
-        btn_row = QHBoxLayout()
-        self._btn_update_trans = WordWrapButton(S("button", "update_from_local"))
-        self._reg_text(self._btn_update_trans, "button", "update_from_local")
-        self._btn_update_trans.setObjectName("primaryBtn")
-        self._btn_update_trans.clicked.connect(
-            lambda: self._update_panel.on_update_translation('local'))
-        self._btn_update_trans_wfcd = WordWrapButton(S("button", "update_from_network"))
-        self._reg_text(self._btn_update_trans_wfcd, "button", "update_from_network")
-        self._btn_update_trans_wfcd.setObjectName("actionBtn")
-        self._btn_update_trans_wfcd.clicked.connect(self._on_update_trans_wfcd)
-        self._btn_toggle_trans_detail = WordWrapButton(S("button", "toggle_detail_expand"))
-        self._reg_text(self._btn_toggle_trans_detail, "button", "toggle_detail_expand")
-        self._btn_toggle_trans_detail.setObjectName("actionBtn")
-        self._btn_toggle_trans_detail.clicked.connect(self._toggle_trans_detail)
-        self._btn_trans_tutorial = WordWrapButton(S("button", "update_tutorial"))
-        self._reg_text(self._btn_trans_tutorial, "button", "update_tutorial")
-        self._btn_trans_tutorial.setObjectName("actionBtn")
-        self._btn_trans_tutorial.clicked.connect(self._show_trans_tutorial)
-        btn_row.addWidget(self._btn_update_trans)
-        btn_row.addWidget(self._btn_update_trans_wfcd)
-        btn_row.addWidget(self._btn_toggle_trans_detail)
-        btn_row.addWidget(self._btn_trans_tutorial)
-        btn_row.addStretch()
-        layout.addLayout(btn_row)
-
-        self._trans_progress = QProgressBar()
-        self._trans_progress.setRange(0, 100)
-        self._trans_progress.setValue(0)
-        self._trans_progress.setFixedHeight(16)
-        self._trans_progress.setFormat("%p%")
-        self._trans_progress.hide()
-        layout.addWidget(self._trans_progress)
-
         parent_layout.addWidget(group)
-
-        self._update_panel.set_trans_widgets(
-            stat_labels=self._trans_stat_labels,
-            cat_label=self._trans_cat_label,
-            btn_update=self._btn_update_trans,
-            progress=self._trans_progress,
-        )
-
-    def _toggle_trans_detail(self):
-        if self._trans_cat_label.isVisible():
-            self._trans_cat_label.hide()
-            self._btn_toggle_trans_detail.setText(S("button", "toggle_detail_expand"))
-            self._reg_text(self._btn_toggle_trans_detail, "button", "toggle_detail_expand")
-        else:
-            self._trans_cat_label.show()
-            self._btn_toggle_trans_detail.setText(S("button", "toggle_detail_collapse"))
-            self._reg_text(self._btn_toggle_trans_detail, "button", "toggle_detail_collapse")
-
-    def _on_update_trans_wfcd(self):
-        self._update_panel.on_update_translation(source='wfcd')
-
-    def _show_trans_tutorial(self):
-        data_dir = str(Path(__file__).resolve().parent.parent / 'data')
-        tutorial_text = S.format("tutorial", "trans_content", data_dir=data_dir)
-        dlg = self._update_panel._build_text_dialog(
-            S("tutorial", "trans_title"), tutorial_text, 560, 600, True, theme.cyber_yellow)
-        dlg.exec()
 
     # ============================================================
     # 全物品中英对照
@@ -562,33 +452,9 @@ class PanelBuilderMixin:
     def _build_items_i18n_group(self, parent_layout):
         group = QGroupBox(S("group", "items_i18n"))
         self._items_group = group
+        group.setObjectName("normalGroup")
         self._reg_text(group, "group", "items_i18n")
         layout = QVBoxLayout(group)
-
-        stat_grid = [
-            (S("stat_label", "items_total"), "items_total"),
-            (S("stat_label", "items_has_cn"), "items_has_cn"),
-            (S("stat_label", "db_size"), "db_size"),
-            (S("stat_label", "last_update"), "last_update"),
-        ]
-        self._items_stat_labels = {}
-        for label, key in stat_grid:
-            row = QHBoxLayout()
-            lbl = QLabel(label)
-            self._reg_text(lbl, "stat_label", key)
-            lbl.setObjectName("statLabel")
-            lbl.setFixedWidth(80)
-            val = QLabel(S("status", "placeholder"))
-            self._reg_text(val, "status", "placeholder")
-            val.setObjectName("statValue")
-            row.addWidget(lbl); row.addWidget(val); row.addStretch()
-            layout.addLayout(row)
-            self._items_stat_labels[key] = val
-
-        query_title = QLabel(S("hint", "items_query_title"))
-        self._reg_text(query_title, "hint", "items_query_title")
-        query_title.setStyleSheet(f"color: {theme.cyber_yellow}; font-size: 12px; font-weight: bold; margin-top: 6px;")
-        layout.addWidget(query_title)
 
         input_row = QHBoxLayout()
         input_row.setSpacing(0)
@@ -670,25 +536,6 @@ class PanelBuilderMixin:
         self._items_search_timer.timeout.connect(self._do_items_search)
 
         parent_layout.addWidget(group)
-
-    def refresh_items_i18n_stats(self):
-        if not hasattr(self, '_items_stat_labels') or not self._items_stat_labels:
-            return
-        try:
-            from data.items_i18n import get_db_stats
-            stats = get_db_stats()
-        except Exception:
-            return
-        if not stats.get('exists'):
-            self._items_stat_labels['items_total'].setText(S("status", "db_not_exist"))
-            for k in ['items_has_cn', 'db_size', 'last_update']:
-                self._items_stat_labels[k].setText(S("status", "placeholder"))
-            return
-        self._items_stat_labels['items_total'].setText(S.format("stat_fmt", "count_items", count=stats['total']))
-        self._items_stat_labels['items_total'].setStyleSheet(f"color: {theme.cyber_green}; font-weight: bold;")
-        self._items_stat_labels['items_has_cn'].setText(S.format("stat_fmt", "count_items", count=stats['has_cn']))
-        self._items_stat_labels['db_size'].setText(S.format("stat_fmt", "db_size_kb", size=stats['db_size'] / 1024))
-        self._items_stat_labels['last_update'].setText(stats['db_mtime'])
 
     # ============================================================
     # 物品搜索
@@ -989,6 +836,7 @@ class PanelBuilderMixin:
     def _build_price_group(self, parent_layout):
         group = QGroupBox(S("group", "wm_prices"))
         self._price_group = group
+        group.setObjectName("normalGroup")
         self._reg_text(group, "group", "wm_prices")
         layout = QVBoxLayout(group)
 
@@ -1061,6 +909,13 @@ class PanelBuilderMixin:
         self._btn_fetch_prices.setObjectName("primaryBtn")
         self._btn_fetch_prices.clicked.connect(self._on_fetch_prices)
         btn_row.addWidget(self._btn_fetch_prices)
+
+        self._btn_open_market_query = WordWrapButton(S("button", "open_market_query"))
+        self._reg_text(self._btn_open_market_query, "button", "open_market_query")
+        self._btn_open_market_query.setObjectName("actionBtn")
+        self._btn_open_market_query.clicked.connect(self._open_market_query)
+        btn_row.addWidget(self._btn_open_market_query)
+
         btn_row.addStretch()
         layout.addLayout(btn_row)
 
@@ -1198,6 +1053,7 @@ class PanelBuilderMixin:
     def _build_hotkey_group(self, parent_layout):
         group = QGroupBox(S("group", "hotkey_settings"))
         self._hotkey_group = group
+        group.setObjectName("normalGroup")
         self._reg_text(group, "group", "hotkey_settings")
         layout = QVBoxLayout(group)
 
@@ -1242,6 +1098,7 @@ class PanelBuilderMixin:
     def _build_reset_group(self, parent_layout):
         group = QGroupBox(S("group", "recovery"))
         self._reset_group = group
+        group.setObjectName("resetGroup")
         self._reg_text(group, "group", "recovery")
         group.setStyleSheet(f"""
             QGroupBox {{
@@ -1321,6 +1178,7 @@ class PanelBuilderMixin:
     def _build_theme_group(self, parent_layout):
         group = QGroupBox(S("group", "theme"))
         self._theme_group = group
+        group.setObjectName("normalGroup")
         self._reg_text(group, "group", "theme")
         layout = QVBoxLayout(group)
         btn_row = QHBoxLayout()
@@ -1356,6 +1214,7 @@ class PanelBuilderMixin:
     def _build_about_group(self, parent_layout):
         group = QGroupBox(S("group", "about_author"))
         self._about_group = group
+        group.setObjectName("normalGroup")
         self._reg_text(group, "group", "about_author")
         group.setStyleSheet(f"""
             QGroupBox {{
@@ -1451,6 +1310,7 @@ class PanelBuilderMixin:
 
         group = QGroupBox(S("group", "lang_preset"))
         self._lang_preset_group = group
+        group.setObjectName("presetGroup")
         self._reg_text(group, "group", "lang_preset")
         group.setStyleSheet(f"""
             QGroupBox {{
@@ -1546,28 +1406,31 @@ class PanelBuilderMixin:
             self._add_log('error', f'语言风格切换失败: {preset_id}')
 
     def _rebuild_ui_for_preset(self):
-        self.setWindowTitle(S("window_title", "management_panel"))
-        for widget, category, key in self._text_registry:
-            try:
-                if hasattr(widget, 'setTitle') and type(widget).__name__ == 'QGroupBox':
-                    widget.setTitle(S(category, key))
-                elif hasattr(widget, 'setPlaceholderText'):
-                    widget.setPlaceholderText(S(category, key))
-                elif hasattr(widget, 'setText'):
-                    widget.setText(S(category, key))
-            except Exception:
-                pass
-        self._refresh_nav_labels()
-        self._refresh_toggle_button_texts()
-        self._refresh_toggle_button_styles()
-        if self._theme_panel:
-            self._theme_panel.refresh_inline_styles()
-        self.setStyleSheet(build_stylesheet())
-        self._refresh_inline_styles()
-        self._update_panel.refresh_stats()
-        self._update_panel.refresh_translation_stats()
-        self.refresh_items_i18n_stats()
-        self.refresh_price_stats()
+        """语言预设切换后重建 UI 文案（批量操作，阻断中间重绘）。"""
+        self.setUpdatesEnabled(False)
+        try:
+            self.setWindowTitle(S("window_title", "management_panel"))
+            for widget, category, key in self._text_registry:
+                try:
+                    if hasattr(widget, 'setTitle') and type(widget).__name__ == 'QGroupBox':
+                        widget.setTitle(S(category, key))
+                    elif hasattr(widget, 'setPlaceholderText'):
+                        widget.setPlaceholderText(S(category, key))
+                    elif hasattr(widget, 'setText'):
+                        widget.setText(S(category, key))
+                except Exception:
+                    pass
+            self._refresh_nav_labels()
+            self._refresh_toggle_button_texts()
+            self._refresh_toggle_button_styles()
+            if self._theme_panel:
+                self._theme_panel.refresh_inline_styles()
+            self.setStyleSheet(build_stylesheet())
+            self._refresh_inline_styles()
+            self._update_panel.refresh_stats()
+            self.refresh_price_stats()
+        finally:
+            self.setUpdatesEnabled(True)
 
     # ============================================================
     # 日志面板

@@ -20,8 +20,6 @@ theme_strings = {
 # 更新三个预设文件
 preset_files = [
     "data/preset_normal.py",
-    "data/preset_santi.py", 
-    "data/preset_cyberpunk2077.py"
 ]
 
 for file_path in preset_files:

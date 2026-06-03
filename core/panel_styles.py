@@ -24,8 +24,7 @@ class PanelStylesMixin:
     # _reset_hint_label, _btn_reset_state, _btn_reload_hotkeys
     # _lang_preset_group, _lang_preset_label, _preset_combo, _preset_desc
     # _items_search_input, _items_result_list, _items_search_hint
-    # _trans_cat_label, _trans_progress
-    # _status_trans_label, _status_items_label
+    
     # _log_title_lbl
     # _bottom_tip
 
@@ -241,88 +240,6 @@ class PanelStylesMixin:
                     QPushButton:hover {{ color: {hover}; }}
                 """)
 
-    # ============================================================
-    # 各 QGroupBox 样式
-    # ============================================================
-
-    _DEFAULT_GROUP_STYLE = """
-        QGroupBox {{
-            background-color: transparent;
-            border: 1px solid {border};
-            border-radius: 4px;
-            padding: 10px;
-            margin-top: 8px;
-            font-size: 12px;
-            color: {text};
-        }}
-        QGroupBox::title {{
-            subcontrol-origin: margin;
-            left: 12px;
-            padding: 0 6px;
-        }}
-    """
-
-    def _set_group_style(self, group, style_template: str, t=None):
-        """通用 QGroupBox 样式设置。"""
-        if t is None:
-            t = theme
-        if group:
-            group.setStyleSheet(style_template.format(
-                border=t.border, text=t.text,
-                cyber_orange=t.cyber_orange, cyber_green=t.cyber_green,
-                cyber_yellow=t.cyber_yellow, cyber_cyan=t.cyber_cyan,
-                text_dim=t.text_dim, card_bg=t.card_bg, panel_bg=t.panel_bg,
-            ))
-
-    def _refresh_group_styles(self, t=None):
-        """批量刷新所有 QGroupBox 样式。"""
-        if t is None:
-            t = theme
-
-        default = self._DEFAULT_GROUP_STYLE.format(
-            border=t.border, text=t.text)
-
-        # 各常规 group
-        for attr in ['_toggle_group', '_status_group', '_relic_group',
-                     '_trans_group', '_items_group', '_price_group',
-                     '_hotkey_group', '_theme_group', '_about_group']:
-            g = getattr(self, attr, None)
-            if g:
-                g.setStyleSheet(default)
-
-        # 紧急恢复（特殊橙色边框）
-        if hasattr(self, '_reset_group'):
-            self._reset_group.setStyleSheet(f"""
-                QGroupBox {{
-                    background-color: transparent;
-                    border: 2px solid {t.cyber_orange};
-                    border-radius: 6px;
-                    padding: 10px;
-                    margin-top: 8px;
-                    font-size: 12px;
-                    color: {t.cyber_orange};
-                    font-weight: bold;
-                }}
-            """)
-
-        # 语言预设组
-        if hasattr(self, '_lang_preset_group'):
-            self._lang_preset_group.setStyleSheet(f"""
-                QGroupBox {{
-                    background-color: transparent;
-                    border: 1px solid {t.border};
-                    border-radius: 4px;
-                    padding: 8px;
-                    margin-top: 8px;
-                    font-size: 11px;
-                    color: {t.text_dim};
-                }}
-            """)
-
-    # ============================================================
-    # 紧急恢复区按钮
-    # ============================================================
-
     def _refresh_reset_button_styles(self, t=None):
         """刷新紧急恢复区按钮样式。"""
         if t is None:
@@ -381,12 +298,6 @@ class PanelStylesMixin:
                 "QScrollArea { border: none; background-color: transparent; }")
             self._left_widget.setStyleSheet("background-color: transparent;")
 
-        # 状态概要标签
-        if hasattr(self, '_status_trans_label'):
-            self._status_trans_label.setStyleSheet(f"color: {t.text_dim}; font-size: 11px; padding: 2px 0;")
-        if hasattr(self, '_status_items_label'):
-            self._status_items_label.setStyleSheet(f"color: {t.text_dim}; font-size: 11px; padding: 2px 0;")
-
         # 底部提示
         if hasattr(self, '_bottom_tip'):
             self._bottom_tip.setStyleSheet(f"color: {t.text_dim}; font-size: 11px;")
@@ -398,27 +309,6 @@ class PanelStylesMixin:
         # 功能开关提示
         if hasattr(self, '_toggle_hint_label'):
             self._toggle_hint_label.setStyleSheet(f"color: {t.text_dim}; font-size: 11px;")
-
-        # 翻译分类标签
-        if hasattr(self, '_trans_cat_label'):
-            self._trans_cat_label.setStyleSheet(f"color: {t.text_dim}; font-size: 11px; padding: 2px 0;")
-
-        # 翻译进度条
-        if hasattr(self, '_trans_progress'):
-            self._trans_progress.setStyleSheet(f"""
-                QProgressBar {{
-                    border: 1px solid {t.border}; border-radius: 3px;
-                    background-color: {t.card_bg}; text-align: center;
-                    color: {t.cyber_yellow}; font-size: 11px; font-weight: bold;
-                }}
-                QProgressBar::chunk {{
-                    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 {t.progress_gradient_start},
-                        stop:0.5 {t.progress_gradient_mid},
-                        stop:1 {t.progress_gradient_end});
-                    border-radius: 2px;
-                }}
-            """)
 
         # 物品搜索组件
         if hasattr(self, '_items_search_input'):
@@ -498,7 +388,6 @@ class PanelStylesMixin:
 
         self._refresh_nav_list_style(t)
         self._refresh_misc_styles(t)
-        self._refresh_group_styles(t)
         self._refresh_hotkey_btn_styles(t)
         self._refresh_toggle_button_styles()
         self._refresh_about_inline_styles()
@@ -515,8 +404,6 @@ class PanelStylesMixin:
         """完整刷新（含数据重新查询）。"""
         self._refresh_inline_styles()
         self._update_panel.refresh_stats()
-        self._update_panel.refresh_translation_stats()
-        self.refresh_items_i18n_stats()
         self._refresh_hotkey_ui()
 
     # ============================================================
@@ -524,20 +411,27 @@ class PanelStylesMixin:
     # ============================================================
 
     def _rebuild_styles_and_swatches_full(self):
-        """完整刷新：全局样式表、内联样式和色块。"""
-        self.setStyleSheet(build_stylesheet())
-        self._refresh_inline_styles()
-        self._theme_panel.rebuild_swatches()
-        self._update_background_size_immediate()
-        self._apply_opacity_overlay()
-        self._apply_blur_effect()
+        """完整刷新：全局样式表、内联样式和色块（批量操作，阻断中间重绘）。"""
+        self.setUpdatesEnabled(False)
+        try:
+            self.setStyleSheet(build_stylesheet())
+            self._refresh_inline_styles()
+            self._theme_panel.rebuild_swatches()
+            self._apply_opacity_overlay()
+            self._bg_blur_effect.setBlurRadius(theme.background_blur)
+        finally:
+            self.setUpdatesEnabled(True)
 
     def _rebuild_styles_and_swatches_partial(self):
-        """部分刷新：只更新样式表和内联样式，不重建色块。"""
-        self.setStyleSheet(build_stylesheet())
-        self._refresh_inline_styles()
-        self._apply_opacity_overlay()
-        self._apply_blur_effect()
+        """部分刷新：只更新样式表和内联样式，不重建色块（批量操作，阻断中间重绘）。"""
+        self.setUpdatesEnabled(False)
+        try:
+            self.setStyleSheet(build_stylesheet())
+            self._refresh_inline_styles()
+            self._apply_opacity_overlay()
+            self._bg_blur_effect.setBlurRadius(theme.background_blur)
+        finally:
+            self.setUpdatesEnabled(True)
 
     def _rebuild_styles_and_swatches(self):
         """刷新全局样式表、内联样式和色块（旧接口，转发到完整刷新）。"""

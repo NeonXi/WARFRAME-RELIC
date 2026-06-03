@@ -170,9 +170,9 @@ class RelicDB:
     def _translate_part(self, en_name: str) -> str:
         """将英文部件名翻译为中文，翻译失败则返回原文"""
         try:
-            from .translation_db import translate_en_to_cn
-            cn = translate_en_to_cn(en_name)
-            return cn if cn else en_name
+            from .items_i18n import translate_item
+            result = translate_item(en_name)
+            return result.get('zh_name', en_name) if result else en_name
         except Exception:
             return en_name
 
