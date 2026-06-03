@@ -103,7 +103,7 @@ class UpdatePanel(QObject):
         self._fetch_worker = None
         self._updating = False
         self._fetching = False
-        self._log_panel_auto_show = False
+        self._log_panel_auto_show = True
 
         # 保存原始日志记录，用于主题切换时重新着色
         self._log_records = []  # [(log_type, msg, source), ...]
@@ -349,6 +349,10 @@ class UpdatePanel(QObject):
 
     def enable_auto_show(self):
         self._log_panel_auto_show = True
+
+    def set_auto_show_suppress(self, suppress: bool):
+        """勾选"本次使用不再展开"时 suppress=True，本次会话不再自动弹出日志。"""
+        self._log_panel_auto_show = not suppress
 
     # ============================================================
     # 日志面板显示/隐藏
@@ -671,8 +675,8 @@ class UpdatePanel(QObject):
         text.setHtml(self._urls_to_html(text_content))
         text.setStyleSheet(
             self._TEXTEDIT_STYLE.format(
-                bg=theme.panel_darker, fg=theme.text, border=theme.border) +
-            f"\nQTextBrowser {{ background-color: {theme.panel_darker}; }}\n"
+                bg=theme.panel_darkest, fg=theme.text, border=theme.border) +
+            f"\nQTextBrowser {{ background-color: {theme.panel_darkest}; }}\n"
             f"QTextBrowser QScrollBar:vertical {{"
             f" background: {theme.panel_darkest}; width: 8px; }}\n"
         )

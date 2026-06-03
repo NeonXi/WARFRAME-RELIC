@@ -1,1 +1,368 @@
 === dev_runner 崩溃日志 (启动: 2026-06-04 06:03:41) ===
+
+============================================================
+崩溃时间: 2026-06-04 06:15:34
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 77, in _setup_ui
+    self.setStyleSheet(build_stylesheet())
+                       ^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 392, in build_stylesheet
+    return StyleSheetBuilder.build_stylesheet()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 42, in build_stylesheet
+    style += cls._build_dialog(t)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'StyleSheetBuilder' has no attribute '_build_dialog'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:15:37
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 77, in _setup_ui
+    self.setStyleSheet(build_stylesheet())
+                       ^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 392, in build_stylesheet
+    return StyleSheetBuilder.build_stylesheet()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 42, in build_stylesheet
+    style += cls._build_dialog(t)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'StyleSheetBuilder' has no attribute '_build_dialog'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:15:40
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 77, in _setup_ui
+    self.setStyleSheet(build_stylesheet())
+                       ^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 392, in build_stylesheet
+    return StyleSheetBuilder.build_stylesheet()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 42, in build_stylesheet
+    style += cls._build_dialog(t)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'StyleSheetBuilder' has no attribute '_build_dialog'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:15:43
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 77, in _setup_ui
+    self.setStyleSheet(build_stylesheet())
+                       ^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 392, in build_stylesheet
+    return StyleSheetBuilder.build_stylesheet()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 42, in build_stylesheet
+    style += cls._build_dialog(t)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'StyleSheetBuilder' has no attribute '_build_dialog'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:15:47
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 77, in _setup_ui
+    self.setStyleSheet(build_stylesheet())
+                       ^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 392, in build_stylesheet
+    return StyleSheetBuilder.build_stylesheet()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 42, in build_stylesheet
+    style += cls._build_dialog(t)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'StyleSheetBuilder' has no attribute '_build_dialog'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:15:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 77, in _setup_ui
+    self.setStyleSheet(build_stylesheet())
+                       ^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 392, in build_stylesheet
+    return StyleSheetBuilder.build_stylesheet()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 42, in build_stylesheet
+    style += cls._build_dialog(t)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'StyleSheetBuilder' has no attribute '_build_dialog'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:15:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 198, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 77, in _setup_ui
+    self.setStyleSheet(build_stylesheet())
+                       ^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 392, in build_stylesheet
+    return StyleSheetBuilder.build_stylesheet()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\stylesheet.py", line 42, in build_stylesheet
+    style += cls._build_dialog(t)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: type object 'StyleSheetBuilder' has no attribute '_build_dialog'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:23:18
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 198, in _setup_ui
+    self._update_panel = UpdatePanel(self, self._data_dir, self._db_path, self._add_log)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 107, in __init__
+    self._log_panel_auto_show = self._load_app_config().get("log_auto_show", True)
+                                ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_load_app_config'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:23:22
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 198, in _setup_ui
+    self._update_panel = UpdatePanel(self, self._data_dir, self._db_path, self._add_log)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 107, in __init__
+    self._log_panel_auto_show = self._load_app_config().get("log_auto_show", True)
+                                ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_load_app_config'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:23:26
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 198, in _setup_ui
+    self._update_panel = UpdatePanel(self, self._data_dir, self._db_path, self._add_log)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\update_panel.py", line 107, in __init__
+    self._log_panel_auto_show = self._load_app_config().get("log_auto_show", True)
+                                ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute '_load_app_config'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:28:38
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 251, in _setup_ui
+    self._build_log_panel(outer_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 1514, in _build_log_panel
+    auto_show_cb.toggled.connect(self._update_panel.set_auto_show if self._update_panel else lambda v: None)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'set_auto_show'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:28:42
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 251, in _setup_ui
+    self._build_log_panel(outer_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 1514, in _build_log_panel
+    auto_show_cb.toggled.connect(self._update_panel.set_auto_show if self._update_panel else lambda v: None)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'set_auto_show'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:28:46
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 251, in _setup_ui
+    self._build_log_panel(outer_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 1514, in _build_log_panel
+    auto_show_cb.toggled.connect(self._update_panel.set_auto_show if self._update_panel else lambda v: None)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'set_auto_show'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-04 06:28:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 66, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 251, in _setup_ui
+    self._build_log_panel(outer_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 1514, in _build_log_panel
+    auto_show_cb.toggled.connect(self._update_panel.set_auto_show if self._update_panel else lambda v: None)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'UpdatePanel' object has no attribute 'set_auto_show'
+
+============================================================

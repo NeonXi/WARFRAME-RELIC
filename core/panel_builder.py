@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QFrame, QProgressBar, QMessageBox, QGroupBox,
     QApplication, QTextEdit, QLineEdit,
     QScrollArea, QListWidget, QListWidgetItem,
-    QToolTip,
+    QToolTip, QCheckBox,
 )
 from PyQt6 import QtCore
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QEvent
@@ -846,31 +846,6 @@ class PanelBuilderMixin:
         self._reg_text(group, "group", "wm_prices")
         layout = QVBoxLayout(group)
 
-        stat_grid = [
-            (S("stat_label", "price_total"), "price_total"),
-            (S("stat_label", "price_has_sell"), "price_has_sell"),
-            (S("stat_label", "price_has_weighted"), "price_has_weighted"),
-            (S("stat_label", "last_update"), "price_mtime"),
-        ]
-        self._price_stat_labels = {}
-        for label, key in stat_grid:
-            row = QHBoxLayout()
-            lbl = QLabel(label)
-            self._reg_text(lbl, "stat_label", key)
-            lbl.setObjectName("statLabel")
-            lbl.setFixedWidth(80)
-            val = QLabel(S("status", "placeholder"))
-            self._reg_text(val, "status", "placeholder")
-            val.setObjectName("statValue")
-            row.addWidget(lbl); row.addWidget(val); row.addStretch()
-            layout.addLayout(row)
-            self._price_stat_labels[key] = val
-
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet(f"background-color: {theme.border}; max-height: 1px; margin: 4px 0;")
-        layout.addWidget(sep)
-
         region_title = QLabel("📐 物品截图区域")
         region_title.setStyleSheet(f"color: {theme.cyber_yellow}; font-size: 12px; font-weight: bold;")
         layout.addWidget(region_title)
@@ -937,23 +912,8 @@ class PanelBuilderMixin:
         self._refresh_item_region_status()
 
     def refresh_price_stats(self):
-        if not hasattr(self, '_price_stat_labels') or not self._price_stat_labels:
-            return
-        try:
-            from data.wm_prices import get_price_stats
-            stats = get_price_stats()
-        except Exception:
-            return
-        if not stats.get('exists'):
-            self._price_stat_labels['price_total'].setText(S("status", "db_not_exist"))
-            for k in ['price_has_sell', 'price_has_weighted', 'price_mtime']:
-                self._price_stat_labels[k].setText(S("status", "placeholder"))
-            return
-        self._price_stat_labels['price_total'].setText(S.format("stat_fmt", "count_items", count=stats['total']))
-        self._price_stat_labels['price_total'].setStyleSheet(f"color: {theme.cyber_green}; font-weight: bold;")
-        self._price_stat_labels['price_has_sell'].setText(S.format("stat_fmt", "count_items", count=stats['has_sell']))
-        self._price_stat_labels['price_has_weighted'].setText(S.format("stat_fmt", "count_items", count=stats['has_weighted']))
-        self._price_stat_labels['price_mtime'].setText(stats['updated_at'])
+        """刷新价格区域状态。"""
+        self._refresh_item_region_status()
 
     def _refresh_item_region_status(self):
         region = load_item_region()
@@ -1535,7 +1495,30 @@ class PanelBuilderMixin:
                 background-color: {theme.btn_hover_bg}; color: {theme.text};
             }}
         """)
-        layout.addWidget(btn_close_log)
+
+        auto_show_cb = QCheckBox("本次使用不再展开")
+        auto_show_cb.setChecked(False)
+        auto_show_cb.setStyleSheet(f"""
+            QCheckBox {{
+                color: {theme.text_dim}; font-size: 12px; spacing: 6px;
+            }}
+            QCheckBox::indicator {{
+                width: 16px; height: 16px;
+                border: 1px solid {theme.border}; border-radius: 3px;
+                background-color: {theme.get_panel_bg_color(180)};
+            }}
+            QCheckBox::indicator:checked {{
+                background-color: {theme.cyber_red};
+            }}
+        """)
+        auto_show_cb.toggled.connect(self._update_panel.set_auto_show_suppress if self._update_panel else lambda v: None)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        btn_row.addWidget(auto_show_cb)
+        btn_row.addStretch()
+        btn_row.addWidget(btn_close_log)
+        layout.addLayout(btn_row)
         outer_layout.addWidget(log_panel)
 
         self._update_panel.set_log_panel_widgets(

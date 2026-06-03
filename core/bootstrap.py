@@ -182,18 +182,9 @@ def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(True)
 
-    # 全局 ToolTip 样式
-    app.setStyleSheet("""
-        QToolTip {
-            background-color: #0A0A1E;
-            color: #E8ECFF;
-            border: 1px solid #1A1A3A;
-            border-radius: 6px;
-            padding: 0px;
-            font-family: "Microsoft YaHei";
-            font-size: 12px;
-        }
-    """)
+    # 全局样式（对话框等继承）
+    from core.stylesheet import build_stylesheet
+    app.setStyleSheet(build_stylesheet())
 
     core = AppCore(app)
     core.run()

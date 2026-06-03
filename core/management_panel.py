@@ -83,7 +83,6 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
         super().showEvent(event)
         if self._first_show:
             self._first_show = False
-            self._update_panel.enable_auto_show()
             QTimer.singleShot(50, self._fix_initial_size)
 
     # ============================================================

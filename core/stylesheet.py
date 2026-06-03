@@ -39,6 +39,7 @@ class StyleSheetBuilder:
             style += cls._build_buttons(t)
             style += cls._build_progress_bar(t)
             style += cls._build_separator(t)
+            style += cls._build_dialog(t)
             cls._base_cache[base_key] = style
         
         # 获取或生成背景样式（只包含背景图相关）
@@ -164,6 +165,7 @@ QPushButton {{
     font-weight: bold;
     min-height: 36px;
     text-align: center;
+    outline: none;
 }}
 QPushButton:hover {{
     background-color: {t.btn_hover_bg};
@@ -190,6 +192,7 @@ QPushButton#primaryBtn {{
     font-weight: bold;
     min-height: 36px;
     text-align: center;
+    outline: none;
 }}
 QPushButton#primaryBtn:hover {{
     background-color: {t.primary_hover_bg};
@@ -274,6 +277,47 @@ QProgressBar::chunk {{
 QFrame#sep {{
     background-color: {t.border};
     max-height: 1px;
+}}
+"""
+
+    @classmethod
+    def _build_dialog(cls, t) -> str:
+        """构建 QDialog / QMessageBox 样式"""
+        return f"""
+QDialog {{
+    background-color: {t.panel_darkest};
+    color: {t.text};
+}}
+QMessageBox {{
+    background-color: {t.panel_darkest};
+    color: {t.text};
+}}
+QMessageBox QLabel {{
+    color: {t.text};
+    font-size: 13px;
+}}
+QMessageBox QPushButton {{
+    background-color: {t.card_bg};
+    color: {t.text};
+    border: 1px solid {t.border};
+    border-radius: 4px;
+    padding: 6px 20px;
+    margin: 4px;
+    min-width: 80px;
+}}
+QMessageBox QPushButton:hover {{
+    border-color: {t.cyber_cyan};
+    background-color: {t.panel_deeper};
+}}
+QMessageBox QPushButton[text="Yes"], 
+QMessageBox QPushButton[text="确定"] {{
+    background-color: rgba(255, 107, 53, 0.15);
+    border-color: #FF6B35;
+    color: #FF6B35;
+}}
+QMessageBox QPushButton[text="Yes"]:hover,
+QMessageBox QPushButton[text="确定"]:hover {{
+    background-color: rgba(255, 107, 53, 0.3);
 }}
 """
     

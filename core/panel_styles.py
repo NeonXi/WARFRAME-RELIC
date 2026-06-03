@@ -6,7 +6,7 @@ WARFRAME-RELIC 内联样式刷新 Mixin
 """
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QGroupBox
+from PyQt6.QtWidgets import QGroupBox, QApplication
 from core.constants import theme
 from core.stylesheet import build_stylesheet
 
@@ -419,6 +419,9 @@ class PanelStylesMixin:
             self._theme_panel.rebuild_swatches()
             self._apply_opacity_overlay()
             self._bg_blur_effect.setBlurRadius(theme.background_blur)
+            self._update_background_size_immediate()
+            # 同时更新应用程序级样式（QMessageBox 等对话框继承）
+            QApplication.instance().setStyleSheet(build_stylesheet())
         finally:
             self.setUpdatesEnabled(True)
 
