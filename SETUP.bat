@@ -94,6 +94,15 @@ echo [1/5] Creating virtual environment (venv)...
 if exist "venv\Scripts\python.exe" (
     echo   [SKIP] venv already exists
 ) else (
+    echo   Checking Python environment...
+    %PYTHON_CMD% --version
+    %PYTHON_CMD% -c "import sys; print('Python path:', sys.executable)"
+    echo.
+    
+    echo   Testing venv module...
+    %PYTHON_CMD% -c "import venv; print('venv module OK')" 2>&1 || echo   [WARN] venv module may not be available
+    
+    echo.
     echo   Creating venv...
     %PYTHON_CMD% -m venv venv 2>&1
     if !errorlevel! neq 0 (
@@ -101,13 +110,13 @@ if exist "venv\Scripts\python.exe" (
         echo   [ERROR] Failed to create venv!
         echo.
         echo   Possible reasons:
-        echo   1. Insufficient permissions (try running as Administrator)
+        echo   1. Insufficient permissions
         echo   2. Python venv module not installed
         echo   3. Disk space issue
-        echo   4. Antivirus blocking the operation
+        echo   4. Antivirus blocking
         echo.
-        echo   Trying alternative method with virtualenv...
-        %PYTHON_CMD% -m pip install virtualenv -q
+        echo   Trying pip-based virtualenv...
+        %PYTHON_CMD% -m pip install --upgrade pip virtualenv -q 2>&1
         if !errorlevel! equ 0 (
             %PYTHON_CMD% -m virtualenv venv 2>&1
             if !errorlevel! equ 0 (
@@ -116,11 +125,40 @@ if exist "venv\Scripts\python.exe" (
             )
         )
         echo.
+        echo   [ERROR] virtualenv also failed!
+        echo.
+        echo   Trying with --without-pip flag...
+        %PYTHON_CMD% -m venv venv --without-pip 2>&1
+        if !errorlevel! equ 0 (
+            echo   [OK] venv created (without pip)
+            echo   Installing pip manually...
+            %PYTHON_CMD% -c "import urllib.request; exec(urllib.request.urlopen('https://bootstrap.pypa.io/get-pip.py').read())"
+            if !errorlevel! equ 0 (
+                echo   [OK] pip installed
+                goto :venv_created
+            )
+        )
+        echo.
         echo   [ERROR] All methods failed!
-        echo   Please try:
-        echo   1. Run this script as Administrator
-        echo   2. Manually create venv: python -m venv venv
-        echo   3. Check disk space and permissions
+        echo.
+        echo   Please try ONE of the following:
+        echo.
+        echo   OPTION 1: Use system Python directly (no venv)
+        echo     1. Open Command Prompt
+        echo     2. Run: pip install -r requirements.txt
+        echo     3. Run: python main.py
+        echo.
+        echo   OPTION 2: Create venv manually
+        echo     1. Open Command Prompt as Administrator
+        echo     2. Navigate to project folder
+        echo     3. Run: python -m venv venv
+        echo     4. Run: venv\Scripts\activate
+        echo     5. Run: pip install -r requirements.txt
+        echo.
+        echo   OPTION 3: Install full Python from official website
+        echo     https://www.python.org/downloads/
+        echo     Make sure to check "Add Python to PATH"
+        echo.
         pause
         exit /b 1
     )
