@@ -3,5 +3,5 @@ dxcam>=0.3.0
 keyboard>=0.13.5
 rapidocr-onnxruntime>=1.4.4
 Pillow>=12.0.0
-numpy>=2.0.0
+numpy<2.0.0
 pypinyin>=0.51.0
