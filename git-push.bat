@@ -1,75 +1,88 @@
 @echo off
 setlocal enabledelayedexpansion
-chcp 65001 >nul
+chcp 437 >nul 2>&1
 cd /d "%~dp0"
 title Git Push - WARFRAME-RELIC
 
 echo.
 echo ============================================================
-echo           WARFRAME-RELIC - Git 一键推送
+echo         WARFRAME-RELIC - Git Push
 echo ============================================================
 echo.
 
-rem --- 检查是否在 git 仓库中 ---
+rem --- Check if inside a git repo ---
 git rev-parse --is-inside-work-tree >nul 2>&1
 if !errorlevel! neq 0 (
-    echo [错误] 当前目录不是 Git 仓库！
+    echo [ERROR] Not a Git repository!
     pause
     exit /b 1
 )
 
-rem --- 显示当前分支 ---
+rem --- Show current branch ---
 for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD') do set BRANCH=%%i
-echo [当前分支] !BRANCH!
+echo [Branch] !BRANCH!
 echo.
 
-rem --- 显示变更状态 ---
-echo [变更状态]
+rem --- Pull latest changes first ---
+echo [0/4] Pulling latest changes...
+git pull --rebase origin !BRANCH!
+if !errorlevel! neq 0 (
+    echo [WARN] Pull failed or no remote updates. Continuing...
+)
+echo.
+
+rem --- Show changes ---
+echo [Changes]
 git status --short
 echo.
 
-rem --- 确认是否继续 ---
-set /p CONFIRM="是否提交并推送这些变更？(Y/N): "
+rem --- Confirm ---
+set /p CONFIRM="Commit and push these changes? (Y/N): "
 if /i not "!CONFIRM!"=="Y" (
-    echo 已取消。
+    echo Cancelled.
     pause
     exit /b 0
 )
 echo.
 
-rem --- 提交信息 ---
-set /p COMMIT_MSG="请输入提交信息（留空使用默认）: "
+rem --- Commit message ---
+set /p COMMIT_MSG="Enter commit message (leave blank for default): "
 if "!COMMIT_MSG!"=="" (
     set COMMIT_MSG=update
 )
 echo.
 
-rem --- 执行 git 操作 ---
-echo [1/3] git add -A ...
+rem --- Execute git operations ---
+echo [1/4] git add -A ...
 git add -A
 if !errorlevel! neq 0 (
-    echo [错误] git add 失败！
+    echo [ERROR] git add failed!
     pause
     exit /b 1
 )
 
-echo [2/3] git commit ...
+echo [2/4] git commit ...
 git commit -m "!COMMIT_MSG!"
 if !errorlevel! neq 0 (
-    echo [提示] 没有需要提交的变更，或提交失败。
+    echo [INFO] Nothing to commit, or commit failed.
 )
 
-echo [3/3] git push ...
+echo [3/4] git push ...
 git push origin !BRANCH!
 if !errorlevel! neq 0 (
-    echo [错误] 推送失败！请检查网络或远程仓库设置。
+    echo [ERROR] Push failed! Check network or remote settings.
+    echo.
+    echo Try:
+    echo   1. Check your internet connection
+    echo   2. Use a VPN or proxy if needed
+    echo   3. Run: git push origin !BRANCH!
     pause
     exit /b 1
 )
 
 echo.
 echo ============================================================
-echo           推送成功！
+echo        Push Successful!
 echo ============================================================
 echo.
 pause
