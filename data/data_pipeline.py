@@ -6,9 +6,9 @@
 
   1. 下载 all.json (WFCD/warframe-drop-data)  — 遗物与掉落数据源
   2. 更新 relics.db       — 从 all.json 迁移遗物数据
-  3. 重建 items_i18n.db    — 全物品中英对照索引（依赖 all.json + i18n.json）
+  3. 重建 items_i18n.db    — 全物品中英对照索引（依赖 all.json）
   4. 拉取 WM 价格          — wm_items.db + wm_prices.db（warframe.market API）
-  5. 构建 game_i18n.db     — 中英对照翻译库（三重数据源交叉验证）
+  5. 构建 game_i18n.db     — 中英对照翻译库（双数据源交叉验证）
 
 用法:
   from data.data_pipeline import DataPipelineWorker
@@ -27,7 +27,7 @@ from pathlib import Path
 from core.hotkey_config import load_github_mirror
 
 try:
-    from PyQt6.QtCore import QObject, pyqtSignal
+    from PyQt6.QtCore import QObject, pyqtSignal, Qt
     _HAS_PYQT = True
 except ImportError:
     _HAS_PYQT = False
@@ -87,18 +87,26 @@ if _HAS_PYQT:
 
         def _emit_log(self, level: str, msg: str):
             if not self._cancelled:
+                # 同时输出到控制台和UI
+                print(f"[PIPELINE] [{level.upper()}] {msg}")
                 self.log.emit(level, msg)
 
         def _emit_step(self, step: int, desc: str):
             if not self._cancelled:
+                # 同时输出到控制台和UI
+                print(f"[PIPELINE] [STEP {step}] {desc}")
                 self.step_changed.emit(step, desc)
 
         def _emit_progress(self, pct: int):
             if not self._cancelled:
+                # 输出到控制台
+                print(f"[PIPELINE] [PROGRESS] {pct}%")
                 self.progress_pct.emit(pct)
 
         def _step_progress(self, stage: str, cur: int, total: int):
             if not self._cancelled:
+                # 输出到控制台
+                print(f"[PIPELINE] [DETAIL] {stage}: {cur}/{total}")
                 self.progress_detail.emit(stage, cur, total)
 
         def run(self):
@@ -162,7 +170,6 @@ if _HAS_PYQT:
                 else:
                     self._emit_log("info", "=" * 50)
                     self._emit_log("info", f"[{step_num}/{total_steps}] 下载遗物数据 (all.json)")
-                    self._emit_log("info", f"  源: https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json")
                     self._emit_step(step_num, "下载遗物数据 (all.json)")
                     self._emit_progress(0)
 
@@ -181,13 +188,17 @@ if _HAS_PYQT:
 
                         worker = FetchWorker(str(ALLJSON_PATH),
                                                  mirror=load_github_mirror())
-                        worker.finished.connect(_fetch_finished)
-                        worker.error.connect(_fetch_error)
-                        worker.log.connect(lambda l, m: self._emit_log(l, m))
-                        worker.progress_pct.connect(self._emit_progress)
+                        # 输出实际使用的下载 URL（包含镜像转换后的地址）
+                        self._emit_log("info", f"  源: {worker.url}")
+                        worker.finished.connect(_fetch_finished, Qt.ConnectionType.DirectConnection)
+                        worker.error.connect(_fetch_error, Qt.ConnectionType.DirectConnection)
+                        worker.log.connect(lambda l, m: self._emit_log(l, m), Qt.ConnectionType.DirectConnection)
+                        worker.progress_pct.connect(self._emit_progress, Qt.ConnectionType.DirectConnection)
                         t = threading.Thread(target=worker.run, daemon=True)
                         t.start()
+                        self._emit_log("info", "[DEBUG] 下载线程已启动，等待完成...")
                         download_done.wait(timeout=600)
+                        self._emit_log("info", f"[DEBUG] download_done.wait() 返回, download_result={download_result}")
 
                         if "error" in download_result:
                             self._emit_log("warn", f"all.json 下载失败: {download_result['error']}")
@@ -197,11 +208,14 @@ if _HAS_PYQT:
                             results["download"] = "failed (using local)"
                         else:
                             results["download"] = "ok"
+                            self._emit_log("ok", f"all.json 下载完成，保存路径: {download_result.get('path', 'unknown')}")
                     except Exception as e:
                         self._emit_log("warn", f"all.json 下载失败: {e}")
                         if not ALLJSON_PATH.exists():
                             raise RuntimeError(f"all.json 不存在且下载失败: {e}")
                         results["download"] = "failed (using local)"
+
+                self._emit_log("info", f"[DEBUG] 步骤1完成，进入步骤2。results={results}")
 
                 # ============================================================
                 # 步骤 2: 更新 relics.db
@@ -209,11 +223,15 @@ if _HAS_PYQT:
                 step_num += 1
                 self._emit_log("info", "")
                 self._emit_log("info", f"[{step_num}/{total_steps}] 更新遗物数据库 (relics.db)")
+                self._emit_log("info", f"[DEBUG] 开始步骤2，ALLJSON_PATH={ALLJSON_PATH}, RELIC_DB_PATH={RELIC_DB_PATH}")
                 self._emit_step(step_num, "更新遗物数据库")
                 self._emit_progress(int(step_num / total_steps * 100))
 
+                self._emit_log("info", "[DEBUG] 调用 update_from_alljson...")
                 from update_db import update_from_alljson
+                self._emit_log("info", f"[DEBUG] update_from_alljson 参数: json_path={ALLJSON_PATH}, db_path={RELIC_DB_PATH}")
                 relic_stats = update_from_alljson(str(ALLJSON_PATH), str(RELIC_DB_PATH))
+                self._emit_log("info", f"[DEBUG] update_from_alljson 返回: {relic_stats}")
                 self._emit_log("ok", f"  遗物: {relic_stats.get('relics', 0):,} 条")
                 self._emit_log("ok", f"  部件: {relic_stats.get('parts', 0):,} 条")
                 self._emit_log("ok", f"  入库: {relic_stats.get('vaulted', 0):,} 条")

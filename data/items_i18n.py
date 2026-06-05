@@ -3,7 +3,6 @@
 
 数据来源:
   - WFCD/warframe-items/All.json       → 物品完整数据（name, uniqueName, category, type, tradable 等）
-  - WFCD/warframe-items/i18n.json      → uniqueName → zh.name（中文名）
 
 关联方式: uniqueName 精确关联，确保中英文对应准确无误。
 
@@ -52,12 +51,10 @@ except ImportError:
 BASE_DIR = os.path.dirname(__file__)
 DB_PATH = os.path.join(BASE_DIR, 'items_i18n.db')
 ALL_ITEMS_PATH = os.path.join(BASE_DIR, 'all_items.json')  # warframe-items 的 All.json
-I18N_PATH = os.path.join(BASE_DIR, 'i18n.json')
 ZH_EN_DICT_PATH = os.path.join(BASE_DIR, 'zh_en_dict.json')  # AdminRoc 中英对照补充数据
 
 # ===== 数据源 URL =====
 WFCD_ALL_URL = 'https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/All.json'
-WFCD_I18N_URL = 'https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/i18n.json'
 
 # ===== 数据库 Schema 版本 =====
 SCHEMA_VERSION = '6'  # v1: 初始, v2: 拼音, v3: 掉落来源字段, v4: 掉落来源子表, v5: 子表富数据, v6: 移除 items 表中掉落来源字段
@@ -461,18 +458,15 @@ def _build_drop_source_map(alljson_path: str, item_map: dict) -> dict:
     return drop_map
 
 
-def build_all_items_db(all_items_path: str = None,
-                       i18n_path: str = None) -> dict:
+def build_all_items_db(all_items_path: str = None) -> dict:
     """构建全物品中英对照数据库。
 
     数据优先级（zh_en_dict.json 最全，作为主数据源）:
       1. zh_en_dict.json  — 16907 条中英对照（最全，含 382 条 Blueprint 部件）
       2. all_items.json   — 15729 条物品详细数据（含 category/tradable/rarity 等）
-      3. i18n.json        — uniqueName → 中文翻译（补充 zh_en_dict 未覆盖的翻译）
 
     Args:
         all_items_path: All.json 路径
-        i18n_path: i18n.json 路径
 
     Returns:
         dict: {'total': int, 'stats': dict}
@@ -490,8 +484,7 @@ def build_all_items_db(all_items_path: str = None,
             import traceback
             traceback.print_exc()
 
-    all_path = all_items_path or ALL_ITEMS_PATH
-    i18n_path = i18n_path or I18N_PATH
+    all_items_path = all_items_path or ALL_ITEMS_PATH
 
     # ============================================================
     # 第1步: 加载 zh_en_dict.json（最全数据源，作为主数据源）
@@ -513,9 +506,9 @@ def build_all_items_db(all_items_path: str = None,
     # 第2步: 加载 all_items.json（补充详细属性）
     # ============================================================
     all_item_by_name = {}  # en_name → item_info 快速查找
-    if os.path.exists(all_path):
-        print(f"[items_i18n] 辅助数据源: all_items.json ({all_path})")
-        with open(all_path, 'r', encoding='utf-8') as f:
+    if os.path.exists(all_items_path):
+        print(f"[items_i18n] 辅助数据源: all_items.json ({all_items_path})")
+        with open(all_items_path, 'r', encoding='utf-8') as f:
             all_data = json.load(f)
 
         if not isinstance(all_data, list):
@@ -541,18 +534,6 @@ def build_all_items_db(all_items_path: str = None,
                 }
     else:
         print(f"[items_i18n] all_items.json 不存在，仅使用 zh_en_dict.json")
-
-    # ============================================================
-    # 第3步: 加载 i18n.json（补充中文翻译，仅用于 zh_en_dict 未覆盖的条目）
-    # ============================================================
-    i18n_data = {}
-    if os.path.exists(i18n_path):
-        print(f"[items_i18n] 翻译补充: i18n.json ({i18n_path})")
-        with open(i18n_path, 'r', encoding='utf-8') as f:
-            i18n_data = json.load(f)
-        print(f"[items_i18n] i18n.json 包含 {len(i18n_data)} 条翻译")
-    else:
-        print(f"[items_i18n] i18n.json 不存在")
 
     # ============================================================
     # 第4步: 以 zh_en_dict.json 为主构建 item_map
@@ -626,7 +607,7 @@ def build_all_items_db(all_items_path: str = None,
             'image_name': info['image_name'],
             'description': info['description'],
             'patchlogs': info['patchlogs'],
-            '_zh_name': '',  # 中文翻译后续从 i18n.json 获取
+            '_zh_name': '',  # 中文翻译来自 zh_en_dict.json
         }
         all_supplemented += 1
 
@@ -833,24 +814,9 @@ def build_all_items_db(all_items_path: str = None,
         if not en_name:
             continue
 
-        # 获取中文翻译：zh_en_dict 优先 → i18n.json 补充
+        # 获取中文翻译：zh_en_dict 优先
         zh_name = item_info.pop('_zh_name', '')
         description_zh = ''
-
-        if not zh_name:
-            # 从 i18n.json 查找
-            i18n_entry = i18n_data.get(unique_name, {})
-            if isinstance(i18n_entry, dict):
-                zh_val = i18n_entry.get('zh', '')
-                if isinstance(zh_val, dict):
-                    zh_name = (zh_val.get('name', '') or '').strip()
-                    desc = zh_val.get('description', '')
-                    if isinstance(desc, str):
-                        description_zh = desc.strip()
-                elif isinstance(zh_val, str):
-                    zh_name = zh_val.strip()
-                    if zh_name == en_name:
-                        zh_name = ''
 
         # 获取英文描述
         desc_en = item_info.get('description', '')
@@ -944,7 +910,7 @@ def build_all_items_db(all_items_path: str = None,
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('total', ?)", (str(inserted),))
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('has_cn', ?)", (str(has_cn),))
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('has_desc', ?)", (str(has_desc),))
-    conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('source', 'zh_en_dict.json (主) + WFCD All.json/i18n.json (补充)')")
+    conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('source', 'zh_en_dict.json (主) + WFCD All.json (补充)')")
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('updated_at', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
 
@@ -1409,8 +1375,8 @@ def search_items(query: str,
             sql += " AND unique_name LIKE ?"
             params.append(f"%{query}%")
         else:  # all
-            sql += " AND (zh_name LIKE ? OR en_name LIKE ? OR unique_name LIKE ?)"
-            params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            sql += " AND (zh_name LIKE ? OR en_name LIKE ? OR unique_name LIKE ? OR zh_pinyin LIKE ?)"
+            params.extend([f"%{query}%", f"%{query}%", f"%{query}%", f"%{query}%"])
 
     if category:
         sql += " AND category = ?"
@@ -1800,7 +1766,7 @@ if _HAS_PYQT:
 
             if not self.silent:
                 self.step_changed.emit(1, "构建全物品中英对照数据库")
-                self.log.emit("info", "正在从 all_items.json + i18n.json 构建全物品数据库...")
+                self.log.emit("info", "正在从 all_items.json 构建全物品数据库...")
 
             try:
                 # 检查数据文件
@@ -1809,10 +1775,6 @@ if _HAS_PYQT:
                         self.log.emit("error", f"all_items.json 不存在: {ALL_ITEMS_PATH}")
                     self.error.emit(f"all_items.json 不存在")
                     return
-
-                if not os.path.exists(I18N_PATH):
-                    if not self.silent:
-                        self.log.emit("warn", f"i18n.json 不存在，将仅使用英文数据")
 
                 self.step_changed.emit(2, "加载数据文件")
                 stats = build_all_items_db()

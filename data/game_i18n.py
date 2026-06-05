@@ -5,7 +5,6 @@
   1. warframe-public-export-plus (calamity-inc) — 基于 DE 官方 Public Export，持续更新
      - dict.en.json: 英文翻译
      - dict.zh.json: 中文翻译
-  2. WFCD/warframe-items — 现有 i18n.json（作为交叉验证）
 
 数据库: data/game_i18n.db
   - translations 表: key(唯一标识), en(英文), zh(中文), category(分类), source(来源), verified(校验状态)
@@ -37,13 +36,9 @@ GITHUB_RAW_BASE = "https://raw.githubusercontent.com/calamity-inc/warframe-publi
 DICT_EN_URL = f"{GITHUB_RAW_BASE}/dict.en.json"
 DICT_ZH_URL = f"{GITHUB_RAW_BASE}/dict.zh.json"
 
-# @wfcd/items i18n.json — 第三数据源（物品多语言翻译，无英文字段）
-WFCD_ITEMS_I18N_URL = "https://raw.githubusercontent.com/WFCD/warframe-items/HEAD/data/json/i18n.json"
-
 # 本地文件路径
 DATA_DIR = Path(__file__).resolve().parent  # data/
 DB_PATH = DATA_DIR / "game_i18n.db"
-I18N_JSON_PATH = DATA_DIR / "i18n.json"
 
 
 # ============================================================
@@ -111,11 +106,38 @@ def _download_json(url: str, timeout: int = 120, mirror: str = None) -> dict:
     if _HAS_MIRROR:
         if mirror is None:
             mirror = load_github_mirror()
-        url = resolve_github_url(url, mirror)
-    req = urllib.request.Request(url, headers={"User-Agent": "WarframeRelicTool/1.0"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        raw = resp.read()
-    return json.loads(raw.decode("utf-8"))
+        resolved_url = resolve_github_url(url, mirror)
+    else:
+        resolved_url = url
+
+    # 多源容灾: 尝试所有可用的 jsDelivr 端点
+    last_error = None
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        if attempt > 1:
+            try:
+                from core.hotkey_config import switch_jsdelivr_endpoint, get_current_jsdelivr_endpoint
+                new_endpoint = switch_jsdelivr_endpoint()
+                resolved_url = resolve_github_url(url, mirror)
+                print(f"[game_i18n] 切换到备用 CDN: {new_endpoint}，第 {attempt} 次重试...")
+            except Exception:
+                pass
+            time.sleep(2)
+        try:
+            req = urllib.request.Request(resolved_url, headers={"User-Agent": "WarframeRelicTool/1.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read()
+            return json.loads(raw.decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            last_error = e
+            print(f"[game_i18n] ⚠ HTTP {e.code}: {e.reason} (尝试 {attempt}/{max_retries})")
+            if e.code == 404:
+                break
+        except Exception as e:
+            last_error = e
+            print(f"[game_i18n] ⚠ 下载失败 (尝试 {attempt}/{max_retries}): {e}")
+
+    raise last_error or Exception(f"下载失败: {resolved_url}")
 
 
 def _load_json_file(filename: str) -> dict:
@@ -133,28 +155,6 @@ def _load_json_file(filename: str) -> dict:
     """
     file_path = DATA_DIR / filename
     with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def _normalize_wfcd_value(value) -> str:
-    """将 WFCD i18n 值标准化为字符串。
-
-    WFCD i18n.json 中有两种格式:
-      - {"zh": "中文文本"}  → 直接取字符串
-      - {"zh": {"name": "名称", "description": "描述"}}  → 取 name
-    """
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict):
-        return value.get("name", "") or value.get("description", "") or ""
-    return str(value)
-
-
-def _load_existing_i18n() -> dict[str, dict[str, str]]:
-    """加载本地已有的 i18n.json（WFCD 来源）。"""
-    if not I18N_JSON_PATH.exists():
-        return {}
-    with open(I18N_JSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -209,9 +209,7 @@ def build_database(
         use_local_files: bool — 是否直接使用本地已有的 dict.en.json 和 dict.zh.json（跳过下载
 
     Returns:
-        dict: {"total": int, "en_only": int, "zh_only": int, "both": int, "conflicts": int,
-               "wfcd_merged": int, "wfcd_new": int,
-               "wfcd_items_merged": int, "wfcd_items_new": int}
+        dict: {"total": int, "en_only": int, "zh_only": int, "both": int}
     """
     def _log(level, msg):
         if log_callback:
@@ -227,7 +225,7 @@ def build_database(
 
     # ---- 阶段 1: 获取 dict.en.json ----
     if use_local_files:
-        _log("info", "[1/6] 加载本地英文翻译文件 (dict.en.json)...")
+        _log("info", "[1/4] 加载本地英文翻译文件 (dict.en.json)...")
         _progress("加载英文", 0, 100)
         try:
             en_dict = _load_json_file("dict.en.json")
@@ -237,7 +235,7 @@ def build_database(
             _log("error", f"加载英文翻译失败: {e}")
             return {"total": 0, "error": str(e)}
     else:
-        _log("info", "[1/6] 下载英文翻译文件 (dict.en.json)...")
+        _log("info", "[1/4] 下载英文翻译文件 (dict.en.json)...")
         _progress("下载英文", 0, 100)
         try:
             en_dict = _download_json(DICT_EN_URL, mirror=mirror)
@@ -249,7 +247,7 @@ def build_database(
 
     # ---- 阶段 2: 获取 dict.zh.json ----
     if use_local_files:
-        _log("info", "[2/6] 加载本地中文翻译文件 (dict.zh.json)...")
+        _log("info", "[2/4] 加载本地中文翻译文件 (dict.zh.json)...")
         _progress("加载中文", 0, 100)
         try:
             zh_dict = _load_json_file("dict.zh.json")
@@ -259,7 +257,7 @@ def build_database(
             _log("error", f"加载中文翻译失败: {e}")
             return {"total": 0, "error": str(e)}
     else:
-        _log("info", "[2/6] 下载中文翻译文件 (dict.zh.json)...")
+        _log("info", "[2/4] 下载中文翻译文件 (dict.zh.json)...")
         _progress("下载中文", 0, 100)
         try:
             zh_dict = _download_json(DICT_ZH_URL, mirror=mirror)
@@ -270,7 +268,7 @@ def build_database(
             return {"total": 0, "error": str(e)}
 
     # ---- 阶段 3: 合并 en/zh 数据 ----
-    _log("info", "[3/6] 合并英文/中文翻译数据...")
+    _log("info", "[3/4] 合并英文/中文翻译数据...")
     _progress("合并数据", 0, 100)
 
     all_keys = set(en_dict.keys()) | set(zh_dict.keys())
@@ -293,127 +291,8 @@ def build_database(
     _progress("合并数据", 100, 100)
     _log("ok", f"合并结果: {len(merged):,} 条 (中英皆有: {both:,}, 仅英文: {en_only:,}, 仅中文: {zh_only:,})")
 
-    # ---- 阶段 4: 交叉验证 WFCD i18n.json (drop-data) ----
-    _log("info", "[4/6] 交叉验证 WFCD i18n.json 数据...")
-    _progress("交叉验证", 0, 100)
-    wfcd_i18n = _load_existing_i18n()
-    wfcd_merged = 0
-    wfcd_new = 0
-    conflicts = 0
-
-    if wfcd_i18n:
-        # 构建反向索引: zh -> en (用于 WFCD-only key 反向查找英文)
-        _log("info", "  构建反向索引...")
-        reverse_index = {}
-        for k, en_val in en_dict.items():
-            if k in zh_dict and zh_dict[k] and en_val:
-                reverse_index[zh_dict[k]] = en_val
-        _log("ok", f"  反向索引: {len(reverse_index):,} 条")
-
-        skipped_non_language = 0
-        for key, langs in wfcd_i18n.items():
-            # 🔴 关键修复: 只处理 /Lotus/Language/ 开头的翻译 key！
-            if not key.startswith("/Lotus/Language/"):
-                skipped_non_language += 1
-                continue
-                
-            if key in merged:
-                # 补充缺失的翻译
-                updated = False
-                # WFCD i18n 格式: {"zh": "中文"} 或 {"zh": {"name": "名称", ...}}
-                en_from_wfcd = _normalize_wfcd_value(langs.get("en", "")) if isinstance(langs, dict) else ""
-                zh_from_wfcd = _normalize_wfcd_value(langs.get("zh", "")) if isinstance(langs, dict) else ""
-                if not merged[key]["en"] and en_from_wfcd:
-                    merged[key]["en"] = en_from_wfcd
-                    updated = True
-                if not merged[key]["zh"] and zh_from_wfcd:
-                    merged[key]["zh"] = zh_from_wfcd
-                    updated = True
-                if updated:
-                    merged[key]["source"] += ",wfcd-i18n"
-                    wfcd_merged += 1
-            else:
-                # WFCD 独有的 key，直接加入
-                en_from_wfcd = _normalize_wfcd_value(langs.get("en", "")) if isinstance(langs, dict) else ""
-                zh_from_wfcd = _normalize_wfcd_value(langs.get("zh", "")) if isinstance(langs, dict) else ""
-                # 如果 WFCD 没有英文，尝试多种方式补充
-                if not en_from_wfcd and zh_from_wfcd:
-                    # 1) 直接查找: WFCD key 是否存在于 public-export-plus dict
-                    en_from_wfcd = en_dict.get(key, "")
-                if not en_from_wfcd and zh_from_wfcd:
-                    # 2) 反向索引: 用中文名查找英文
-                    en_from_wfcd = reverse_index.get(zh_from_wfcd, "")
-                if not en_from_wfcd:
-                    # 3) 从 key 路径推断: 取最后一个路径段, 去掉后缀
-                    en_from_wfcd = _derive_en_from_key(key)
-                merged[key] = {
-                    "en": en_from_wfcd,
-                    "zh": zh_from_wfcd,
-                    "source": "wfcd-i18n",
-                }
-                wfcd_new += 1
-        
-        _log("info", f"  过滤掉非翻译 key: {skipped_non_language:,} 条")
-
-    _progress("交叉验证", 100, 100)
-    _log("ok", f"WFCD 交叉验证: 补充 {wfcd_merged:,} 条, 新增 {wfcd_new:,} 条")
-
-    # ---- 阶段 5: 交叉验证 @wfcd/items i18n.json (物品多语言) ----
-    wfcd_items_merged = 0
-    wfcd_items_new = 0
-    if not use_local_files:
-        # 仅在在线模式下下载 @wfcd/items i18n.json
-        _log("info", "[5/6] 交叉验证 @wfcd/items i18n.json 数据...")
-        _progress("@wfcd/items", 0, 100)
-
-        try:
-            wfcd_items_i18n = _download_json(WFCD_ITEMS_I18N_URL, timeout=180)
-            _progress("@wfcd/items", 50, 100)
-            _log("ok", f"@wfcd/items i18n.json: {len(wfcd_items_i18n):,} 条记录")
-
-            items_skipped = 0
-            for key, langs in wfcd_items_i18n.items():
-                # 同样只处理 /Lotus/Language/ 开头的翻译 key！
-                if not key.startswith("/Lotus/Language/"):
-                    items_skipped += 1
-                    continue
-                    
-                if not isinstance(langs, dict):
-                    continue
-                # @wfcd/items 格式: {"zh": {"name": "...", "description": "..."}, "de": {...}, ...}
-                # 注意: 此数据源没有 en 字段
-                zh_from_items = _normalize_wfcd_value(langs.get("zh", "")) if isinstance(langs.get("zh", ""), dict) else ""
-
-                if key in merged:
-                    if not merged[key]["zh"] and zh_from_items:
-                        merged[key]["zh"] = zh_from_items
-                        merged[key]["source"] += ",wfcd-items"
-                        wfcd_items_merged += 1
-                else:
-                    # 新 key: 从 key 路径推断英文，使用 items 的中文翻译
-                    en_from_items = _derive_en_from_key(key)
-                    merged[key] = {
-                        "en": en_from_items,
-                        "zh": zh_from_items,
-                        "source": "wfcd-items",
-                    }
-                    wfcd_items_new += 1
-            
-            _log("info", f"  @wfcd/items 过滤掉非翻译 key: {items_skipped:,} 条")
-
-            _progress("@wfcd/items", 100, 100)
-            _log("ok", f"@wfcd/items 交叉验证: 补充 {wfcd_items_merged:,} 条, 新增 {wfcd_items_new:,} 条")
-        except Exception as e:
-            _log("warn", f"@wfcd/items i18n.json 下载失败 (非致命): {e}")
-            wfcd_items_merged = 0
-            wfcd_items_new = 0
-    else:
-        # 本地模式：跳过 @wfcd/items 下载，直接进入下一阶段
-        _log("info", "[5/6] 跳过 @wfcd/items 交叉验证 (本地模式)")
-        _progress("@wfcd/items", 100, 100)
-
-    # ---- 阶段 6: 写入数据库 ----
-    _log("info", "[6/6] 写入数据库...")
+    # ---- 阶段 4: 写入数据库 ----
+    _log("info", "[4/4] 写入数据库...")
     _progress("写入数据库", 0, 100)
 
     conn = _get_connection()
@@ -474,11 +353,6 @@ def build_database(
         "en_only": en_only,
         "zh_only": zh_only,
         "both": both,
-        "conflicts": conflicts,
-        "wfcd_merged": wfcd_merged,
-        "wfcd_new": wfcd_new,
-        "wfcd_items_merged": wfcd_items_merged,
-        "wfcd_items_new": wfcd_items_new,
     }
     _log("ok", f"构建完成! 总计 {total:,} 条翻译记录")
     return stats
@@ -778,10 +652,5 @@ if __name__ == "__main__":
     print("\n构建完成!")
     print(f"  总记录数: {stats['total']:,}")
     print(f"  中英皆有: {stats['both']:,}")
-    print(f"  仅英文:   {stats['en_only']:,}")
     print(f"  仅中文:   {stats['zh_only']:,}")
-    print(f"  WFCD 补充: {stats['wfcd_merged']:,}")
-    print(f"  WFCD 新增: {stats['wfcd_new']:,}")
-    if "wfcd_items_merged" in stats and "wfcd_items_new" in stats:
-        print(f"  物品补充: {stats['wfcd_items_merged']:,}")
-        print(f"  物品新增: {stats['wfcd_items_new']:,}")
+    print(f"  仅英文:   {stats['en_only']:,}")

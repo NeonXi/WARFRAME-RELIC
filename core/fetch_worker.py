@@ -1,5 +1,5 @@
 """
-数据拉取 Worker —— 后台线程从 GitHub 下载最新 all.json 和 i18n.json，精细化进度反馈。
+数据拉取 Worker —— 后台线程从 GitHub 下载最新 all.json，精细化进度反馈。
 """
 
 import json
@@ -17,17 +17,10 @@ from core.hotkey_config import resolve_github_url, load_github_mirror
 
 GITHUB_RAW_BASE = "https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data"
 ALLJSON_URL = f"{GITHUB_RAW_BASE}/all.json"
-RELIC_URL = f"{GITHUB_RAW_BASE}/relics.json"
-
-# i18n 多语言翻译数据（来自 warframe-items 仓库）
-I18N_URL = "https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/i18n.json"
-
-# i18n 清洗: 仅保留的语言代码
-I18N_KEEP_LANGS = {'zh', 'en'}
 
 
 class FetchWorker(QObject):
-    """后台线程：从 GitHub 下载最新 all.json 和 i18n.json，精细化进度反馈"""
+    """后台线程：从 GitHub 下载最新 all.json，精细化进度反馈"""
 
     # ---- 信号定义 ----
     step_changed = pyqtSignal(int, str)       # 当前步骤 (1~10), 步骤描述
@@ -43,7 +36,6 @@ class FetchWorker(QObject):
         self.url = resolve_github_url(url, mirror)
         self.max_retries = max_retries
         self._mirror = mirror
-        self._resolved_i18n_url = resolve_github_url(I18N_URL, mirror)
 
     # ------------------------------------------------------------
     # 核心执行流程
@@ -80,15 +72,30 @@ class FetchWorker(QObject):
             self.error.emit(f"DNS 解析失败: {e}\n请检查网络连接")
             return
 
-        # ===== 步骤 3: TCP 连接 + SSL 握手（带重试）=====
+        # ===== 步骤 3: TCP 连接 + SSL 握手（带多源容灾重试）=====
         self.step_changed.emit(3, "建立安全连接")
         self.log.emit("info", "正在建立 HTTPS 连接...")
         resp = None
         last_error = None
+        
+        # 多源容灾: 仅 jsdelivr 镜像需要切换 CDN 端点
+        is_jsdelivr = (self._mirror == "jsdelivr")
+        if is_jsdelivr:
+            from core.hotkey_config import get_all_jsdelivr_endpoints, switch_jsdelivr_endpoint, get_current_jsdelivr_endpoint
+            endpoints = get_all_jsdelivr_endpoints()
+            current_endpoint = get_current_jsdelivr_endpoint()
+            endpoint_index = endpoints.index(current_endpoint) if current_endpoint in endpoints else 0
+
         for attempt in range(1, self.max_retries + 1):
             if attempt > 1:
+                if is_jsdelivr:
+                    # 切换到下一个 jsDelivr 端点
+                    new_endpoint = switch_jsdelivr_endpoint()
+                    self.log.emit("info", f"切换到备用 CDN: {new_endpoint}")
+                    self.url = self.url.replace(endpoints[(endpoint_index + attempt - 2) % len(endpoints)], new_endpoint)
                 self.log.emit("info", f"第 {attempt} 次重试...")
                 time.sleep(2)
+            
             try:
                 req = urllib.request.Request(
                     self.url,
@@ -111,15 +118,16 @@ class FetchWorker(QObject):
                 reason = str(e.reason)
                 self.log.emit("warn", f"连接失败 (第 {attempt}/{self.max_retries} 次): {reason}")
                 if "timed out" in reason.lower():
-                    self.log.emit("warn", "连接超时，可能原因: 防火墙阻止 / 网络不稳定")
+                    self.log.emit("warn", "连接超时，正在尝试备用 CDN..." if is_jsdelivr else "连接超时")
             except Exception as e:
                 last_error = (str(e), e)
                 self.log.emit("warn", f"未知连接错误 (第 {attempt}/{self.max_retries} 次): {e}")
         else:
             msg, exc = last_error or ("未知错误", Exception("unknown"))
-            self.log.emit("error", f"{msg}（已重试 {self.max_retries} 次）")
+            endpoint_info = f"尝试了 {len(endpoints)} 个 CDN 端点" if is_jsdelivr else f"已重试 {self.max_retries} 次"
+            self.log.emit("error", f"{msg}（{endpoint_info}）")
             self.log.emit("error", "建议: 使用 Watt Toolkit 加速 GitHub 或手动下载")
-            self.error.emit(f"{msg}\n已重试 {self.max_retries} 次，仍然失败。\n请尝试手动下载或使用网络加速工具。")
+            self.error.emit(f"{msg}\n{endpoint_info}，仍然失败。\n请尝试手动下载或使用网络加速工具。")
             return
 
         try:
@@ -140,7 +148,7 @@ class FetchWorker(QObject):
                 else:
                     self.log.emit("info", f"文件大小: {size_kb:.0f} KB ({int(content_length):,} bytes)")
             else:
-                self.log.emit("warn", "服务器未提供 Content-Length，无法显示下载进度")
+                self.log.emit("info", "服务器未提供 Content-Length，将使用预估进度")
 
             # ===== 步骤 5: 下载数据（带进度） =====
             self.step_changed.emit(5, "下载数据")
@@ -151,6 +159,9 @@ class FetchWorker(QObject):
             total = int(content_length) if content_length else 0
             last_pct = -1
             dl_start = time.time()
+            
+            # 预估文件大小（用于没有 Content-Length 的情况）
+            estimated_size = total if total > 0 else 6 * 1024 * 1024  # 默认 6MB
 
             while True:
                 chunk = resp.read(8192)
@@ -158,15 +169,20 @@ class FetchWorker(QObject):
                     break
                 chunks.append(chunk)
                 downloaded += len(chunk)
-                if total > 0:
-                    pct = min(int(downloaded * 100 / total), 100)
-                    if pct != last_pct:
-                        self.progress_pct.emit(pct)
-                        if pct % 20 == 0 and pct != last_pct:
-                            elapsed = time.time() - dl_start
-                            speed = (downloaded / 1024 / elapsed) if elapsed > 0 else 0
+                
+                # 始终更新进度，即使没有 Content-Length
+                calc_total = total if total > 0 else estimated_size
+                pct = min(int(downloaded * 100 / calc_total), 99)  # 最大 99%，完成后再设为 100%
+                if pct != last_pct:
+                    self.progress_pct.emit(pct)
+                    if pct % 20 == 0 and pct != last_pct:
+                        elapsed = time.time() - dl_start
+                        speed = (downloaded / 1024 / elapsed) if elapsed > 0 else 0
+                        if total > 0:
                             self.log.emit("info", f"下载进度: {pct}% ({downloaded/1024:.0f}/{total/1024:.0f} KB, {speed:.0f} KB/s)")
-                        last_pct = pct
+                        else:
+                            self.log.emit("info", f"下载进度: {pct}% ({downloaded/1024:.0f} KB, {speed:.0f} KB/s)")
+                    last_pct = pct
             content = b"".join(chunks)
         except Exception as e:
             self.log.emit("error", f"下载中断: {e}")
@@ -189,6 +205,7 @@ class FetchWorker(QObject):
         else:
             self.log.emit("ok", f"下载完成 → {dl_kb:.0f} KB (耗时 {dl_time:.1f}s, 平均 {speed:.0f} KB/s)")
         self.progress_pct.emit(100)
+        self.log.emit("info", "[DEBUG] all.json 下载完成，即将进入验证阶段")
 
         # ===== 步骤 6: 验证数据格式 =====
         self.step_changed.emit(6, "验证数据格式")
@@ -237,138 +254,7 @@ class FetchWorker(QObject):
             self.error.emit(f"保存文件失败: {e}")
             return
 
-        # ================================================================
-        # 阶段 2: 下载 i18n.json（多语言翻译数据）
-        # ================================================================
-        self._download_i18n(save_path)
-
         total_time = time.time() - start_time
         self.log.emit("ok", f"========== 全部完成 (总耗时 {total_time:.1f}s) ==========")
+        self.log.emit("info", f"[DEBUG] 准备发射 finished 信号，save_path={save_path}")
         self.finished.emit(str(save_path))
-
-    # ------------------------------------------------------------
-    # 下载 i18n.json 并清洗（仅保留 zh/en）
-    # ------------------------------------------------------------
-    def _download_i18n(self, alljson_save_path: str):
-        """下载 i18n.json，清洗后保存到 data/i18n.json。"""
-        save_dir = Path(alljson_save_path).parent
-        i18n_path = save_dir / 'i18n.json'
-
-        # ===== 步骤 8: 下载 i18n.json =====
-        self.step_changed.emit(8, "下载 i18n 翻译数据")
-        self.log.emit("info", "")
-        self.log.emit("info", "--- 阶段 2: 下载 i18n.json (多语言翻译) ---")
-        self.log.emit("info", f"源地址: {self._resolved_i18n_url}")
-        self.log.emit("info", f"保存到: {i18n_path}")
-
-        try:
-            resp = None
-            for attempt in range(1, self.max_retries + 1):
-                if attempt > 1:
-                    self.log.emit("info", f"第 {attempt} 次重试...")
-                    time.sleep(2)
-                try:
-                    req = urllib.request.Request(
-                        self._resolved_i18n_url,
-                        headers={"User-Agent": "WARFRAME-RELIC/1.0"}
-                    )
-                    resp = urllib.request.urlopen(req, timeout=30)
-                    break
-                except urllib.error.HTTPError as e:
-                    self.log.emit("warn", f"i18n.json HTTP {e.code}: {e.reason}")
-                    if e.code == 404:
-                        break
-                except urllib.error.URLError as e:
-                    self.log.emit("warn", f"i18n.json 连接失败 (第 {attempt}/{self.max_retries} 次): {e.reason}")
-            else:
-                self.log.emit("warn", "i18n.json 下载失败，将跳过翻译数据更新")
-                self.log.emit("info", "  提示: 可稍后手动下载 i18n.json 放入 data 目录")
-                return
-
-            # 下载
-            dl_start = time.time()
-            chunks = []
-            content_length = resp.headers.get("Content-Length")
-            total = int(content_length) if content_length else 0
-            if total:
-                self.log.emit("info", f"文件大小: {total/1024/1024:.1f} MB")
-
-            while True:
-                chunk = resp.read(32768)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-                if total > 0:
-                    pct = min(int(sum(len(c) for c in chunks) * 100 / total), 100)
-                    self.progress_pct.emit(pct)
-
-            content = b"".join(chunks)
-            dl_time = time.time() - dl_start
-            self.log.emit("ok", f"i18n.json 下载完成 ({len(content)/1024/1024:.1f} MB, 耗时 {dl_time:.1f}s)")
-
-        except Exception as e:
-            self.log.emit("warn", f"i18n.json 下载失败: {e}")
-            self.log.emit("info", "  提示: 可稍后手动下载 i18n.json 放入 data 目录")
-            return
-        finally:
-            if resp is not None:
-                try:
-                    resp.close()
-                except Exception:
-                    pass
-
-        # ===== 步骤 9: 清洗 i18n.json（仅保留 zh/en）=====
-        self.step_changed.emit(9, "清洗 i18n 翻译数据")
-        self.log.emit("info", "正在清洗 i18n.json，移除多余语言...")
-
-        try:
-            data = json.loads(content)
-            orig_langs = set()
-            stripped_count = 0
-            kept_langs = set()
-
-            for unique_name, translations in data.items():
-                if not isinstance(translations, dict):
-                    continue
-                for lang in translations:
-                    orig_langs.add(lang)
-
-                new_translations = {}
-                for lang in I18N_KEEP_LANGS:
-                    if lang in translations:
-                        new_translations[lang] = translations[lang]
-                        kept_langs.add(lang)
-
-                if len(new_translations) < len(translations):
-                    stripped_count += 1
-
-                data[unique_name] = new_translations
-
-            langs_removed = orig_langs - kept_langs
-            self.log.emit("ok", f"清洗完成: {len(data)} 个条目, 保留 {sorted(kept_langs)}, "
-                          f"移除 {sorted(langs_removed)}, 修改 {stripped_count} 条")
-        except Exception as e:
-            self.log.emit("error", f"i18n.json 清洗失败: {e}")
-            return
-
-        # ===== 步骤 10: 保存 i18n.json =====
-        self.step_changed.emit(10, "保存 i18n 翻译数据")
-        self.log.emit("info", "正在保存 i18n.json...")
-
-        # 备份旧文件
-        if i18n_path.exists():
-            backup = i18n_path.with_suffix('.json.bak')
-            try:
-                i18n_path.replace(backup)
-                self.log.emit("info", f"旧 i18n.json 已备份: {backup.name}")
-            except Exception as e:
-                self.log.emit("warn", f"备份旧 i18n.json 失败: {e}")
-
-        try:
-            with open(i18n_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            size = os.path.getsize(i18n_path)
-            self.log.emit("ok", f"i18n.json 已保存（已清洗+格式化）: {i18n_path} ({size/1024/1024:.1f} MB)")
-        except Exception as e:
-            self.log.emit("error", f"i18n.json 保存失败: {e}")
-            return

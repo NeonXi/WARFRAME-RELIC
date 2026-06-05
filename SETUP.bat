@@ -1,117 +1,141 @@
 @echo off
 setlocal enabledelayedexpansion
-chcp 65001 >nul
 cd /d "%~dp0"
-title WARFRAME-RELIC 环境初始化
+title WARFRAME-RELIC Setup
+
+:: Force ASCII mode to avoid UTF-8 encoding issues with cmd.exe
+chcp 437 >nul 2>&1
 
 echo.
 echo ============================================================
-echo       WARFRAME-RELIC - 零基础环境初始化
+echo       WARFRAME-RELIC - Environment Setup
 echo ============================================================
 echo.
 
 rem ==========================================
-rem 0. 检查 Python
+rem 0. Check Python
 rem ==========================================
-echo [0/4] 检测 Python...
+echo [0/5] Checking Python...
 
 set PYTHON_CMD=
 set PYTHON_VER=
 
-:: 优先使用 py launcher
+:: Try py launcher first
 where py >nul 2>&1
 if %errorlevel% equ 0 (
-    for /f "tokens=2" %%v in ('py -3 --version 2^>^&1') do set PYTHON_VER=%%v
+    for /f "tokens=2" %%v in ('py -3 --version 2^>nul') do set PYTHON_VER=%%v
     if defined PYTHON_VER (
         set "PYTHON_CMD=py -3"
-        echo   [OK] 找到 Python !PYTHON_VER! ^(通过 py launcher^)
+        echo   [OK] Python !PYTHON_VER! found (py launcher)
     )
 )
 
-:: 如果 py launcher 没找到，尝试 python
+:: Try python
 if not defined PYTHON_CMD (
     where python >nul 2>&1
     if !errorlevel! equ 0 (
-        for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PYTHON_VER=%%v
+        for /f "tokens=2" %%v in ('python --version 2^>nul') do set PYTHON_VER=%%v
         set "PYTHON_CMD=python"
-        echo   [OK] 找到 Python !PYTHON_VER! ^(通过 PATH^)
+        echo   [OK] Python !PYTHON_VER! found (PATH)
     )
 )
 
-:: 尝试 python3
+:: Try python3
 if not defined PYTHON_CMD (
     where python3 >nul 2>&1
     if !errorlevel! equ 0 (
-        for /f "tokens=2" %%v in ('python3 --version 2^>^&1') do set PYTHON_VER=%%v
+        for /f "tokens=2" %%v in ('python3 --version 2^>nul') do set PYTHON_VER=%%v
         set "PYTHON_CMD=python3"
-        echo   [OK] 找到 Python !PYTHON_VER! ^(通过 PATH^)
+        echo   [OK] Python !PYTHON_VER! found (PATH)
     )
 )
 
-:: 都没找到
+:: Auto download and install Python if not found
 if not defined PYTHON_CMD (
-    echo   [ERROR] 未找到 Python!
+    echo   [INFO] Python not found, will download and install automatically...
     echo.
-    echo   请先安装 Python 3.10+
-    echo   下载地址: https://www.python.org/downloads/
-    echo   【重要】安装时务必勾选 "Add Python to PATH"
-    echo.
-    pause
-    exit /b 1
-)
-
-echo.
-
-rem ==========================================
-rem 1. 创建虚拟环境
-rem ==========================================
-echo [1/4] 创建虚拟环境 (venv)...
-
-if exist "venv\Scripts\python.exe" (
-    echo   [SKIP] 虚拟环境已存在
-) else (
-    %PYTHON_CMD% -m venv venv
+    
+    set "PYTHON_URL=https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe"
+    set "PYTHON_INSTALLER=python-installer.exe"
+    
+    echo   Downloading Python 3.12.4...
+    powershell -Command "(New-Object Net.WebClient).DownloadFile('%PYTHON_URL%', '%PYTHON_INSTALLER%')"
     if !errorlevel! neq 0 (
-        echo   [ERROR] 虚拟环境创建失败!
+        echo   [ERROR] Failed to download Python!
+        echo   Please download manually from: https://www.python.org/downloads/
         pause
         exit /b 1
     )
-    echo   [OK] 虚拟环境创建成功
+    
+    echo   Installing Python...
+    echo   This may take a few minutes...
+    %PYTHON_INSTALLER% /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+    if !errorlevel! neq 0 (
+        echo   [ERROR] Python installation failed!
+        pause
+        exit /b 1
+    )
+    
+    del %PYTHON_INSTALLER% >nul 2>&1
+    echo   [OK] Python installed successfully
+    
+    :: Refresh PATH and find Python
+    set "PYTHON_CMD=python"
+    set PYTHON_VER=3.12.4
 )
 
 echo.
 
 rem ==========================================
-rem 2. 升级 pip
+rem 1. Create virtual environment
 rem ==========================================
-echo [2/4] 升级 pip...
+echo [1/5] Creating virtual environment (venv)...
+
+if exist "venv\Scripts\python.exe" (
+    echo   [SKIP] venv already exists
+) else (
+    %PYTHON_CMD% -m venv venv
+    if !errorlevel! neq 0 (
+        echo   [ERROR] Failed to create venv!
+        pause
+        exit /b 1
+    )
+    echo   [OK] venv created
+)
+
+echo.
+
+rem ==========================================
+rem 2. Upgrade pip
+rem ==========================================
+echo [2/5] Upgrading pip...
 
 venv\Scripts\python.exe -m pip install --upgrade pip -i https://mirrors.cloud.tencent.com/pypi/simple --quiet
 if %errorlevel% neq 0 (
-    echo   [WARN] pip 升级失败，尝试继续...
+    echo   [WARN] pip upgrade failed, continuing...
 ) else (
-    echo   [OK] pip 已是最新
+    echo   [OK] pip is up to date
 )
 
 echo.
 
 rem ==========================================
-rem 3. 安装项目依赖
+rem 3. Install dependencies
 rem ==========================================
-echo [3/4] 安装项目依赖...
-echo   (优先使用腾讯云镜像，失败则回退到官方源)
+echo [3/5] Installing dependencies...
+echo   (Trying Tencent Cloud mirror first, fallback to PyPI)
 echo.
 
 venv\Scripts\python.exe -m pip install -r requirements.txt -i https://mirrors.cloud.tencent.com/pypi/simple
 if %errorlevel% neq 0 (
     echo.
-    echo   [WARN] 腾讯云镜像失败，尝试官方源...
+    echo   [WARN] Mirror failed, trying PyPI official...
     echo.
     venv\Scripts\python.exe -m pip install -r requirements.txt
     if !errorlevel! neq 0 (
         echo.
-        echo   [ERROR] 依赖安装失败!
-        echo   请检查网络连接后重试。
+        echo   [ERROR] Dependency installation failed!
+        echo   Please check your network and try again.
         echo.
         pause
         exit /b 1
@@ -119,17 +143,17 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo   [OK] 依赖安装完成
+echo   [OK] Dependencies installed
 
 echo.
 
 rem ==========================================
-rem 4. 验证环境
+rem 4. Verify environment
 rem ==========================================
-echo [4/4] 验证环境...
+echo [4/5] Verifying environment...
 
 echo.
-echo   检查关键模块...
+echo   Checking modules...
 
 set ALL_OK=1
 
@@ -138,7 +162,7 @@ for %%m in (PyQt6 dxcam keyboard rapidocr_onnxruntime cv2 PIL numpy pypinyin) do
     if !errorlevel! equ 0 (
         echo     [+] %%m
     ) else (
-        echo     [-] %%m - 缺失!
+        echo     [-] %%m - MISSING!
         set ALL_OK=0
     )
 )
@@ -146,27 +170,38 @@ for %%m in (PyQt6 dxcam keyboard rapidocr_onnxruntime cv2 PIL numpy pypinyin) do
 echo.
 
 if %ALL_OK% equ 0 (
-    echo   [WARN] 部分模块缺失，可能需要手动安装
+    echo   [WARN] Some modules are missing, manual install may be needed
 ) else (
-    echo   [OK] 所有模块验证通过!
+    echo   [OK] All modules verified!
 )
 
 echo.
 
 rem ==========================================
-rem 完成
+rem 5. Cleanup
+rem ==========================================
+echo [5/5] Final cleanup...
+
+:: Remove temporary files
+del /q python-installer.exe >nul 2>&1
+echo   [OK] Cleanup done
+
+echo.
+
+rem ==========================================
+rem Done
 rem ==========================================
 echo ============================================================
-echo       环境初始化完成!
+echo       Setup Complete!
 echo ============================================================
 echo.
-echo   启动方式:
-echo     1. 开发模式 (推荐): 双击 DEV_RUN.bat
-echo     2. 直接启动:       双击 WARFRAME-RELIC.bat
-echo     3. 命令行启动:     venv\Scripts\python.exe main.py
+echo   How to start:
+echo     1. Dev mode (recommended): Run DEV_RUN.bat
+echo     2. Direct launch:          Run WARFRAME-RELIC.bat
+echo     3. Command line:           venv\Scripts\python.exe main.py
 echo.
-echo   打包发布:
-echo     双击 打包.bat
+echo   Build executable:
+echo     Run pack.bat
 echo.
 echo ============================================================
 

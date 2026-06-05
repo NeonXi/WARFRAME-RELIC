@@ -228,19 +228,6 @@ class UpdatePanel(QObject):
                 self._source_label.setText(S.format("update", "source_not_found", path=self._alljson_path))
                 self._source_label.setStyleSheet(f"color: {theme.cyber_red};")
 
-        # i18n 源文件状态
-        i18n_path = str(self._data_dir / 'i18n.json')
-        if self._i18n_source_label:
-            if os.path.exists(i18n_path):
-                i18n_size = os.path.getsize(i18n_path)
-                self._i18n_source_label.setText(
-                    S.format("update", "source_current", path=i18n_path) +
-                    f" ({i18n_size/1024/1024:.1f} MB)")
-                self._i18n_source_label.setStyleSheet(f"color: {theme.cyber_green};")
-            else:
-                self._i18n_source_label.setText(S.format("update", "source_not_found", path=i18n_path))
-                self._i18n_source_label.setStyleSheet(f"color: {theme.cyber_red};")
-
         # 本地数据库文件
         self._refresh_db_files_label()
 

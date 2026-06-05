@@ -156,10 +156,10 @@ STRINGS = {
                     "此操作不会影响：主题配色、功能开关、语言预设、数据库。\n"
                     "当快捷键失效、界面卡死或识别异常时，请立即点击此按钮。",
         "bottom_tip": "提示: 按 Ctrl+Shift+G 打开此控制台 | Ctrl+G 框选截图",
-        "data_source_relic": "原始数据源: 来自 WFCD 项目的 all.json + i18n.json\n本地数据库: 从原始数据源派生的 SQLite 数据库文件\n点击「更新基础数据」自动下载并执行完整流水线，或手动选择本地文件后更新",
+        "data_source_relic": "原始数据源: 来自 WFCD 项目的 all.json\n本地数据库: 从原始数据源派生的 SQLite 数据库文件\n点击「更新基础数据」自动下载并执行完整流水线，或手动选择本地文件后更新",
         "data_source_db_center": "更新基础数据: all.json → relics.db → items_i18n.db → game_i18n.db (约 2-3 分钟)\n拉取市场价格: warframe.market API → wm_prices.db (约 10-15 分钟，耗时较长请耐心等待)",
-        "data_source_trans": "数据来源: WFCD warframe-items 项目（All.json + i18n.json 双文件关联算法）",
-        "data_source_items": "数据来源: WFCD warframe-items All.json + i18n.json\n随翻译库 / 遗物数据库自动同步更新",
+        "data_source_trans": "数据来源: WFCD warframe-items 项目（All.json 双文件关联算法）",
+        "data_source_items": "数据来源: WFCD warframe-items All.json\n随翻译库 / 遗物数据库自动同步更新",
         "data_source_wm": "数据来源: warframe.market API v2\n仅采集卖价数据，内嵌反压价权重算法\n偏离中位数 >30% 的低价权重降为 0.1\n加权参考价 = Σ(价格×权重) / Σ权重\n建议每数小时拉取一次以保持数据时效性",
         "hotkey_format": "输入格式: ctrl+g / alt+shift+f 等。修改后即时生效，无需重启。",
         "hotkey_placeholder": "例如 ctrl+g",
@@ -177,7 +177,7 @@ STRINGS = {
         "source_title": "原始数据源",
         "local_db_title": "本地数据库",
         "source_all": "all.json",
-        "source_i18n": "i18n.json",
+        "source_i18n": "dict.zh.json",
         "source_status_ok": "✓",
         "source_status_missing": "✗ 未找到",
         "db_file_fmt": "{name}  {size}  {mtime}",
@@ -386,7 +386,7 @@ STRINGS = {
             "┌─ 遗物与掉落数据 ─────────────────────────\n"
             "│ 来源: WFCD/warframe-drop-data\n"
             "│ https://github.com/WFCD/warframe-drop-data\n"
-            "│ 文件: all.json (遗物与掉落) / i18n.json (翻译)\n"
+            "│ 文件: all.json (遗物与掉落)\n"
             "│\n"
             "├─ 市场价格数据 ───────────────────────────\n"
             "│ 来源: warframe.market API v2\n"
@@ -395,8 +395,8 @@ STRINGS = {
             "│\n"
             "└─ 中英对照翻译数据 ───────────────────────\n"
             "  来源1: warframe-public-export-plus (官方导出)\n"
-            "  来源2: WFCD/warframe-drop-data i18n.json\n"
-            "  来源3: WFCD/warframe-items i18n.json\n"
+            "  来源2: calamity-inc/warframe-public-export-plus dict.zh.json\n"
+            "  来源3: AdminRoc zh_en_dict.json\n"
             "  数据库: data/game_i18n.db\n\n"
             "点击「更新基础数据」可自动下载遗物数据并更新所有数据库。\n"
             "点击「拉取市场价格」单独更新 warframe.market 价格（耗时较长）。\n"
@@ -422,9 +422,9 @@ STRINGS = {
             "① 在浏览器中打开以下链接并保存文件：\n"
             "   all.json:\n"
             "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json\n"
-            "   i18n.json:\n"
-            "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/i18n.json\n\n"
-            "② 将下载好的 all.json 和 i18n.json 放入：\n"
+            "   dict.zh.json:\n"
+            "   https://raw.githubusercontent.com/calamity-inc/warframe-public-export-plus/senpai/dict.zh.json\n\n"
+            "② 将下载好的 all.json 放入：\n"
             "   {data_dir}\n\n"
             "③ 回到本程序，点击「浏览文件」选中该文件，再点「更新基础数据」即可。\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"

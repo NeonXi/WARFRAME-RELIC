@@ -235,15 +235,47 @@ def load_github_mirror() -> str:
         return DEFAULT_GITHUB_MIRROR
 
 
-def save_github_mirror(mirror: str) -> bool:
-    """保存 GitHub 镜像配置。"""
+def save_github_mirror(mirror: str, gitee_username: str = None) -> bool:
+    """保存 GitHub 镜像配置。
+
+    Args:
+        mirror: 镜像类型 ("", "jsdelivr", "gitee", 或代理 URL)
+        gitee_username: Gitee 用户名（当 mirror 为 "gitee" 时使用）
+    """
     path = _mirror_config_path()
     try:
         with open(path, "w", encoding="utf-8") as f:
-            json.dump({"github_mirror": mirror.strip()}, f, indent=2, ensure_ascii=False)
+            config = {"github_mirror": mirror.strip()}
+            if gitee_username:
+                config["gitee_username"] = gitee_username.strip()
+            json.dump(config, f, indent=2, ensure_ascii=False)
         return True
     except Exception:
         return False
+
+
+def load_gitee_username() -> str:
+    """加载 Gitee 用户名。"""
+    path = _mirror_config_path()
+    if not os.path.exists(path):
+        return ""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return str(data.get("gitee_username", "")).strip()
+    except (json.JSONDecodeError, Exception):
+        return ""
+
+
+# jsDelivr CDN 多源端点（按优先级排序）
+JSDELIVR_ENDPOINTS = [
+    "cdn.jsdelivr.net",      # 主端点
+    "fastly.jsdelivr.net",   # Fastly CDN 备份
+    "gcore.jsdelivr.net",    # Gcore CDN 备份
+]
+
+# 当前使用的 jsDelivr 端点索引
+_current_jsdelivr_index = 0
 
 
 def resolve_github_url(url: str, mirror: str = None) -> str:
@@ -251,12 +283,51 @@ def resolve_github_url(url: str, mirror: str = None) -> str:
 
     - 如果 mirror 为空，返回原始 URL
     - 如果 mirror 以 http:// 或 https:// 开头，作为前缀代理（如 ghproxy.com）
+    - 如果 mirror 是 "jsdelivr"，使用 jsDelivr CDN 格式（多源容灾）
+    - 如果 mirror 是 "gitee"，使用 Gitee 镜像（需配置用户名）
     - 否则作为域名替换（如 raw.kgithub.com 替换 raw.githubusercontent.com）
+
+    jsDelivr 格式转换示例：
+    - 原始: https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json
+    - jsDelivr: https://cdn.jsdelivr.net/gh/WFCD/warframe-drop-data@main/data/all.json
+
+    Gitee 格式转换示例：
+    - 原始: https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json
+    - Gitee: https://gitee.com/{username}/warframe-drop-data/raw/main/data/all.json
     """
+    import re
     if mirror is None:
         mirror = load_github_mirror()
     mirror = mirror.strip()
     if not mirror:
+        return url
+
+    if mirror == "gitee":
+        # Gitee 镜像模式
+        # 仅支持 warframe-drop-data 仓库（已成功导入 Gitee）
+        # 其他仓库（如 warframe-items）保持原始 URL
+        gitee_username = load_gitee_username()
+        if not gitee_username:
+            # 未配置 Gitee 用户名，回退到直连
+            return url
+        # 匹配 GitHub raw URL: https://raw.githubusercontent.com/{user}/{repo}/{branch}/{path}
+        match = re.match(r"https?://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.*)", url)
+        if match:
+            user, repo, branch, path = match.groups()
+            # warframe-drop-data 仓库使用 Gitee
+            if repo == "warframe-drop-data":
+                return f"https://gitee.com/{gitee_username}/{repo}/raw/{branch}/{path}"
+            # 其他仓库保持原始 URL
+        return url
+
+    if mirror == "jsdelivr":
+        # → https://{endpoint}/gh/{user}/{repo}@{branch}/{path}
+        import re
+        match = re.match(r"https?://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.*)", url)
+        if match:
+            user, repo, branch, path = match.groups()
+            endpoint = JSDELIVR_ENDPOINTS[_current_jsdelivr_index]
+            return f"https://{endpoint}/gh/{user}/{repo}@{branch}/{path}"
         return url
     if mirror.startswith("http://") or mirror.startswith("https://"):
         # 前缀代理模式: https://ghproxy.com/https://raw.githubusercontent.com/...
@@ -264,3 +335,24 @@ def resolve_github_url(url: str, mirror: str = None) -> str:
     else:
         # 域名替换模式: raw.kgithub.com 替换 raw.githubusercontent.com
         return url.replace("raw.githubusercontent.com", mirror)
+
+
+def switch_jsdelivr_endpoint() -> str:
+    """切换到下一个 jsDelivr CDN 端点（用于故障切换）。
+
+    Returns:
+        新的端点域名
+    """
+    global _current_jsdelivr_index
+    _current_jsdelivr_index = (_current_jsdelivr_index + 1) % len(JSDELIVR_ENDPOINTS)
+    return JSDELIVR_ENDPOINTS[_current_jsdelivr_index]
+
+
+def get_current_jsdelivr_endpoint() -> str:
+    """获取当前使用的 jsDelivr CDN 端点。"""
+    return JSDELIVR_ENDPOINTS[_current_jsdelivr_index]
+
+
+def get_all_jsdelivr_endpoints() -> list:
+    """获取所有可用的 jsDelivr CDN 端点。"""
+    return JSDELIVR_ENDPOINTS.copy()

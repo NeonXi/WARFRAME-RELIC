@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sqlite3
+import shutil
 
 # ============================================================
 # 纪元英文 → 中文映射
@@ -80,9 +81,9 @@ def open_db_write(db_path: str) -> sqlite3.Connection:
         try:
             os.remove(db_path)
             print(f"  已删除旧数据库: {db_path}")
-        except PermissionError:
+        except OSError as e:
             alt_path = db_path + '.new'
-            print(f"  旧数据库被占用，将写入临时文件: {alt_path}")
+            print(f"  旧数据库无法删除 ({e})，将写入临时文件: {alt_path}")
             conn = sqlite3.connect(alt_path)
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA foreign_keys=ON")
@@ -214,6 +215,12 @@ def migrate_alljson_to_db(
 
     conn = open_db_write(db_path)
     cur = conn.cursor()
+
+    # 清空旧数据（防止旧数据库未被删除导致的 UNIQUE 冲突）
+    cur.execute("DELETE FROM relic_aliases")
+    cur.execute("DELETE FROM relic_parts")
+    cur.execute("DELETE FROM relics")
+    conn.commit()
 
     inserted_relics = 0
     inserted_parts = 0

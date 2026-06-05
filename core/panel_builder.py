@@ -8,6 +8,7 @@ WARFRAME-RELIC UI 构建 Mixin
 """
 
 import os
+import sys
 from pathlib import Path
 from core.bg_layer import BgImageWidget
 
@@ -377,8 +378,9 @@ class PanelBuilderMixin:
             self._stat_label_refs[data_key] = val
 
         self._progress = QProgressBar()
-        self._progress.setRange(0, 0); self._progress.hide()
-        self._progress.setFixedHeight(6)
+        self._progress.setRange(0, 100); self._progress.hide()
+        self._progress.setFixedHeight(20)
+        self._progress.setFormat("  %p%  ")  # 显示百分比文字
         layout.addWidget(self._progress)
 
         self._progress_text = QLabel("")
@@ -391,7 +393,7 @@ class PanelBuilderMixin:
         self._update_panel.set_progress(self._progress, self._progress_text)
 
     # ============================================================
-    # 数据管理中心（拉取 all.json + i18n.json → 清洗 → 格式化 → 更新数据库）
+    # 数据管理中心（拉取 all.json → 清洗 → 格式化 → 更新数据库）
     # ============================================================
 
     def _build_db_center_group(self, parent_layout):
@@ -501,11 +503,70 @@ class PanelBuilderMixin:
             QPushButton:hover {{ color: {theme.cyber_red}; border-color: {theme.cyber_red}; }}
         """)
         self._btn_mirror_clear.clicked.connect(self._on_mirror_clear)
+        
+        # jsDelivr CDN 快捷按钮
+        self._btn_mirror_jsdelivr = QPushButton("jsDelivr")
+        self._btn_mirror_jsdelivr.setFixedSize(60, 22)
+        self._btn_mirror_jsdelivr.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {theme.cyber_cyan}; border: 1px solid {theme.cyber_cyan};
+                border-radius: 3px; font-size: 10px; padding: 0;
+            }}
+            QPushButton:hover {{ background: {theme.cyber_cyan}; color: {theme.panel_bg}; }}
+        """)
+        self._btn_mirror_jsdelivr.clicked.connect(self._on_mirror_jsdelivr)
+
+        # ghproxy 代理快捷按钮（支持大文件 >50MB）
+        self._btn_mirror_ghproxy = QPushButton("ghproxy")
+        self._btn_mirror_ghproxy.setFixedSize(60, 22)
+        self._btn_mirror_ghproxy.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {theme.cyber_green}; border: 1px solid {theme.cyber_green};
+                border-radius: 3px; font-size: 10px; padding: 0;
+            }}
+            QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.panel_bg}; }}
+        """)
+        self._btn_mirror_ghproxy.clicked.connect(self._on_mirror_ghproxy)
+
+        # Gitee 镜像快捷按钮
+        self._btn_mirror_gitee = QPushButton("Gitee")
+        self._btn_mirror_gitee.setFixedSize(50, 22)
+        self._btn_mirror_gitee.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {theme.cyber_orange}; border: 1px solid {theme.cyber_orange};
+                border-radius: 3px; font-size: 10px; padding: 0;
+            }}
+            QPushButton:hover {{ background: {theme.cyber_orange}; color: {theme.panel_bg}; }}
+        """)
+        self._btn_mirror_gitee.clicked.connect(self._on_mirror_gitee)
+
+        # Gitee 同步按钮（从 GitHub 拉最新代码到 Gitee）
+        self._btn_sync_gitee = QPushButton("↻")
+        self._btn_sync_gitee.setFixedSize(28, 22)
+        self._btn_sync_gitee.setToolTip("从 GitHub 同步最新代码到 Gitee 仓库")
+        self._btn_sync_gitee.setStyleSheet(f"""
+            QPushButton {{
+                background: {theme.btn_default_bg}; color: {theme.cyber_green};
+                border: 1px solid {theme.cyber_green}; border-radius: 3px; font-size: 12px;
+            }}
+            QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.panel_bg}; }}
+        """)
+        self._btn_sync_gitee.clicked.connect(self._on_sync_gitee)
+
         mirror_row.addWidget(mirror_label)
         mirror_row.addWidget(self._mirror_input)
+        mirror_row.addWidget(self._btn_mirror_jsdelivr)
+        mirror_row.addWidget(self._btn_mirror_ghproxy)
+        mirror_row.addWidget(self._btn_mirror_gitee)
+        mirror_row.addWidget(self._btn_sync_gitee)
         mirror_row.addWidget(self._btn_mirror_clear)
         mirror_row.addStretch()
         layout.addLayout(mirror_row)
+
+        # 镜像提示
+        mirror_hint = QLabel("jsDelivr 有 50MB 限制 | ghproxy 支持大文件 | Gitee 需配置用户名（推荐）")
+        mirror_hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 9px; padding: 0 0 2px 0;")
+        layout.addWidget(mirror_hint)
 
         # 加载已保存的镜像配置
         from core.hotkey_config import load_github_mirror
@@ -1039,6 +1100,8 @@ class PanelBuilderMixin:
 
     def _on_i18n_progress(self, pct):
         self._update_panel._progress.setValue(pct)
+        self._update_panel._progress_text.setText(f"进度: {pct}%")
+        QApplication.processEvents()
 
     def _on_i18n_detail(self, stage, cur, total):
         self._update_panel._progress_text.setText(f'{stage}: {cur}/{total}')
@@ -1128,8 +1191,11 @@ class PanelBuilderMixin:
         self._pipeline_worker.progress_detail.connect(self._on_pipeline_detail)
         self._pipeline_worker.finished.connect(self._on_pipeline_finished)
         self._pipeline_worker.error.connect(self._on_pipeline_error)
+        # 立即显示进度条并设置初始值
+        self._update_panel._progress.setValue(0)
         self._update_panel._progress.show()
         self._update_panel._progress_text.show()
+        self._update_panel._progress_text.setText("初始化...")
         threading.Thread(target=self._pipeline_worker.run, daemon=True).start()
 
     def _on_pipeline_step(self, step, desc):
@@ -1140,6 +1206,8 @@ class PanelBuilderMixin:
 
     def _on_pipeline_progress(self, pct):
         self._update_panel._progress.setValue(pct)
+        self._update_panel._progress_text.setText(f"进度: {pct}%")
+        QApplication.processEvents()  # 立即刷新 UI
 
     def _on_pipeline_detail(self, stage, cur, total):
         if total > 0:
@@ -1327,6 +1395,92 @@ class PanelBuilderMixin:
         """清除 GitHub 镜像配置。"""
         self._mirror_input.clear()
         self._on_mirror_changed()
+
+    def _on_mirror_jsdelivr(self):
+        """设置使用 jsDelivr CDN。"""
+        self._mirror_input.setText("jsdelivr")
+        self._on_mirror_changed()
+
+    def _on_mirror_ghproxy(self):
+        """设置使用 ghproxy.com 代理（支持大文件）。"""
+        self._mirror_input.setText("https://ghproxy.com/")
+        self._on_mirror_changed()
+
+    def _on_mirror_gitee(self):
+        """设置使用 Gitee 镜像（需要用户名）。"""
+        from PyQt6.QtWidgets import QInputDialog
+        from core.hotkey_config import save_github_mirror, load_gitee_username
+        import re
+
+        # 先尝试加载已保存的用户名
+        saved_username = load_gitee_username()
+
+        # 弹出对话框让用户输入 Gitee 用户名
+        username, ok = QInputDialog.getText(
+            self,
+            "配置 Gitee 镜像",
+            "请输入你的 Gitee 用户名（不是完整URL，只填用户名部分）:\n"
+            "例如: https://gitee.com/zdljarvis → 只填 zdljarvis",
+            text=saved_username if saved_username else ""
+        )
+
+        if ok and username.strip():
+            username = username.strip()
+            # 提取用户名（如果用户输入了完整URL，只提取用户名部分）
+            # 例如: https://gitee.com/zdljarvis → zdljarvis
+            match = re.search(r'gitee\.com/([^/]+)', username)
+            if match:
+                username = match.group(1)
+            self._mirror_input.setText("gitee")
+            save_github_mirror("gitee", username)
+            self._add_log('ok', f'Gitee 镜像已配置: gitee.com/{username}/...')
+            # 同时显示在输入框
+            self._mirror_input.setText(f"gitee ({username})")
+        elif not ok:
+            # 用户取消，不做任何更改
+            pass
+        else:
+            self._add_log('warn', 'Gitee 用户名为空，未配置镜像')
+
+    def _on_sync_gitee(self):
+        """从 GitHub 同步最新代码到 Gitee 仓库。"""
+        self._btn_sync_gitee.setEnabled(False)
+        self._add_log('info', '========== Gitee 仓库同步 ==========')
+        self._add_log('info', '正在从 GitHub 同步最新代码到 Gitee...')
+
+        def _run():
+            import subprocess
+            from pathlib import Path
+            script = Path(__file__).resolve().parent.parent / "scripts" / "sync_gitee.py"
+            try:
+                result = subprocess.run(
+                    [sys.executable, str(script)],
+                    capture_output=True, text=True, timeout=300,
+                    cwd=str(Path(__file__).resolve().parent.parent)
+                )
+                for line in result.stdout.strip().split("\n"):
+                    if line.strip():
+                        if "✓" in line or "success" in line.lower():
+                            self._add_log('ok', line.strip())
+                        elif "✗" in line or "error" in line.lower() or "⚠" in line:
+                            self._add_log('warn', line.strip())
+                        elif line.startswith("[") or line.startswith("="):
+                            self._add_log('info', line.strip())
+                        else:
+                            self._add_log('info', line.strip())
+                if result.returncode != 0:
+                    self._add_log('warn', f'同步脚本退出码: {result.returncode}')
+                    if result.stderr:
+                        self._add_log('warn', result.stderr.strip()[:200])
+            except subprocess.TimeoutExpired:
+                self._add_log('error', '同步超时（5分钟），请检查网络')
+            except Exception as e:
+                self._add_log('error', f'同步失败: {e}')
+            finally:
+                self._btn_sync_gitee.setEnabled(True)
+
+        import threading
+        threading.Thread(target=_run, daemon=True).start()
 
     # ============================================================
     # 热键配置

@@ -1,1 +1,3199 @@
-=== dev_runner 崩溃日志 (启动: 2026-06-05 04:07:32) ===
+=== dev_runner 崩溃日志 (启动: 2026-06-05 18:39:18) ===
+
+============================================================
+崩溃时间: 2026-06-05 19:23:39
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:23:43
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:23:47
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:23:51
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:23:55
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:23:59
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:03
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:07
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:11
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:15
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:20
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:24
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 203, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 548, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:33
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:37
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:41
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:45
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:49
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:24:57
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:02
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:06
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:10
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:14
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:18
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:22
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:26
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:30
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:34
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:38
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:42
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:46
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:54
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:25:59
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:03
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:07
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:11
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:15
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:19
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:23
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:27
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:31
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:35
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:39
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:43
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:47
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:51
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:26:55
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:00
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:04
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:12
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:16
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:20
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:24
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:28
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:32
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:36
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:40
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:44
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:27:55
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:00
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:04
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:12
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:16
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:20
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:24
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:28
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:32
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:36
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:40
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:44
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:48
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:52
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:28:57
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:01
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:05
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:09
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:13
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:17
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:21
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:25
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:29
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:33
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:37
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:41
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:45
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:49
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:53
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:29:57
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:02
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:06
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:10
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:14
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:18
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:22
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:26
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:30
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:34
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:38
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:42
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:46
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:50
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:54
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:30:58
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:03
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:07
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 549, in _build_db_center_group
+    background: {theme.btn_bg}; color: {theme.cyber_green};
+                 ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'btn_bg'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:12
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:16
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:20
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:24
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:28
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:36
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:40
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:44
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:48
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:52
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:31:56
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:32:00
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:32:04
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
+
+============================================================
+崩溃时间: 2026-06-05 19:32:08
+退出码: 1
+stderr:
+Traceback (most recent call last):
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 814, in <module>
+    main()
+  File "D:\MyProgram\WARFRAME-RELIC\core\bootstrap.py", line 189, in main
+    core = AppCore(app)
+           ^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\main.py", line 101, in __init__
+    self._management_panel = ManagementPanel()
+                             ^^^^^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\management_panel.py", line 67, in __init__
+    self._setup_ui()
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 204, in _setup_ui
+    self._build_db_center_group(content_layout)
+  File "D:\MyProgram\WARFRAME-RELIC\core\panel_builder.py", line 552, in _build_db_center_group
+    QPushButton:hover {{ background: {theme.cyber_green}; color: {theme.bg_dark}; }}
+                                                                  ^^^^^^^^^^^^^
+  File "D:\MyProgram\WARFRAME-RELIC\core\theme_config.py", line 681, in __getattr__
+    raise AttributeError(f"'ThemeConfig' has no attribute '{name}'")
+AttributeError: 'ThemeConfig' has no attribute 'bg_dark'
+
+============================================================
