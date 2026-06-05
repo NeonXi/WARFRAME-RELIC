@@ -94,14 +94,39 @@ echo [1/5] Creating virtual environment (venv)...
 if exist "venv\Scripts\python.exe" (
     echo   [SKIP] venv already exists
 ) else (
-    %PYTHON_CMD% -m venv venv
+    echo   Creating venv...
+    %PYTHON_CMD% -m venv venv 2>&1
     if !errorlevel! neq 0 (
+        echo.
         echo   [ERROR] Failed to create venv!
+        echo.
+        echo   Possible reasons:
+        echo   1. Insufficient permissions (try running as Administrator)
+        echo   2. Python venv module not installed
+        echo   3. Disk space issue
+        echo   4. Antivirus blocking the operation
+        echo.
+        echo   Trying alternative method with virtualenv...
+        %PYTHON_CMD% -m pip install virtualenv -q
+        if !errorlevel! equ 0 (
+            %PYTHON_CMD% -m virtualenv venv 2>&1
+            if !errorlevel! equ 0 (
+                echo   [OK] venv created with virtualenv
+                goto :venv_created
+            )
+        )
+        echo.
+        echo   [ERROR] All methods failed!
+        echo   Please try:
+        echo   1. Run this script as Administrator
+        echo   2. Manually create venv: python -m venv venv
+        echo   3. Check disk space and permissions
         pause
         exit /b 1
     )
     echo   [OK] venv created
 )
+:venv_created
 
 echo.
 
