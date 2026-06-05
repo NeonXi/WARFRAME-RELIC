@@ -177,23 +177,59 @@ rem ==========================================
 rem 3. Install dependencies
 rem ==========================================
 echo [3/5] Installing dependencies...
-echo   (Trying Tencent Cloud mirror first, fallback to PyPI)
+echo   This may take several minutes...
 echo.
 
-%VENV_PYTHON% -m pip install -r requirements.txt -i https://mirrors.cloud.tencent.com/pypi/simple
-if %errorlevel% neq 0 (
-    echo.
-    echo   [WARN] Mirror failed, trying PyPI official...
-    echo.
-    %VENV_PYTHON% -m pip install -r requirements.txt
-    if !errorlevel! neq 0 (
-        echo.
-        echo   [ERROR] Dependency installation failed!
-        echo   Please check your network and try again.
-        echo.
-        pause
-        exit /b 1
+set MIRRORS=(
+    "https://mirrors.cloud.tencent.com/pypi/simple"
+    "https://pypi.tuna.tsinghua.edu.cn/simple"
+    "https://mirrors.aliyun.com/pypi/simple"
+    "https://pypi.org/simple"
+)
+
+set INSTALL_OK=0
+set MIRROR_COUNT=0
+
+for %%m in %MIRRORS% do (
+    set /A MIRROR_COUNT+=1
+    echo   [Attempt !MIRROR_COUNT!/4] Trying mirror: %%m
+    %VENV_PYTHON% -m pip install -r requirements.txt -i %%m --timeout=120
+    if !errorlevel! equ 0 (
+        set INSTALL_OK=1
+        echo   [OK] Dependencies installed via mirror
+        goto :install_done
     )
+    echo   [WARN] Mirror failed, trying next...
+    echo.
+)
+
+:install_done
+if %INSTALL_OK% equ 0 (
+    echo.
+    echo   [ERROR] All mirrors failed!
+    echo.
+    echo   Possible reasons:
+    echo   1. No internet connection
+    echo   2. Network blocked by firewall/anti-virus
+    echo   3. PyPI mirrors are temporarily unavailable
+    echo.
+    echo   Please try ONE of the following:
+    echo.
+    echo   OPTION 1: Check network connection
+    echo     - Make sure you have internet access
+    echo     - Try opening https://pypi.org in a browser
+    echo.
+    echo   OPTION 2: Use a VPN or proxy
+    echo     set HTTPS_PROXY=http://your-proxy:port
+    echo     set HTTP_PROXY=http://your-proxy:port
+    echo.
+    echo   OPTION 3: Install dependencies manually
+    echo     1. Open Command Prompt
+    echo     2. Run: pip install -r requirements.txt
+    echo        (or with mirror: pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple)
+    echo.
+    pause
+    exit /b 1
 )
 
 echo.
