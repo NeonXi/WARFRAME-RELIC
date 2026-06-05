@@ -206,3 +206,61 @@ def save_feature_toggles(toggles: dict) -> bool:
         return True
     except Exception:
         return False
+
+
+# ============================================================
+# GitHub 镜像 / 代理配置
+# ============================================================
+
+DEFAULT_GITHUB_MIRROR = ""  # 默认直连，如需加速可填 https://gh-proxy.com/
+
+
+def _mirror_config_path() -> str:
+    from pathlib import Path
+    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return str(data_dir / "mirror_config.json")
+
+
+def load_github_mirror() -> str:
+    """加载 GitHub 镜像配置。"""
+    path = _mirror_config_path()
+    if not os.path.exists(path):
+        return DEFAULT_GITHUB_MIRROR
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return str(data.get("github_mirror", DEFAULT_GITHUB_MIRROR)).strip()
+    except (json.JSONDecodeError, Exception):
+        return DEFAULT_GITHUB_MIRROR
+
+
+def save_github_mirror(mirror: str) -> bool:
+    """保存 GitHub 镜像配置。"""
+    path = _mirror_config_path()
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"github_mirror": mirror.strip()}, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception:
+        return False
+
+
+def resolve_github_url(url: str, mirror: str = None) -> str:
+    """将 GitHub raw URL 解析为实际下载地址。
+
+    - 如果 mirror 为空，返回原始 URL
+    - 如果 mirror 以 http:// 或 https:// 开头，作为前缀代理（如 ghproxy.com）
+    - 否则作为域名替换（如 raw.kgithub.com 替换 raw.githubusercontent.com）
+    """
+    if mirror is None:
+        mirror = load_github_mirror()
+    mirror = mirror.strip()
+    if not mirror:
+        return url
+    if mirror.startswith("http://") or mirror.startswith("https://"):
+        # 前缀代理模式: https://ghproxy.com/https://raw.githubusercontent.com/...
+        return mirror.rstrip("/") + "/" + url
+    else:
+        # 域名替换模式: raw.kgithub.com 替换 raw.githubusercontent.com
+        return url.replace("raw.githubusercontent.com", mirror)

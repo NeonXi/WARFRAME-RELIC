@@ -55,8 +55,8 @@ def format_slug(name):
 
 
 def _find_slug_in_db(name):
-    """Find slug from local wm_items.db database"""
-    db_path = get_data_path('wm_items.db')
+    """Find slug from local wm_prices.db database"""
+    db_path = get_data_path('wm_prices.db')
     if not os.path.exists(db_path):
         return None
     
@@ -65,14 +65,14 @@ def _find_slug_in_db(name):
         cursor = conn.cursor()
         
         # Exact match first
-        cursor.execute("SELECT slug FROM items WHERE en_name = ?", (name,))
+        cursor.execute("SELECT slug FROM item_prices WHERE en_name = ?", (name,))
         row = cursor.fetchone()
         if row:
             conn.close()
             return row[0]
         
         # Fallback: LIKE match
-        cursor.execute("SELECT slug FROM items WHERE en_name LIKE ?", (f'%{name}%',))
+        cursor.execute("SELECT slug FROM item_prices WHERE en_name LIKE ?", (f"%{name}%",))
         row = cursor.fetchone()
         conn.close()
         return row[0] if row else None

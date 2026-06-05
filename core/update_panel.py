@@ -6,24 +6,19 @@ WARFRAME-RELIC 数据更新面板 & 日志面板
 import os
 import re
 import sqlite3
-import threading
 from pathlib import Path
 from datetime import datetime
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QFileDialog, QProgressBar, QMessageBox, QGroupBox,
-    QDialog, QDialogButtonBox, QTextEdit, QTextBrowser,
+    QVBoxLayout, QLabel, QPushButton,
+    QFileDialog, QProgressBar, QDialog, QDialogButtonBox, QTextEdit, QTextBrowser,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject
 
 from core.constants import theme
 from core.stylesheet import build_stylesheet, build_dialog_button_style
-from core.update_worker import UpdateWorker
-from core.fetch_worker import FetchWorker, ALLJSON_URL
 from data.ui_strings import S
 from data.items_i18n import get_db_stats as get_items_i18n_stats
-from data.ui_strings import S
 
 
 # ============================================================
@@ -99,10 +94,6 @@ class UpdatePanel(QObject):
         self._alljson_path = str(data_dir / 'all.json')
         self._add_log = add_log
 
-        self._worker = None
-        self._fetch_worker = None
-        self._updating = False
-        self._fetching = False
         self._log_panel_auto_show = True
 
         # 保存原始日志记录，用于主题切换时重新着色
@@ -117,8 +108,8 @@ class UpdatePanel(QObject):
         self._db_files_label = None
         self._progress = None
         self._progress_text = None
-        self._btn_update = None
-        self._btn_fetch = None
+        self._btn_update_base = None
+        self._btn_fetch_prices = None
         self._btn_browse = None
         self._btn_browse_db = None
         self._btn_tutorial = None
@@ -143,10 +134,10 @@ class UpdatePanel(QObject):
         self._progress = progress
         self._progress_text = progress_text
 
-    def set_buttons(self, btn_update, btn_fetch, btn_browse,
-                    btn_browse_db=None, btn_tutorial=None):
-        self._btn_update = btn_update
-        self._btn_fetch = btn_fetch
+    def set_buttons(self, btn_update_base=None, btn_fetch_prices=None,
+                    btn_browse=None, btn_browse_db=None, btn_tutorial=None):
+        self._btn_update_base = btn_update_base
+        self._btn_fetch_prices = btn_fetch_prices
         self._btn_browse = btn_browse
         self._btn_browse_db = btn_browse_db
         self._btn_tutorial = btn_tutorial
@@ -166,8 +157,11 @@ class UpdatePanel(QObject):
         return self._log_panel and self._log_panel.isVisible()
 
     @property
-    def is_busy(self):
-        return self._updating or self._fetching
+    def log_panel_width(self):
+        """日志面板的实际宽度，用于布局计算。"""
+        if self._log_panel and self._log_panel.isVisible():
+            return self._log_panel.width()
+        return 0
 
     # ============================================================
     # 统计刷新
@@ -360,23 +354,13 @@ class UpdatePanel(QObject):
 
     def _show_log_panel(self):
         self._log_panel.show()
-        # 通知父窗口调整宽度
         if hasattr(self._parent, '_adjust_window_width'):
             self._parent._adjust_window_width()
-        else:
-            # 兼容旧逻辑
-            extra_w = getattr(self._parent, '_theme_panel_width', 0) + 420
-            self._parent.resize(580 + extra_w, max(self._parent.height(), 700))
 
     def _hide_log_panel(self):
         self._log_panel.hide()
-        # 通知父窗口调整宽度
         if hasattr(self._parent, '_adjust_window_width'):
             self._parent._adjust_window_width()
-        else:
-            # 兼容旧逻辑
-            extra_w = getattr(self._parent, '_theme_panel_width', 0)
-            self._parent.resize(580 + extra_w, max(self._parent.height(), 700))
 
     def show_log_panel(self):
         self._show_log_panel()
@@ -401,237 +385,6 @@ class UpdatePanel(QObject):
             self._source_label.setStyleSheet(f"color: {theme.cyber_yellow};")
             self.refresh_stats()
 
-    def on_fetch(self):
-        if self._fetching or self._updating:
-            return
-        reply = QMessageBox.question(
-            self._parent, S("update", "fetch_confirm_title"),
-            S.format("update", "fetch_confirm_msg", url=ALLJSON_URL, save_path=self._alljson_path),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes)
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-
-        self._show_log_panel()
-        self._log_area.clear()
-        self._log_area.append(
-            f'<span style="color:{theme.text_dim};">========== 开始拉取数据 ==========</span>')
-        self._log_area.append(f'<span style="color:{theme.cyber_cyan};">  源地址: {ALLJSON_URL}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.cyber_cyan};">  保存到: {self._alljson_path}</span>')
-        self._dl_progress.setValue(0)
-        self._dl_progress.show()
-        self._step_icon.setText("⏳")
-        self._step_label.setText(S("update", "preparing"))
-        self._step_label.setStyleSheet(f"color: {theme.cyber_yellow}; font-size: 13px;")
-        self._log_detail.setText(S("update", "waiting_start"))
-
-        self._fetching = True
-        self._set_buttons_enabled(False)
-        self._progress.show(); self._progress_text.show()
-        self._progress_text.setText(S("update", "download_starting"))
-
-        self._fetch_worker = FetchWorker(self._alljson_path)
-        self._fetch_worker.step_changed.connect(self._on_fetch_step)
-        self._fetch_worker.log.connect(self._on_fetch_log)
-        self._fetch_worker.progress_pct.connect(self._on_fetch_progress)
-        self._fetch_worker.finished.connect(self._on_fetch_finished)
-        self._fetch_worker.error.connect(self._on_fetch_error)
-        threading.Thread(target=self._fetch_worker.run, daemon=True).start()
-
-    def on_update(self):
-        if self._updating:
-            return
-        if not os.path.exists(self._alljson_path):
-            QMessageBox.warning(self._parent, S("update", "file_not_found_title"),
-                S.format("update", "file_not_found_msg", path=self._alljson_path))
-            return
-        if not self._fetching:
-            reply = QMessageBox.question(
-                self._parent, S("update", "confirm_update_title"),
-                S.format("update", "confirm_update_msg", source=self._alljson_path, target=self._db_path),
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No)
-            if reply != QMessageBox.StandardButton.Yes:
-                return
-
-        self._updating = True
-        self._set_buttons_enabled(False)
-        self._progress.show(); self._progress_text.show()
-        self._progress_text.setText(S("update", "preparing"))
-
-        # 打开日志面板并记录开始信息
-        self._show_log_panel()
-        self._log_area.append(
-            f'<span style="color:{theme.text_dim};">{S("update", "log_start_update")}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.cyber_cyan};">{S.format("update", "log_data_source", path=self._alljson_path)}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.cyber_cyan};">{S.format("update", "log_target_db", path=self._db_path)}</span>')
-        self._step_icon.setText("⏳")
-        self._step_label.setText(S("update", "updating_db"))
-        self._step_label.setStyleSheet(f"color: {theme.cyber_yellow}; font-size: 13px;")
-        self._log_detail.setText(S("update", "reading_data"))
-
-        self._worker = UpdateWorker(self._alljson_path, self._db_path)
-        self._worker.progress.connect(self._on_progress)
-        self._worker.finished.connect(self._on_finished)
-        self._worker.error.connect(self._on_error)
-        threading.Thread(target=self._worker.run, daemon=True).start()
-
-    # ---- Fetch 回调 ----
-
-    def _on_fetch_step(self, step, desc):
-        details = {
-            1: S("update", "fetch_step_1"),
-            2: S("update", "fetch_step_2"),
-            3: S("update", "fetch_step_3"),
-            4: S("update", "fetch_step_4"),
-            5: S("update", "fetch_step_5"),
-            6: S("update", "fetch_step_6"),
-            7: S("update", "fetch_step_7"),
-        }
-        icons = {1: "⏉", 2: "⬢", 3: "⊛", 4: "⊞", 5: "↓", 6: "✔", 7: "◉"}
-        self._step_icon.setText(icons.get(step, "◷"))
-        self._step_label.setText(f"[{step}/7] {desc}")
-        self._step_label.setStyleSheet(f"color: {theme.cyber_yellow}; font-size: 13px;")
-        self._log_detail.setText(details.get(step, desc))
-        self._log_area.append(
-            f'<span style="color:{theme.cyber_yellow};">▶ [{step}/7] {desc}</span>')
-
-    def _on_fetch_log(self, log_type, msg):
-        self._log_area.append(self._format_log_line(log_type, msg))
-        self._log_area.verticalScrollBar().setValue(
-            self._log_area.verticalScrollBar().maximum())
-
-    def _on_fetch_progress(self, pct):
-        self._dl_progress.setValue(pct)
-        self._log_detail.setText(S.format("update", "downloading_pct_wait", pct=pct))
-
-    def _on_fetch_finished(self, save_path):
-        self._alljson_path = save_path
-        alljson_size = os.path.getsize(self._alljson_path)
-        self._source_label.setText(
-            S.format("update", "source_current", path=self._alljson_path) +
-            f" ({alljson_size/1024/1024:.1f} MB)")
-        self._source_label.setStyleSheet(f"color: {theme.cyber_green};")
-        self._dl_progress.hide()
-        self._step_icon.setText("✔")
-        self._step_label.setText(S("update", "download_success"))
-        self._step_label.setStyleSheet(f"color: {theme.cyber_green}; font-size: 13px;")
-        self._log_detail.setText(S("update", "download_complete"))
-        self._progress_text.setText(S("update", "download_complete"))
-        self.on_update()
-        self._fetching = False
-
-    def _on_fetch_error(self, msg):
-        self._fetching = False
-        self._set_buttons_enabled(True)
-        self._progress.hide(); self._progress_text.hide()
-        self._dl_progress.hide()
-        self._step_icon.setText("✘")
-        self._step_label.setText(S("update", "download_failed"))
-        self._step_label.setStyleSheet(f"color: {theme.fetch_error_color}; font-size: 13px;")
-        self._log_detail.setText(f"下载失败: {msg[:200]}")
-        self._log_area.append(
-            f'<span style="color:{theme.fetch_error_color};">下载失败: {msg}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.fetch_manual_hint};">{S("update", "log_manual_guide_title")}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.fetch_manual_hint};">{S.format("update", "log_manual_step1", url=ALLJSON_URL)}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.fetch_manual_hint};">{S("update", "log_manual_step2")}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.fetch_manual_hint};">{S("update", "log_manual_step3")}</span>')
-        self._log_area.append(
-            f'<span style="color:{theme.text_dim};">{S("update", "log_fetch_failed_line")}</span>')
-
-    # ---- Update 回调 ----
-
-    def _on_progress(self, msg):
-        self._progress_text.setText(msg)
-        if self._log_panel.isVisible():
-            self._log_detail.setText(S.format("update", "updating_db_detail", msg=msg))
-            self._log_area.append(
-                f'<span style="color:{theme.cyber_yellow};">  ▶ {msg}</span>')
-
-    def _on_finished(self, stats):
-        self._updating = False
-        self._set_buttons_enabled(True)
-        self._progress.hide(); self._progress_text.hide()
-        self.refresh_stats()
-
-        total = stats.get('relics', 0)
-        dropping = stats.get('dropping', 0)
-
-        if self._log_panel.isVisible():
-            self._step_icon.setText("✔")
-            self._step_label.setText(S("update", "update_complete"))
-            self._step_label.setStyleSheet(f"color: {theme.cyber_green}; font-size: 13px;")
-            self._log_detail.setText(
-                S.format("update", "update_success",
-                    relics=total, parts=stats.get('parts', 0),
-                    aliases=stats.get('aliases', 0), dropping=dropping,
-                    vaulted=total - dropping))
-
-            # 详细汇总日志
-            self._log_area.append(
-                f'<span style="color:{theme.cyber_green};">{S("update", "log_update_done_line")}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.cyber_green};">{S("update", "log_update_done")}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.text}; display:block; margin-left:20px;">'
-                f'{S.format("update", "log_relics_total", count=total)}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.text}; display:block; margin-left:20px;">'
-                f'{S.format("update", "log_parts_total", count=stats.get("parts", 0))}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.text}; display:block; margin-left:20px;">'
-                f'{S.format("update", "log_aliases_total", count=stats.get("aliases", 0))}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.cyber_green}; display:block; margin-left:20px;">'
-                f'{S.format("update", "log_dropping", count=dropping)}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.cyber_red}; display:block; margin-left:20px;">'
-                f'{S.format("update", "log_vaulted", count=total - dropping)}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.text_dim};">{S("update", "log_update_finished")}</span>')
-
-        # 自动跟随更新全物品中英对照数据库
-        try:
-            from data.items_i18n import auto_rebuild_items_db, get_db_stats as get_items_stats
-            self._log_area.append(
-                f'<span style="color:{theme.cyber_yellow};">  ⏳ {S("update", "items_rebuilding")}</span>')
-            ok = auto_rebuild_items_db(silent=True)
-            if ok:
-                s = get_items_stats()
-                self._log_area.append(
-                    f'<span style="color:{theme.cyber_green};">  ✓ {S.format("update", "items_rebuilt", total=s["total"])}</span>')
-        except Exception:
-            pass
-
-        self.db_updated.emit(self._db_path)
-
-    def _on_error(self, msg):
-        self._updating = False
-        self._set_buttons_enabled(True)
-        self._progress.hide(); self._progress_text.hide()
-        if self._log_panel.isVisible():
-            self._step_icon.setText("✘")
-            self._step_label.setText(S("update", "update_failed"))
-            self._step_label.setStyleSheet(f"color: {theme.fetch_error_color}; font-size: 13px;")
-            self._log_detail.setText(S.format("update", "update_error", msg=msg[:200]))
-            self._log_area.append(
-                f'<span style="color:{theme.fetch_error_color};">  ✗ 更新失败: {msg}</span>')
-            self._log_area.append(
-                f'<span style="color:{theme.text_dim};">========== 更新失败 ==========</span>')
-        # 不再弹窗，日志区已显示错误详情
-
-    def _set_buttons_enabled(self, enabled: bool):
-        for btn in [self._btn_update, self._btn_fetch, self._btn_browse]:
-            if btn:
-                btn.setEnabled(enabled)
-
     # ============================================================
     # 对话框
     # ============================================================
@@ -644,10 +397,6 @@ class UpdatePanel(QObject):
         url_pattern = r'(https?://[^\s<>"]+)'
         html = re.sub(url_pattern, r'<a href="\1" style="color: #5dade2;">\1</a>', html)
         return html
-
-    def _show_error_dialog(self, title: str, message: str):
-        dlg = self._build_text_dialog(title, message, 550, 380, False)
-        dlg.exec()
 
     def _build_text_dialog(self, title: str, text_content: str,
                            width: int = 560, height: int = 600,

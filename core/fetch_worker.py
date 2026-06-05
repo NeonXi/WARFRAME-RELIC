@@ -12,6 +12,8 @@ from pathlib import Path
 
 from PyQt6.QtCore import pyqtSignal, QObject
 
+from core.hotkey_config import resolve_github_url, load_github_mirror
+
 
 GITHUB_RAW_BASE = "https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data"
 ALLJSON_URL = f"{GITHUB_RAW_BASE}/all.json"
@@ -34,11 +36,14 @@ class FetchWorker(QObject):
     finished = pyqtSignal(str)                # 下载完成 → 携带 all.json 保存路径
     error = pyqtSignal(str)                   # 致命错误
 
-    def __init__(self, save_path: str, url: str = ALLJSON_URL, max_retries: int = 2):
+    def __init__(self, save_path: str, url: str = ALLJSON_URL, max_retries: int = 2,
+                 mirror: str = None):
         super().__init__()
         self.save_path = save_path
-        self.url = url
+        self.url = resolve_github_url(url, mirror)
         self.max_retries = max_retries
+        self._mirror = mirror
+        self._resolved_i18n_url = resolve_github_url(I18N_URL, mirror)
 
     # ------------------------------------------------------------
     # 核心执行流程
@@ -253,7 +258,7 @@ class FetchWorker(QObject):
         self.step_changed.emit(8, "下载 i18n 翻译数据")
         self.log.emit("info", "")
         self.log.emit("info", "--- 阶段 2: 下载 i18n.json (多语言翻译) ---")
-        self.log.emit("info", f"源地址: {I18N_URL}")
+        self.log.emit("info", f"源地址: {self._resolved_i18n_url}")
         self.log.emit("info", f"保存到: {i18n_path}")
 
         try:
@@ -264,7 +269,7 @@ class FetchWorker(QObject):
                     time.sleep(2)
                 try:
                     req = urllib.request.Request(
-                        I18N_URL,
+                        self._resolved_i18n_url,
                         headers={"User-Agent": "WARFRAME-RELIC/1.0"}
                     )
                     resp = urllib.request.urlopen(req, timeout=30)

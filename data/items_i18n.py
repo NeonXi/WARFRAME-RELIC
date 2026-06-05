@@ -21,8 +21,13 @@ import json
 import os
 import re
 import sqlite3
+import sys
 import time
 from datetime import datetime
+
+# 支持直接运行脚本时的模块导入
+if __name__ == '__main__':
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from typing import Optional
 
 # ---- 拼音支持 ----
@@ -55,7 +60,7 @@ WFCD_ALL_URL = 'https://raw.githubusercontent.com/WFCD/warframe-items/master/dat
 WFCD_I18N_URL = 'https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/i18n.json'
 
 # ===== 数据库 Schema 版本 =====
-SCHEMA_VERSION = '2'  # v1: 初始版本, v2: 添加拼音完整性检查
+SCHEMA_VERSION = '6'  # v1: 初始, v2: 拼音, v3: 掉落来源字段, v4: 掉落来源子表, v5: 子表富数据, v6: 移除 items 表中掉落来源字段
 
 # ===== 数据库表结构 =====
 SCHEMA = """
@@ -92,6 +97,22 @@ CREATE TABLE IF NOT EXISTS items_meta (
     key TEXT PRIMARY KEY,
     value TEXT
 );
+
+-- 掉落来源子表（物品与掉落来源的多对多关系，含富数据）
+CREATE TABLE IF NOT EXISTS drop_sources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL,
+    source_en TEXT NOT NULL,            -- 掉落来源英文名（如 "Void/Hepit"）
+    source_zh TEXT NOT NULL,            -- 掉落来源中文名（如 "虚空/Hepit"）
+    rarity TEXT DEFAULT '',             -- 稀有度 (Common/Uncommon/Rare/Legendary)
+    chance REAL DEFAULT 0,              -- 掉落概率 (%)
+    rotation TEXT DEFAULT '',           -- 轮次 (A/B/C)
+    source_type TEXT DEFAULT '',        -- 来源类型 (missionRewards/bounty/relic/enemy/syndicate/...)
+    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_drop_sources_item ON drop_sources(item_id);
+CREATE INDEX IF NOT EXISTS idx_drop_sources_source ON drop_sources(source_en);
+CREATE INDEX IF NOT EXISTS idx_drop_sources_type ON drop_sources(source_type);
 """
 
 
@@ -182,6 +203,262 @@ def _derive_zh_from_pattern(name_lower: str, zh_en_list: list) -> str:
 
     # 无法推导
     return ''
+
+
+# 从共享术语模块导入翻译函数
+from data.game_terms import translate_location  # noqa: E402
+
+
+def _build_drop_source_map(alljson_path: str, item_map: dict) -> dict:
+    """从 all.json 构建 物品名 → 掉落来源 的映射（富数据）。
+
+    遍历 all.json 中的所有掉落来源（遗物、任务奖励、赏金、敌人掉落等），
+    为每个物品收集其掉落途径，包含 rarity/chance/rotation/source_type。
+
+    与 drop_tooltip.py 的 DropSourceIndex 使用相同的数据结构，
+    确保数据统一。
+
+    Args:
+        alljson_path: all.json 文件路径
+        item_map: 已构建的 item_map（用于查找 relic 中文名）
+
+    Returns:
+        dict: {item_name_lower: [
+            {'source_en': ..., 'source_zh': ..., 'rarity': ..., 'chance': ...,
+             'rotation': ..., 'source_type': ...}, ...
+        ]}
+    """
+    drop_map = {}
+    
+    if not os.path.exists(alljson_path):
+        return drop_map
+    
+    with open(alljson_path, 'r', encoding='utf-8') as f:
+        drop_data = json.load(f)
+    
+    def _add_drop(item_name: str, source_en: str, source_zh: str = "",
+                  rarity: str = "", chance: float = 0, rotation: str = "",
+                  source_type: str = ""):
+        """添加一条掉落来源记录"""
+        if not item_name or not source_en:
+            return
+        name_key = item_name.strip().lower()
+        if not name_key:
+            return
+        if name_key not in drop_map:
+            drop_map[name_key] = []
+        # 去重：相同 source_en + rotation + rarity 视为同一条
+        for existing in drop_map[name_key]:
+            if (existing['source_en'] == source_en and
+                existing['rotation'] == rotation and
+                existing['rarity'] == rarity):
+                # 保留更高概率
+                if chance > existing['chance']:
+                    existing['chance'] = chance
+                return
+        drop_map[name_key].append({
+            'source_en': source_en,
+            'source_zh': source_zh if source_zh else source_en,
+            'rarity': rarity,
+            'chance': chance,
+            'rotation': rotation,
+            'source_type': source_type,
+        })
+
+    # 1. 遍历 relics → 遗物作为掉落来源
+    for relic in drop_data.get('relics', []):
+        relic_name = relic.get('name', '')
+        if not relic_name:
+            continue
+        relic_zh = relic_name
+        for un, info in item_map.items():
+            if info['name'].lower() == relic_name.lower():
+                relic_zh = info.get('_zh_name', '') or relic_name
+                break
+        for reward in relic.get('rewards', []):
+            _add_drop(
+                reward.get('itemName', ''),
+                relic_name, relic_zh,
+                rarity=reward.get('rarity', ''),
+                chance=reward.get('chance', 0),
+                source_type='relic',
+            )
+
+    # 2. missionRewards: planet → node → rewards
+    mission_rewards = drop_data.get('missionRewards', {})
+    if isinstance(mission_rewards, dict):
+        for planet, nodes in mission_rewards.items():
+            if not isinstance(nodes, dict):
+                continue
+            for node, ndata in nodes.items():
+                if not isinstance(ndata, dict):
+                    continue
+                gm = ndata.get('gameMode', '')
+                loc_en = f"{planet}/{node}"
+                if gm:
+                    loc_en += f" ({gm})"
+                rewards = ndata.get('rewards', {})
+                if isinstance(rewards, dict):
+                    for rot, items in rewards.items():
+                        if isinstance(items, list):
+                            for item in items:
+                                if isinstance(item, dict):
+                                    _add_drop(
+                                        item.get('itemName', ''),
+                                        loc_en, translate_location(loc_en),
+                                        rarity=item.get('rarity', ''),
+                                        chance=item.get('chance', 0),
+                                        rotation=rot,
+                                        source_type='missionRewards',
+                                    )
+
+    # 3. 赏金类
+    for bounty_key, bounty_label in [
+        ('cetusBountyRewards', 'Cetus Bounty'),
+        ('solarisBountyRewards', 'Fortuna Bounty'),
+        ('deimosRewards', 'Cambion Drift Bounty'),
+        ('zarimanRewards', 'Zariman Bounty'),
+        ('entratiLabRewards', 'Entrati Lab Bounty'),
+        ('hexRewards', 'Höllvania Bounty'),
+    ]:
+        bounty_data = drop_data.get(bounty_key, [])
+        if not isinstance(bounty_data, list):
+            continue
+        for entry in bounty_data:
+            if not isinstance(entry, dict):
+                continue
+            rewards = entry.get('rewards', {})
+            if isinstance(rewards, dict):
+                for rot, items in rewards.items():
+                    if isinstance(items, list):
+                        for item in items:
+                            if isinstance(item, dict):
+                                _add_drop(
+                                    item.get('itemName', ''),
+                                    bounty_label, translate_location(bounty_label),
+                                    rarity=item.get('rarity', ''),
+                                    chance=item.get('chance', 0),
+                                    rotation=rot,
+                                    source_type=bounty_key,
+                                )
+
+    # 4. sortieRewards
+    for entry in drop_data.get('sortieRewards', []):
+        if isinstance(entry, dict):
+            _add_drop(
+                entry.get('itemName', ''),
+                'Sortie', '突击',
+                rarity=entry.get('rarity', ''),
+                chance=entry.get('chance', 0),
+                source_type='sortieRewards',
+            )
+
+    # 5. keyRewards
+    key_rewards = drop_data.get('keyRewards', [])
+    if isinstance(key_rewards, list):
+        for entry in key_rewards:
+            if not isinstance(entry, dict):
+                continue
+            key_name = entry.get('keyName', '') or entry.get('name', '') or 'Void Key'
+            rewards = entry.get('rewards', {})
+            if isinstance(rewards, list):
+                for item in rewards:
+                    if isinstance(item, dict):
+                        _add_drop(item.get('itemName', ''), key_name, translate_location(key_name),
+                                  rarity=item.get('rarity', ''),
+                                  chance=item.get('chance', 0),
+                                  source_type='keyRewards')
+            elif isinstance(rewards, dict):
+                for rot, items in rewards.items():
+                    if isinstance(items, list):
+                        for item in items:
+                            if isinstance(item, dict):
+                                _add_drop(item.get('itemName', ''), f"{key_name}", translate_location(key_name),
+                                          rarity=item.get('rarity', ''),
+                                          chance=item.get('chance', 0),
+                                          rotation=rot,
+                                          source_type='keyRewards')
+
+    # 6. transientRewards
+    for entry in drop_data.get('transientRewards', []):
+        if not isinstance(entry, dict):
+            continue
+        rewards = entry.get('rewards', {})
+        if isinstance(rewards, list):
+            for item in rewards:
+                if isinstance(item, dict):
+                    _add_drop(item.get('itemName', ''), 'Transient Reward', '临时奖励',
+                              rarity=item.get('rarity', ''),
+                              chance=item.get('chance', 0),
+                              source_type='transientRewards')
+        elif isinstance(rewards, dict):
+            for rot, items in rewards.items():
+                if isinstance(items, list):
+                    for item in items:
+                        if isinstance(item, dict):
+                            _add_drop(item.get('itemName', ''), 'Transient Reward', '临时奖励',
+                                      rarity=item.get('rarity', ''),
+                                      chance=item.get('chance', 0),
+                                      rotation=rot,
+                                      source_type='transientRewards')
+
+    # 7. blueprintLocations
+    for bp in drop_data.get('blueprintLocations', []):
+        if isinstance(bp, dict):
+            bp_name = bp.get('blueprintName', bp.get('itemName', ''))
+            loc = bp.get('location', '')
+            if bp_name and loc:
+                _add_drop(bp_name, loc, translate_location(loc),
+                          rarity=bp.get('rarity', ''),
+                          chance=bp.get('chance', 0),
+                          source_type='blueprintLocations')
+
+    # 8. enemyModTables
+    for entry in drop_data.get('enemyModTables', []):
+        if isinstance(entry, dict):
+            enemy = entry.get('enemyName', 'Unknown Enemy')
+            for mod in entry.get('mods', []):
+                if isinstance(mod, dict):
+                    _add_drop(mod.get('modName', ''), enemy, enemy,
+                              rarity=mod.get('rarity', ''),
+                              chance=mod.get('chance', 0),
+                              source_type='enemyModTables')
+
+    # 9. enemyBlueprintTables
+    for bp in drop_data.get('enemyBlueprintTables', []):
+        if isinstance(bp, dict):
+            bp_name = bp.get('blueprintName', bp.get('itemName', ''))
+            enemy = bp.get('enemyName', 'Unknown Enemy')
+            if bp_name:
+                _add_drop(bp_name, enemy, enemy,
+                          rarity=bp.get('rarity', ''),
+                          chance=bp.get('chance', 0),
+                          source_type='enemyBlueprintTables')
+
+    # 10. modLocations
+    for mod in drop_data.get('modLocations', []):
+        if isinstance(mod, dict):
+            mod_name = mod.get('modName', mod.get('itemName', ''))
+            loc = mod.get('location', '')
+            if mod_name and loc:
+                _add_drop(mod_name, loc, translate_location(loc),
+                          rarity=mod.get('rarity', ''),
+                          chance=mod.get('chance', 0),
+                          source_type='modLocations')
+
+    # 11. syndicates
+    syndicates = drop_data.get('syndicates', {})
+    if isinstance(syndicates, dict):
+        for faction, items in syndicates.items():
+            if isinstance(items, list):
+                for entry in items:
+                    if isinstance(entry, dict):
+                        _add_drop(entry.get('itemName', entry.get('name', '')), faction, faction,
+                                  rarity=entry.get('rarity', ''),
+                                  chance=entry.get('chance', 100),
+                                  source_type='syndicates')
+
+    return drop_map
 
 
 def build_all_items_db(all_items_path: str = None,
@@ -519,11 +796,20 @@ def build_all_items_db(all_items_path: str = None,
             print(f"[items_i18n] all.json 掉落数据补充了 {drop_supplemented} 个额外物品")
 
     # ============================================================
+    # 第5.6步: 构建掉落来源映射（物品名 → 掉落途径）
+    # ============================================================
+    print("[items_i18n] 正在构建掉落来源映射...")
+    drop_source_map = _build_drop_source_map(alljson_path, item_map)
+    drop_mapped_count = len(drop_source_map)
+    print(f"[items_i18n] 掉落来源映射完成: {drop_mapped_count} 个物品有掉落途径")
+
+    # ============================================================
     # 第6步: 写入数据库（批量插入优化）
     # ============================================================
     conn = sqlite3.connect(DB_PATH)
     conn.executescript(SCHEMA)
     conn.execute("DELETE FROM items")
+    conn.execute("DELETE FROM sqlite_sequence WHERE name='items'")  # 重置自增 ID 从 1 开始
     
     inserted = 0
     has_cn = 0
@@ -619,6 +905,39 @@ def build_all_items_db(all_items_path: str = None,
     if batch_data:
         conn.executemany(INSERT_SQL, batch_data)
         inserted += len(batch_data)
+
+    # ============================================================
+    # 第6.5步: 填充掉落来源子表（富数据）
+    # ============================================================
+    conn.execute("DELETE FROM drop_sources")
+    # 查询所有已插入物品的 id 和 en_name
+    item_rows = conn.execute("SELECT id, en_name FROM items").fetchall()
+    drop_source_batch = []
+    drop_source_count = 0
+    INSERT_DROP_SQL = """INSERT INTO drop_sources
+        (item_id, source_en, source_zh, rarity, chance, rotation, source_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?)"""
+    for item_id, en_name in item_rows:
+        sources_list = drop_source_map.get(en_name.lower(), [])
+        if not isinstance(sources_list, list) or not sources_list:
+            continue
+        for src in sources_list:
+            drop_source_batch.append((
+                item_id,
+                src.get('source_en', ''),
+                src.get('source_zh', src.get('source_en', '')),
+                src.get('rarity', ''),
+                src.get('chance', 0),
+                src.get('rotation', ''),
+                src.get('source_type', ''),
+            ))
+            drop_source_count += 1
+        if len(drop_source_batch) >= 1000:
+            conn.executemany(INSERT_DROP_SQL, drop_source_batch)
+            drop_source_batch.clear()
+    if drop_source_batch:
+        conn.executemany(INSERT_DROP_SQL, drop_source_batch)
+    print(f"[items_i18n] 掉落来源子表: {drop_source_count} 条记录")
 
     # 元信息（包含 schema 版本）
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -718,10 +1037,126 @@ def _ensure_schema_version(conn):
         else:
             print("[items_i18n] ⚠ pypinyin 未安装，无法修复拼音数据")
         
-        # 更新版本号
-        conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
+        # 更新版本号到 v2
+        conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", ('2',))
         conn.commit()
         print("[items_i18n] Schema 升级到 v2 完成")
+    
+    elif current_version == '2':
+        # v2 -> v3: 添加掉落来源字段
+        print("[items_i18n] 检测到旧版 schema (v2)，正在升级到 v3...")
+        
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(items)")
+        cols = [row[1] for row in cur.fetchall()]
+        
+        if 'drop_source_zh' not in cols:
+            print("[items_i18n] 添加 drop_source_zh 字段...")
+            conn.execute("ALTER TABLE items ADD COLUMN drop_source_zh TEXT DEFAULT ''")
+        
+        if 'drop_source_en' not in cols:
+            print("[items_i18n] 添加 drop_source_en 字段...")
+            conn.execute("ALTER TABLE items ADD COLUMN drop_source_en TEXT DEFAULT ''")
+        
+        conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", ('3',))
+        conn.commit()
+        print("[items_i18n] Schema 升级到 v3 完成")
+    
+    elif current_version == '3':
+        # v3 -> v4: 创建掉落来源子表
+        print("[items_i18n] 检测到旧版 schema (v3)，正在升级到 v4...")
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS drop_sources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL,
+                source_en TEXT NOT NULL,
+                source_zh TEXT NOT NULL,
+                FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_drop_sources_item ON drop_sources(item_id);
+            CREATE INDEX IF NOT EXISTS idx_drop_sources_source ON drop_sources(source_en);
+        """)
+        conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
+        conn.commit()
+        print("[items_i18n] Schema 升级到 v4 完成")
+    
+    elif current_version == '4':
+        # v4 -> v5: drop_sources 表增加富数据字段 (rarity, chance, rotation, source_type)
+        print("[items_i18n] 检测到旧版 schema (v4)，正在升级到 v5...")
+        # 删除旧表并重建（v4 的 drop_sources 数据来自逗号分隔，重建后数据更精确）
+        conn.executescript("""
+            DROP TABLE IF EXISTS drop_sources;
+            CREATE TABLE drop_sources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL,
+                source_en TEXT NOT NULL,
+                source_zh TEXT NOT NULL,
+                rarity TEXT DEFAULT '',
+                chance REAL DEFAULT 0,
+                rotation TEXT DEFAULT '',
+                source_type TEXT DEFAULT '',
+                FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_drop_sources_item ON drop_sources(item_id);
+            CREATE INDEX IF NOT EXISTS idx_drop_sources_source ON drop_sources(source_en);
+            CREATE INDEX IF NOT EXISTS idx_drop_sources_type ON drop_sources(source_type);
+        """)
+        conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
+        conn.commit()
+        print("[items_i18n] Schema 升级到 v5 完成（drop_sources 表已重建，需重新 build 以填充富数据）")
+    
+    elif current_version == '5':
+        # v5 -> v6: 移除 items 表中的 drop_source_zh 和 drop_source_en 字段
+        print("[items_i18n] 检测到旧版 schema (v5)，正在升级到 v6...")
+        
+        # 在 SQLite 中不能直接删除列，需要重建表
+        # 创建临时表，复制数据，删除旧表，重命名临时表
+        conn.executescript("""
+            -- 创建临时表（不含 drop_source 字段）
+            CREATE TABLE IF NOT EXISTS items_temp (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                unique_name TEXT NOT NULL UNIQUE,
+                zh_name TEXT NOT NULL,
+                en_name TEXT NOT NULL,
+                category TEXT,
+                item_type TEXT,
+                is_tradable INTEGER DEFAULT 0,
+                is_prime INTEGER DEFAULT 0,
+                rarity TEXT,
+                mr_requirement INTEGER DEFAULT 0,
+                image_name TEXT,
+                description_zh TEXT,
+                description_en TEXT,
+                zh_pinyin TEXT DEFAULT ''
+            );
+            
+            -- 复制数据（排除 drop_source_zh, drop_source_en）
+            INSERT INTO items_temp (
+                id, unique_name, zh_name, en_name, category, item_type,
+                is_tradable, is_prime, rarity, mr_requirement, image_name,
+                description_zh, description_en, zh_pinyin
+            )
+            SELECT id, unique_name, zh_name, en_name, category, item_type,
+                   is_tradable, is_prime, rarity, mr_requirement, image_name,
+                   description_zh, description_en, zh_pinyin
+            FROM items;
+            
+            -- 删除旧表，重命名临时表
+            DROP TABLE items;
+            ALTER TABLE items_temp RENAME TO items;
+            
+            -- 重建索引
+            CREATE INDEX IF NOT EXISTS idx_items_zh ON items(zh_name);
+            CREATE INDEX IF NOT EXISTS idx_items_en ON items(en_name);
+            CREATE INDEX IF NOT EXISTS idx_items_pinyin ON items(zh_pinyin);
+            CREATE INDEX IF NOT EXISTS idx_items_category ON items(category);
+            CREATE INDEX IF NOT EXISTS idx_items_type ON items(item_type);
+            CREATE INDEX IF NOT EXISTS idx_items_prime ON items(is_prime);
+            CREATE INDEX IF NOT EXISTS idx_items_tradable ON items(is_tradable);
+        """)
+        conn.execute("INSERT OR REPLACE INTO items_meta (key, value) VALUES ('schema_version', ?)", (SCHEMA_VERSION,))
+        conn.commit()
+        print("[items_i18n] Schema 升级到 v6 完成（已移除 items 表中的掉落来源字段）")
     
     elif current_version != SCHEMA_VERSION:
         print(f"[items_i18n] ⚠ 未知的 schema 版本: {current_version} (期望: {SCHEMA_VERSION})")
@@ -887,6 +1322,53 @@ def _make_pinyin(zh_name: str) -> str:
 # ============================================================
 # 查询 API
 # ============================================================
+
+def query_drop_sources(item_name: str = None, item_id: int = None,
+                       limit: int = 50) -> list[dict]:
+    """查询物品的掉落来源（富数据）。
+
+    优先使用此函数，数据来自 drop_sources 子表，包含 rarity/chance/rotation/source_type。
+
+    Args:
+        item_name: 物品英文名（模糊匹配）
+        item_id: 物品 ID（精确匹配）
+        limit: 返回数量上限
+
+    Returns:
+        [{source_en, source_zh, rarity, chance, rotation, source_type, en_name}, ...]
+        按 chance 降序排列
+    """
+    if not os.path.exists(DB_PATH):
+        return []
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+
+    sql = """SELECT ds.source_en, ds.source_zh, ds.rarity, ds.chance,
+                    ds.rotation, ds.source_type, i.en_name
+             FROM drop_sources ds
+             JOIN items i ON i.id = ds.item_id
+             WHERE 1=1"""
+    params = []
+
+    if item_id is not None:
+        sql += " AND ds.item_id = ?"
+        params.append(item_id)
+    elif item_name:
+        sql += " AND i.en_name LIKE ?"
+        params.append(f"%{item_name}%")
+
+    sql += " ORDER BY ds.chance DESC LIMIT ?"
+    params.append(limit)
+
+    try:
+        rows = conn.execute(sql, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        conn.close()
+        return []
+
 
 def search_items(query: str,
                  search_field: str = 'all',

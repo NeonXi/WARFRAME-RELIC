@@ -39,7 +39,7 @@ from core.theme_panel import ThemePanel
 from core.update_panel import UpdatePanel, get_db_stats
 from core.word_wrap_button import WordWrapButton
 from core.hotkey_capture_button import HotkeyCaptureButton
-from core.drop_tooltip import SOURCE_TYPE_CN
+from data.game_terms import SOURCE_TYPE_CN, RARITY_CN
 from data.ui_strings import S
 
 
@@ -216,6 +216,14 @@ class PanelBuilderMixin:
         self._btn_reload_ui.setToolTip("完全重载面板 UI")
         self._btn_reload_ui.clicked.connect(self._on_reload_ui)
         exit_row.addWidget(self._btn_reload_ui)
+        
+        # 后台数据处理按钮
+        self._btn_data_center = WordWrapButton(S("button", "data_center"))
+        self._reg_text(self._btn_data_center, "button", "data_center")
+        self._btn_data_center.setToolTip("打开后台数据处理中心")
+        self._btn_data_center.clicked.connect(self._on_open_data_center)
+        exit_row.addWidget(self._btn_data_center)
+        
         exit_row.addStretch()
         self._btn_exit = WordWrapButton(S("button", "exit"))
         self._reg_text(self._btn_exit, "button", "exit")
@@ -406,35 +414,104 @@ class PanelBuilderMixin:
         layout.addWidget(db_files_label)
 
         row_fetch = QHBoxLayout()
-        self._btn_fetch = WordWrapButton(S("button", "fetch_github"))
-        self._reg_text(self._btn_fetch, "button", "fetch_github")
-        self._btn_fetch
-        self._btn_fetch.clicked.connect(self._update_panel.on_fetch)
+        self._btn_update_base = WordWrapButton("更新基础数据")
+        self._btn_update_base.setStyleSheet(
+            f"QPushButton {{ background-color: {theme.cyber_yellow}; color: #000000; "
+            f"font-weight: bold; padding: 8px 16px; border-radius: 4px; }}"
+            f"QPushButton:hover {{ background-color: {theme.cyber_cyan}; }}"
+            f"QPushButton:disabled {{ background-color: {theme.text_dim}; color: #666666; }}"
+        )
+        self._btn_update_base.clicked.connect(self._on_update_base_data)
+        self._btn_fetch_prices = WordWrapButton("拉取市场价格")
+        self._btn_fetch_prices.setStyleSheet(
+            f"QPushButton {{ background-color: {theme.cyber_cyan}; color: #000000; "
+            f"font-weight: bold; padding: 8px 16px; border-radius: 4px; }}"
+            f"QPushButton:hover {{ background-color: {theme.cyber_yellow}; }}"
+            f"QPushButton:disabled {{ background-color: {theme.text_dim}; color: #666666; }}"
+        )
+        self._btn_fetch_prices.clicked.connect(self._on_fetch_prices)
         self._btn_browse = WordWrapButton(S("button", "browse_file"))
         self._reg_text(self._btn_browse, "button", "browse_file")
         self._btn_browse.clicked.connect(self._update_panel.on_browse)
-        self._btn_update = WordWrapButton(S("button", "update_db"))
-        self._reg_text(self._btn_update, "button", "update_db")
-        self._btn_update
-        self._btn_update.clicked.connect(self._update_panel.on_update)
-        row_fetch.addWidget(self._btn_fetch)
+        row_fetch.addWidget(self._btn_update_base)
+        row_fetch.addWidget(self._btn_fetch_prices)
         row_fetch.addWidget(self._btn_browse)
-        row_fetch.addWidget(self._btn_update)
         layout.addLayout(row_fetch)
 
         row1 = QHBoxLayout()
         self._btn_tutorial = WordWrapButton(S("button", "update_tutorial"))
         self._reg_text(self._btn_tutorial, "button", "update_tutorial")
-        self._btn_tutorial
         self._btn_tutorial.clicked.connect(self._update_panel.show_tutorial)
         self._btn_browse_db = WordWrapButton(S("button", "open_data_dir"))
         self._reg_text(self._btn_browse_db, "button", "open_data_dir")
-        self._btn_browse_db
         self._btn_browse_db.clicked.connect(self._open_data_dir)
+        self._btn_test_speed = WordWrapButton("测试GitHub网速")
+        self._btn_test_speed.setStyleSheet(
+            f"QPushButton {{ background-color: {theme.card_bg}; color: {theme.text_dim}; "
+            f"border: 1px solid {theme.border}; border-radius: 4px; padding: 6px 12px; font-size: 11px; }}"
+            f"QPushButton:hover {{ background-color: {theme.btn_hover_bg}; color: {theme.text}; }}"
+        )
+        self._btn_test_speed.clicked.connect(self._on_test_github_speed)
         row1.addWidget(self._btn_tutorial)
         row1.addWidget(self._btn_browse_db)
+        row1.addWidget(self._btn_test_speed)
         row1.addStretch()
         layout.addLayout(row1)
+
+        # ── 翻译库本地构建按钮 ──
+        row2 = QHBoxLayout()
+        self._btn_build_i18n_local = WordWrapButton("从本地文件构建翻译库")
+        self._btn_build_i18n_local.setStyleSheet(
+            f"QPushButton {{ background-color: {theme.cyber_magenta}; color: #000000; "
+            f"font-weight: bold; padding: 8px 16px; border-radius: 4px; }}"
+            f"QPushButton:hover {{ background-color: {theme.cyber_cyan}; }}"
+            f"QPushButton:disabled {{ background-color: {theme.text_dim}; color: #666666; }}"
+        )
+        self._btn_build_i18n_local.clicked.connect(self._on_build_i18n_from_local)
+        row2.addWidget(self._btn_build_i18n_local)
+        row2.addStretch()
+        layout.addLayout(row2)
+
+        # ── GitHub 镜像设置 ──
+        mirror_row = QHBoxLayout()
+        mirror_label = QLabel("GitHub 镜像:")
+        mirror_label.setStyleSheet(f"color: {theme.text_dim}; font-size: 11px;")
+        self._mirror_input = QLineEdit()
+        self._mirror_input.setPlaceholderText("如 raw.kgithub.com 或 https://ghproxy.com/")
+        self._mirror_input.setStyleSheet(f"""
+            QLineEdit {{
+                background-color: {theme.card_bg};
+                color: {theme.text};
+                border: 1px solid {theme.border};
+                border-radius: 3px;
+                padding: 3px 6px;
+                font-size: 11px;
+            }}
+            QLineEdit:focus {{ border-color: {theme.cyber_cyan}; }}
+        """)
+        self._mirror_input.setMaximumWidth(280)
+        self._mirror_input.editingFinished.connect(self._on_mirror_changed)
+        self._btn_mirror_clear = QPushButton("清除")
+        self._btn_mirror_clear.setFixedSize(40, 22)
+        self._btn_mirror_clear.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent; color: {theme.text_dim}; border: 1px solid {theme.border};
+                border-radius: 3px; font-size: 10px; padding: 0;
+            }}
+            QPushButton:hover {{ color: {theme.cyber_red}; border-color: {theme.cyber_red}; }}
+        """)
+        self._btn_mirror_clear.clicked.connect(self._on_mirror_clear)
+        mirror_row.addWidget(mirror_label)
+        mirror_row.addWidget(self._mirror_input)
+        mirror_row.addWidget(self._btn_mirror_clear)
+        mirror_row.addStretch()
+        layout.addLayout(mirror_row)
+
+        # 加载已保存的镜像配置
+        from core.hotkey_config import load_github_mirror
+        saved_mirror = load_github_mirror()
+        if saved_mirror:
+            self._mirror_input.setText(saved_mirror)
 
         hint = QLabel(S("hint", "data_source_db_center"))
         self._reg_text(hint, "hint", "data_source_db_center")
@@ -444,7 +521,8 @@ class PanelBuilderMixin:
 
         self._update_panel.set_source_label(source_label, i18n_source_label, db_files_label)
         self._update_panel.set_buttons(
-            btn_update=self._btn_update, btn_fetch=self._btn_fetch,
+            btn_update_base=self._btn_update_base,
+            btn_fetch_prices=self._btn_fetch_prices,
             btn_browse=self._btn_browse,
             btn_browse_db=self._btn_browse_db, btn_tutorial=self._btn_tutorial)
 
@@ -749,8 +827,7 @@ class PanelBuilderMixin:
                 ch = p.get('chance', 0)
                 clr = chance_to_color.get(ch, COLOR_SILVER)
                 rarity = p.get('rarity', '')
-                rarity_cn_map = {'Common': '普通', 'Uncommon': '罕见', 'Rare': '稀有', 'Legendary': '传说'}
-                rarity_cn = rarity_cn_map.get(rarity, rarity)
+                rarity_cn = RARITY_CN.get(rarity, rarity)
                 parts.append(
                     f"<div style='padding:2px 0 2px 20px; font-size:13px; white-space:nowrap;'>"
                     f"<span style='color:{clr};'>● {esc(p['name'])}</span>"
@@ -804,6 +881,8 @@ class PanelBuilderMixin:
                 )
                 for item in items:
                     loc = item.get('location', '?')
+                    loc_zh = item.get('location_zh', '')
+                    display_name = loc_zh if loc_zh else loc
                     chance = item.get('chance', 0)
                     rotation = item.get('rotation', '')
                     if 0 < chance < 100:
@@ -819,19 +898,19 @@ class PanelBuilderMixin:
                             f"color:#8E9CB2; font-size:11px; padding:1px 5px; "
                             f"border-radius:3px; margin-left:4px;'>轮次{rotation}</span>"
                         )
+                    extra = ""
+                    if chance_str and rot_tag:
+                        extra = f" -- <span style='color:#8E9CB2;'>{chance_str}</span> {rot_tag}"
+                    elif chance_str:
+                        extra = f" -- <span style='color:#8E9CB2;'>{chance_str}</span>"
+                    elif rot_tag:
+                        extra = f" -- {rot_tag}"
                     parts.append(
                         f"<div style='padding:1px 0 1px 24px; font-size:12px; white-space:nowrap;'>"
-                        f"<span style='color:#C8D0E0;'>{esc(loc)}</span>"
-                        f"<span style='color:#8E9CB2; margin-left:6px;'>{chance_str}</span>"
-                        f"{rot_tag}</div>"
+                        f"<span style='color:#C8D0E0;'>{esc(display_name)}</span>"
+                        f"{extra}</div>"
                     )
 
-        parts.append(
-            f"<div style='background:#0E0E24; padding:4px 12px; "
-            f"border-top:1px solid #1a1a3a; margin-top:4px;'>"
-            f"<span style='color:#444466; font-size:11px;'>"
-            f"数据来源: WFCD warframe-drop-data</span></div>"
-        )
         return "".join(parts)
 
     # ============================================================
@@ -866,46 +945,14 @@ class PanelBuilderMixin:
         region_btn_row.addStretch()
         layout.addLayout(region_btn_row)
 
-        region_hint = QLabel("提示：框选4个物品卡片的总区域，程序会自动横向4等分。\n"
-                            "按快捷键 Ctrl+T 即可自动截4图并查询价格。")
-        region_hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 10px; padding: 2px 0;")
-        region_hint.setWordWrap(True)
-        layout.addWidget(region_hint)
-
-        sep2 = QFrame()
-        sep2.setFrameShape(QFrame.Shape.HLine)
-        sep2.setStyleSheet(f"background-color: {theme.border}; max-height: 1px; margin: 4px 0;")
-        layout.addWidget(sep2)
-
-        hint = QLabel(S("hint", "data_source_wm"))
-        self._reg_text(hint, "hint", "data_source_wm")
-        hint.setStyleSheet(f"color: {theme.text_dim}; font-size: 10px; padding: 2px 0;")
-        hint.setWordWrap(True)
-        layout.addWidget(hint)
-
         btn_row = QHBoxLayout()
-        self._btn_fetch_prices = WordWrapButton(S("button", "fetch_prices"))
-        self._reg_text(self._btn_fetch_prices, "button", "fetch_prices")
-        self._btn_fetch_prices
-        self._btn_fetch_prices.clicked.connect(self._on_fetch_prices)
-        btn_row.addWidget(self._btn_fetch_prices)
-
         self._btn_open_market_query = WordWrapButton(S("button", "open_market_query"))
         self._reg_text(self._btn_open_market_query, "button", "open_market_query")
         self._btn_open_market_query
         self._btn_open_market_query.clicked.connect(self._open_market_query)
         btn_row.addWidget(self._btn_open_market_query)
-
         btn_row.addStretch()
         layout.addLayout(btn_row)
-
-        self._price_progress = QProgressBar()
-        self._price_progress.setRange(0, 100)
-        self._price_progress.setValue(0)
-        self._price_progress.setFixedHeight(16)
-        self._price_progress.setFormat("%p%")
-        self._price_progress.hide()
-        layout.addWidget(self._price_progress)
 
         parent_layout.addWidget(group)
         self._refresh_item_region_status()
@@ -950,66 +997,336 @@ class PanelBuilderMixin:
         except Exception as e:
             self._add_log('error', f'清除物品区域失败: {e}')
 
-    def _on_fetch_prices(self):
-        if not os.path.exists(str(self._data_dir / 'items_i18n.db')):
-            QMessageBox.warning(self, S("price", "no_items_title"), S("price", "no_items_msg"))
-            return
+    def _on_build_i18n_from_local(self):
+        """从本地文件构建翻译库。"""
+        from data.game_i18n import GameI18nBuildWorker
+
         reply = QMessageBox.question(
-            self, S("price", "fetch_confirm_title"), S("price", "fetch_confirm_msg"),
+            self, "从本地文件构建翻译库",
+            "将使用本地 data 目录下的 dict.en.json 和 dict.zh.json 文件\n"
+            "构建中英对照翻译数据库 (game_i18n.db)。\n\n"
+            "确保这两个文件已正确放置在 data 目录下。\n\n"
+            "预计耗时: 10-20 秒\n"
+            "确认开始？",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes)
         if reply != QMessageBox.StandardButton.Yes:
             return
+
+        self._btn_update_base.setEnabled(False)
         self._btn_fetch_prices.setEnabled(False)
-        self._price_progress.show()
-        self._price_progress.setValue(0)
-        self._add_log('info', '========== 开始拉取 warframe.market 卖价数据 ==========')
-        self._add_log('info', 'API: https://api.warframe.market/v2/')
-        self._add_log('info', '模式: 多线程并发拉取 (8线程) + 全局限速 3请求/秒')
-        self._add_log('info', '权重机制: 偏离中位数 >30% 视为压价，权重降为 0.1')
+        self._btn_build_i18n_local.setEnabled(False)
+        self._add_log('info', '========== 从本地文件构建翻译库 ==========')
+        self._add_log('info', '数据源: data/dict.en.json, data/dict.zh.json')
 
-        from data.wm_prices import PriceFetchWorker, MAX_WORKERS
+        self._i18n_worker = GameI18nBuildWorker(use_local_files=True)
+        self._i18n_worker.step_changed.connect(self._on_i18n_step)
+        self._i18n_worker.log.connect(self._on_i18n_log)
+        self._i18n_worker.progress_pct.connect(self._on_i18n_progress)
+        self._i18n_worker.progress_detail.connect(self._on_i18n_detail)
+        self._i18n_worker.finished.connect(self._on_i18n_finished)
+        self._i18n_worker.error.connect(self._on_i18n_error)
+        self._update_panel._progress.show()
+        self._update_panel._progress_text.show()
         import threading
-        self._price_worker = PriceFetchWorker(max_workers=MAX_WORKERS)
-        self._price_worker.step_changed.connect(self._on_price_step)
-        self._price_worker.log.connect(self._on_price_log)
-        self._price_worker.progress_pct.connect(self._price_progress.setValue)
-        self._price_worker.progress_detail.connect(self._on_price_progress)
-        self._price_worker.finished.connect(self._on_price_finished)
-        self._price_worker.error.connect(self._on_price_error)
-        threading.Thread(target=self._price_worker.run, daemon=True).start()
+        threading.Thread(target=self._i18n_worker.run, daemon=True).start()
 
-    def _on_price_step(self, step, desc):
+    def _on_i18n_step(self, step, desc):
         self._add_log('info', f'[步骤 {step}] {desc}')
 
-    def _on_price_log(self, level, msg):
+    def _on_i18n_log(self, level, msg):
         self._add_log(level, msg)
 
-    def _on_price_progress(self, current, total):
+    def _on_i18n_progress(self, pct):
+        self._update_panel._progress.setValue(pct)
+
+    def _on_i18n_detail(self, stage, cur, total):
+        self._update_panel._progress_text.setText(f'{stage}: {cur}/{total}')
+
+    def _on_i18n_finished(self, stats):
+        self._btn_update_base.setEnabled(True)
+        self._btn_fetch_prices.setEnabled(True)
+        self._btn_build_i18n_local.setEnabled(True)
+        self._update_panel._progress.hide()
+        self._update_panel._progress_text.hide()
+        self._update_panel._progress.setValue(0)
+        self._add_log('ok', '翻译库构建完成！')
+        self._update_panel.refresh_db_stats()
+
+    def _on_i18n_error(self, err):
+        self._btn_update_base.setEnabled(True)
+        self._btn_fetch_prices.setEnabled(True)
+        self._btn_build_i18n_local.setEnabled(True)
+        self._update_panel._progress.hide()
+        self._update_panel._progress_text.hide()
+        self._update_panel._progress.setValue(0)
+        self._add_log('error', f'翻译库构建失败: {err}')
+
+    def _on_update_base_data(self):
+        """更新基础数据（快速）。
+
+        流水线: all.json → relics.db → items_i18n.db → game_i18n.db
+        不含市场价格拉取（耗时较长）。
+        """
+        reply = QMessageBox.question(
+            self, "更新基础数据",
+            "将按顺序执行以下步骤：\n\n"
+            "1. 下载遗物数据 (all.json)\n"
+            "2. 更新遗物数据库 (relics.db)\n"
+            "3. 重建全物品索引 (items_i18n.db)\n"
+            "4. 构建翻译数据库 (game_i18n.db)\n\n"
+            "预计耗时: 2-3 分钟\n"
+            "确认开始？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        self._pipeline_mode = "base"
+        self._btn_update_base.setEnabled(False)
+        self._btn_fetch_prices.setEnabled(False)
+        self._add_log('info', '========== 更新基础数据 ==========')
+        self._add_log('info', '流水线: all.json → relics.db → items_i18n.db → game_i18n.db')
+
+        self._launch_pipeline(skip_prices=True)
+
+    def _on_fetch_prices(self):
+        """拉取 warframe.market 市场价格（耗时较长）。
+
+        仅拉取市场价格，不更新其他数据库。
+        """
+        reply = QMessageBox.question(
+            self, "拉取市场价格",
+            "将从 warframe.market API 拉取最新卖价数据。\n\n"
+            "仅拉取卖价，含反压价权重机制\n"
+            "偏离中位数 >30% 的低价权重降为 0.1\n\n"
+            "速率限制: 每秒 3 个请求\n"
+            "预计耗时: 10-15 分钟\n\n"
+            "确认开始？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        self._pipeline_mode = "prices"
+        self._btn_update_base.setEnabled(False)
+        self._btn_fetch_prices.setEnabled(False)
+        self._add_log('info', '========== 拉取市场价格 ==========')
+        self._add_log('info', '数据源: warframe.market API v2')
+
+        self._launch_pipeline(prices_only=True)
+
+    def _launch_pipeline(self, skip_prices=False, prices_only=False):
+        """启动数据流水线后台线程。"""
+        from data.data_pipeline import DataPipelineWorker
+        import threading
+        self._pipeline_worker = DataPipelineWorker(
+            skip_prices=skip_prices, prices_only=prices_only)
+        self._pipeline_worker.step_changed.connect(self._on_pipeline_step)
+        self._pipeline_worker.log.connect(self._on_pipeline_log)
+        self._pipeline_worker.progress_pct.connect(self._on_pipeline_progress)
+        self._pipeline_worker.progress_detail.connect(self._on_pipeline_detail)
+        self._pipeline_worker.finished.connect(self._on_pipeline_finished)
+        self._pipeline_worker.error.connect(self._on_pipeline_error)
+        self._update_panel._progress.show()
+        self._update_panel._progress_text.show()
+        threading.Thread(target=self._pipeline_worker.run, daemon=True).start()
+
+    def _on_pipeline_step(self, step, desc):
+        self._add_log('info', f'[步骤 {step}] {desc}')
+
+    def _on_pipeline_log(self, level, msg):
+        self._add_log(level, msg)
+
+    def _on_pipeline_progress(self, pct):
+        self._update_panel._progress.setValue(pct)
+
+    def _on_pipeline_detail(self, stage, cur, total):
         if total > 0:
-            pct = current * 100 // total
-            self._price_progress.setFormat(f"{current}/{total} ({pct}%)")
+            self._update_panel._progress_text.setText(f"{stage}: {cur}/{total}")
 
-    def _on_price_finished(self, result):
+    def _on_pipeline_finished(self, result):
+        self._btn_update_base.setEnabled(True)
         self._btn_fetch_prices.setEnabled(True)
-        self._price_progress.setValue(100)
-        self._price_progress.setFormat(S("status", "done"))
+        self._update_panel._progress.hide()
+        self._update_panel._progress_text.hide()
+        self._update_panel.refresh_stats()
         self.refresh_price_stats()
-        self._add_log('ok', S("price", "fetch_done"))
-        QMessageBox.information(self, S("price", "fetch_done_title"),
-            S.format("price", "fetch_done_msg",
-                total=result.get('total', 0),
-                with_sell=result.get('with_sell', 0),
-                with_weighted=result.get('with_weighted', 0),
-                total_abnormal=result.get('total_abnormal', 0),
-                elapsed=result.get('elapsed', 0)))
 
-    def _on_price_error(self, err_msg):
+        if result.get("success"):
+            mode = getattr(self, '_pipeline_mode', 'base')
+            if mode == "prices":
+                self._add_log('ok', f'市场价格拉取完成! 总耗时: {result.get("elapsed", 0):.0f}s')
+                QMessageBox.information(self, "拉取完成",
+                    f"市场价格拉取完成！\n\n"
+                    f"总耗时: {result.get('elapsed', 0):.0f}s\n\n"
+                    "价格数据已刷新。")
+            else:
+                self._add_log('ok', f'基础数据更新完成! 总耗时: {result.get("elapsed", 0):.0f}s')
+                QMessageBox.information(self, "更新完成",
+                    f"基础数据更新完成！\n\n"
+                    f"总耗时: {result.get('elapsed', 0):.0f}s\n\n"
+                    "各数据库状态已刷新，可查看数据总览。")
+        else:
+            self._add_log('error', f'流水线执行失败: {result.get("error", "未知错误")}')
+            QMessageBox.warning(self, "更新失败",
+                f"部分数据库更新失败:\n{result.get('error', '未知错误')}\n\n"
+                "已完成的步骤不受影响，可查看日志了解详情。")
+
+    def _on_pipeline_error(self, err_msg):
+        self._btn_update_base.setEnabled(True)
         self._btn_fetch_prices.setEnabled(True)
-        self._price_progress.hide()
-        self._add_log('error', f'价格拉取失败: {err_msg}')
-        QMessageBox.critical(self, S("price", "fetch_failed_title"),
-            S.format("price", "fetch_failed_msg", error=err_msg))
+        self._update_panel._progress.hide()
+        self._update_panel._progress_text.hide()
+        self._add_log('error', f'流水线错误: {err_msg}')
+
+    def _on_test_github_speed(self):
+        """测试 GitHub raw.githubusercontent.com 连接速度。"""
+        self._add_log('info', '========== GitHub 网速测试 ==========')
+
+        import threading
+        import urllib.request
+        import time
+        from core.hotkey_config import resolve_github_url, load_github_mirror
+
+        mirror = load_github_mirror()
+        if mirror:
+            self._add_log('info', f'镜像: {mirror}')
+        else:
+            self._add_log('info', '镜像: 未设置 (直连)')
+
+        ping_url = resolve_github_url(
+            "https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json", mirror)
+        dl_url = resolve_github_url(
+            "https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json", mirror)
+        self._add_log('info', f'Ping 目标: {ping_url}')
+        self._add_log('info', f'  Ping 超时: 8s | 下载超时: 12s')
+        self._btn_test_speed.setEnabled(False)
+        self._btn_test_speed.setText("测试中... 剩余 20s")
+        # 禁用按钮后 Qt 自动转移焦点到下一个控件，手动移到日志区避免误激活搜索框
+        self._update_panel._log_area.setFocus()
+
+        self._add_log('info', '  [1/2] Pinging...')
+        self._add_log('info', '  [2/2] 下载测速...')
+
+        results = []
+        stage = [1]  # 1=Ping, 2=下载
+
+        def _run_test():
+            # 测试 1: Ping 延迟
+            try:
+                start = time.time()
+                req = urllib.request.Request(ping_url, method="HEAD")
+                req.add_header("User-Agent", "WARFRAME-RELIC/1.0")
+                urllib.request.urlopen(req, timeout=8)
+                elapsed = (time.time() - start) * 1000
+                results.append(("Ping 延迟", elapsed, None))
+            except Exception as e:
+                results.append(("Ping 延迟", None, str(e)))
+
+            stage[0] = 2
+
+            # 测试 2: 下载速度（128KB 采样）
+            try:
+                start = time.time()
+                req = urllib.request.Request(dl_url)
+                req.add_header("User-Agent", "WARFRAME-RELIC/1.0")
+                req.add_header("Range", "bytes=0-131071")  # 128KB
+                resp = urllib.request.urlopen(req, timeout=12)
+                data = resp.read()
+                elapsed = time.time() - start
+                if elapsed > 0 and len(data) > 0:
+                    size_kb = len(data) / 1024
+                    speed_kbps = size_kb / elapsed
+                    results.append(("下载速度 (128KB采样)", elapsed * 1000, None,
+                                    f"{size_kb:.0f}KB, {speed_kbps:.0f}KB/s"))
+                else:
+                    results.append(("下载速度", None, "未收到数据"))
+            except Exception as e:
+                results.append(("下载速度", None, str(e)))
+
+            results.append(("_done", None, None))
+
+        threading.Thread(target=_run_test, daemon=True).start()
+
+        # 用 QTimer 轮询结果（避免 QMetaObject.invokeMethod 的 Q_ARG 类型问题）
+        from PyQt6.QtCore import QTimer
+        self._speed_test_timer = QTimer(self)
+        elapsed = [0]
+        last_btn_update = [0]  # 上次更新按钮文案的秒数
+
+        def _check_results():
+            elapsed[0] += 200
+            # 检查是否已完成
+            if results and results[-1][0] == "_done":
+                self._speed_test_timer.stop()
+                results.pop()
+                self._show_speed_test_results(results)
+                return
+            # 超时保护：最多等 25 秒
+            if elapsed[0] > 25000:
+                self._speed_test_timer.stop()
+                if not results:
+                    self._add_log('warn', '  测试超时，GitHub 可能无法访问')
+                else:
+                    self._show_speed_test_results(results)
+                return
+            # 每秒更新按钮倒计时和阶段提示
+            sec = elapsed[0] // 1000
+            if sec != last_btn_update[0]:
+                last_btn_update[0] = sec
+                remaining = max(0, 25 - sec)
+                current_stage = stage[0]
+                stage_label = "Ping" if current_stage == 1 else "下载"
+                self._btn_test_speed.setText(f"测试中... {stage_label} 剩余 {remaining}s")
+
+        self._speed_test_timer.timeout.connect(_check_results)
+        self._speed_test_timer.start(200)
+
+    def _show_speed_test_results(self, results):
+        """显示网速测试结果。"""
+        self._btn_test_speed.setEnabled(True)
+        self._btn_test_speed.setText("测试GitHub网速")
+
+        for item in results:
+            label = item[0]
+            elapsed = item[1]
+            error = item[2]
+            extra = item[3] if len(item) > 3 else None
+
+            if error:
+                self._add_log('error', f"  {label}: 连接失败 ({error})")
+            else:
+                latency_str = f"{elapsed:.0f}ms"
+                if elapsed < 500:
+                    level = 'ok'
+                elif elapsed < 2000:
+                    level = 'warn'
+                else:
+                    level = 'error'
+                msg = f"  {label}: {latency_str}"
+                if extra:
+                    msg += f" ({extra})"
+                self._add_log(level, msg)
+
+        if not results:
+            self._add_log('warn', '  所有测试均失败，请检查网络或使用代理')
+        self._add_log('info', '========== 网速测试完成 ==========')
+
+    def _on_mirror_changed(self):
+        """保存 GitHub 镜像配置。"""
+        mirror = self._mirror_input.text().strip()
+        from core.hotkey_config import save_github_mirror
+        if save_github_mirror(mirror):
+            if mirror:
+                self._add_log('ok', f'GitHub 镜像已设置: {mirror}')
+            else:
+                self._add_log('info', 'GitHub 镜像已清除，将使用直连')
+
+    def _on_mirror_clear(self):
+        """清除 GitHub 镜像配置。"""
+        self._mirror_input.clear()
+        self._on_mirror_changed()
 
     # ============================================================
     # 热键配置

@@ -9,7 +9,6 @@ market_query 使用本地 SQLite 数据库存储物品信息，支持离线搜�
 | 数据库 | 路径 | 用途 |
 |--------|------|------|
 | **wm_items.db** | `data/wm_items.db` | 主数据库：物品名称、Slug、可交易状态 |
-| **error_items.db** | `data/error_items.db` | 错误记录：API 更新失败的物品 |
 
 ## wm_items.db 主数据库
 
@@ -86,12 +85,6 @@ FROM items;
 | 武器部件 | 名称含 Barrel/Receiver/Stock/枪管/枪机/枪托 | 设为可交易 |
 | 蓝图 | 名称含 Blueprint/蓝图 | 设为可交易 |
 | 套装 | 名称含 Set/一套 | 设为可交易 |
-
-## error_items.db 错误数据库
-
-### 表结构：`failed_items`
-
-用于记录从 API 更新数据库时失败的物品条目。
 
 ## 数据生成流程
 

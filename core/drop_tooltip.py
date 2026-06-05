@@ -22,141 +22,10 @@ import os
 import re
 from typing import Optional
 
-# ============================================================
-# 星球 → 中文（节点保持英文）
-# ============================================================
-PLANET_CN = {
-    "Mercury": "水星",
-    "Venus": "金星",
-    "Earth": "地球",
-    "Mars": "火星",
-    "Jupiter": "木星",
-    "Saturn": "土星",
-    "Uranus": "天王星",
-    "Neptune": "海王星",
-    "Pluto": "冥王星",
-    "Eris": "阋神星",
-    "Sedna": "赛德娜",
-    "Lua": "月球",
-    "KuvaFortress": "赤毒要塞",
-    "Void": "虚空",
-    "Deimos": "火卫二",
-    "Zariman": "扎里曼号",
-    "Cetus": "希图斯",
-    "Solaris": "索拉里斯",
-    "Cavia": "科维兽",
-    "Hex": "六人组",
-    "Sanctuary": "圣殿",
-    "Derelict": "遗迹",
-}
-
-# 任务类型 → 中文
-GAMEMODE_CN = {
-    "Survival": "生存",
-    "Defense": "防御",
-    "Excavation": "挖掘",
-    "Capture": "捕获",
-    "Exterminate": "歼灭",
-    "Rescue": "救援",
-    "Spy": "间谍",
-    "Sabotage": "破坏",
-    "Assassination": "刺杀",
-    "Interception": "拦截",
-    "Hijack": "劫持",
-    "Infested Salvage": "感染者回收",
-    "Defection": "叛逃",
-    "Arena": "竞技场",
-    "Disruption": "中断",
-    "Orphix": "殁世机甲",
-    "Void Flood": "虚空洪流",
-    "Void Cascade": "虚空瀑布",
-    "Void Armageddon": "虚空末日",
-    "Free Roam": "自由漫游",
-    "Skirmish": "前哨战",
-    "Pursuit": "追击",
-    "Mobile Defense": "移动防御",
-    "Assault": "强袭",
-    "Volatile": "爆发",
-    "Mirror Defense": "镜像防御",
-    "Alchemy": "炼金",
-    "Netracells": "虚空锐将",
-    "Void Storm": "虚空风暴",
-    "Rush": "竞速",
-    "Archwing": "Archwing",
-    "Conclave": "武形秘仪",
-}
-
-# 稀有度中文
-RARITY_CN = {
-    "Common": "普通",
-    "Uncommon": "罕见",
-    "Rare": "稀有",
-    "Legendary": "传说",
-    "Ultra Rare": "超稀有",
-}
-
-# 敌人名 → 中文（常用）
-ENEMY_CN = {
-    "Vorac Crewship": "沃拉克战舰",
-    "Scaldra Screamer": "Scaldra 尖啸者",
-    "Grineer Lancer": "Grineer 枪兵",
-    "Grineer Trooper": "Grineer 骑兵",
-    "Grineer Butcher": "Grineer 屠夫",
-    "Grineer Scorch": "Grineer 灼烧者",
-    "Grineer Bombard": "Grineer 轰击者",
-    "Grineer Heavy Gunner": "Grineer 重型机枪手",
-    "Grineer Napalm": "Grineer 凝固汽油弹手",
-    "Corpus Crewman": "Corpus 船员",
-    "Corpus Prod Crewman": "Corpus 电击船员",
-    "Corpus Sniper Crewman": "Corpus 狙击船员",
-    "Corpus Tech": "Corpus 技师",
-    "Corpus Nullifier": "Corpus 虚能船员",
-    "Infested Runner": "Infested 奔跑者",
-    "Infested Charger": "Infested 冲刺者",
-    "Infested Leaper": "Infested 跳跃者",
-    "Infested Ancient": "Infested 远古者",
-    "Infested Ancient Healer": "Infested 远古治愈者",
-    "Infested Ancient Disruptor": "Infested 远古干扰者",
-    "Infested Toxic Ancient": "Infested 远古剧毒者",
-    "Orokin Drone": "Orokin 无人机",
-    "Orokin Specter": "Orokin 魅影",
-    "Sentient Battalyst": "Sentient 战斗使",
-    "Sentient Conculyst": "Sentient 震荡使",
-    "Corrupted Lancer": "堕落枪兵",
-    "Corrupted Heavy Gunner": "堕落重型机枪手",
-    "Corrupted Bombard": "堕落轰击者",
-    "Corrupted Nullifier": "堕落虚能者",
-    "Corrupted Ancient": "堕落远古者",
-    "Corrupted Crewman": "堕落船员",
-    "Narmer Enemy": "合一众敌人",
-    "Murmur Enemy": "低语者敌人",
-    "Scaldra Enemy": "Scaldra 敌人",
-    "Techrot Enemy": "科技腐化敌人",
-}
-
-# 掉落类型中文
-SOURCE_TYPE_CN = {
-    "missionRewards": "任务奖励",
-    "bountyRewards": "赏金任务",
-    "sortieRewards": "突击奖励",
-    "keyRewards": "钥匙奖励",
-    "transientRewards": "限时奖励",
-    "blueprintLocations": "蓝图掉落",
-    "enemyModTables": "敌人掉落",
-    "enemyBlueprintTables": "敌人蓝图掉落",
-    "modLocations": "Mod 掉落",
-    "cetusBountyRewards": "希图斯赏金",
-    "solarisBountyRewards": "索拉里斯赏金",
-    "deimosRewards": "火卫二奖励",
-    "zarimanRewards": "扎里曼奖励",
-    "entratiLabRewards": "英择谛实验室奖励",
-    "hexRewards": "六人组奖励",
-    "syndicates": "集团兑换",
-    "resourceByAvatar": "资源",
-    "sigilByAvatar": "纹章",
-    "additionalItemByAvatar": "附加物品",
-    "relics": "遗物",
-}
+# 从共享术语模块导入翻译映射
+from data.game_terms import (
+    PLANET_CN, GAMEMODE_CN, RARITY_CN, ENEMY_CN, SOURCE_TYPE_CN
+)
 
 
 class DropSourceIndex:
@@ -617,7 +486,7 @@ class DropSourceIndex:
         """
         if not sources:
             return (
-                f"<div style='padding:8px;'>"
+                f"<div style='background:#0E0E24; padding:8px;'>"
                 f"<b style='color:#00FFFF;'>{self._escape_html(item_name)}</b><br>"
                 f"<span style='color:#6677AA; font-size:11px;'>暂无掉落来源数据</span></div>"
             )
@@ -655,6 +524,11 @@ class DropSourceIndex:
         }
 
         parts = []
+        # ---- 外层容器（深色背景） ----
+        parts.append(
+            f"<div style='background:#0E0E24; border-radius:8px; overflow:hidden;'>"
+        )
+
         # ---- 头部：物品名 ----
         parts.append(
             f"<div style='background:#0E0E24; padding:8px 12px; "
@@ -668,7 +542,7 @@ class DropSourceIndex:
 
         # ---- 内容区 ----
         parts.append(
-            f"<div style='padding:6px 12px 8px 12px;'>"
+            f"<div style='background:#0E0E24; padding:6px 12px 8px 12px;'>"
         )
 
         for st, items in by_type.items():
@@ -690,9 +564,13 @@ class DropSourceIndex:
 
             for item in items[:8]:
                 loc = item.get('location', '?')
+                loc_zh = item.get('location_zh', '')
                 rarity = item.get('rarity', '')
                 chance = item.get('chance', 0)
                 rotation = item.get('rotation', '')
+
+                # 显示名称：中文优先
+                display_name = loc_zh if loc_zh else loc
 
                 # 概率格式化
                 if chance > 0 and chance < 100:
@@ -712,31 +590,92 @@ class DropSourceIndex:
                     )
 
                 # 行：地点 | 概率 | 轮次
+                # 在概率/轮次前加 " -- " 分隔符
+                extra = ""
+                if chance_str and rot_tag:
+                    extra = f" -- <span style='color:#8E9CB2;'>{chance_str}</span> {rot_tag}"
+                elif chance_str:
+                    extra = f" -- <span style='color:#8E9CB2;'>{chance_str}</span>"
+                elif rot_tag:
+                    extra = f" -- {rot_tag}"
+
                 parts.append(
                     f"<div style='padding:2px 0 2px 12px; font-size:12px; "
                     f"white-space:nowrap;'>"
-                    f"<span style='color:#C8D0E0;'>{self._escape_html(loc)}</span>"
-                    f"<span style='color:#8E9CB2; margin-left:8px;'>"
-                    f"{chance_str}"
-                    f"</span>"
-                    f"{rot_tag}"
+                    f"<span style='color:#C8D0E0;'>{self._escape_html(display_name)}</span>"
+                    f"{extra}"
                     f"</div>"
                 )
 
-        # 底部数据来源
-        parts.append(
-            f"</div>"
-            f"<div style='background:#0E0E24; padding:4px 12px; "
-            f"border-top:1px solid #1a1a3a;'>"
-            f"<span style='color:#444466; font-size:10px;'>"
-            f"数据来源: WFCD warframe-drop-data</span></div>"
-        )
+        parts.append("</div>")  # 关闭内容区
+        parts.append("</div>")  # 关闭外层容器
 
         return "".join(parts)
 
     @staticmethod
     def _escape_html(text: str) -> str:
         return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+    # ---- 数据库读取 ----
+
+    @classmethod
+    def from_db(cls, db_path: str = None) -> Optional['DropSourceIndex']:
+        """从 items_i18n.db 的 drop_sources 表构建索引。
+
+        这是推荐的数据源：数据库已包含由 build_all_items_db() 从 all.json
+        解析的富数据（rarity/chance/rotation/source_type），避免了重复解析。
+
+        Args:
+            db_path: items_i18n.db 路径，默认 data/items_i18n.db
+
+        Returns:
+            DropSourceIndex 实例，若数据库不可用则返回 None
+        """
+        import sqlite3 as _sqlite3
+        if db_path is None:
+            db_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), 'data', 'items_i18n.db'
+            )
+        if not os.path.exists(db_path):
+            return None
+
+        idx = cls.__new__(cls)
+        idx._sources = {}
+        idx._built = True
+        idx._alljson_path = ''
+        idx._zh_en = {}
+
+        try:
+            conn = _sqlite3.connect(db_path)
+            conn.row_factory = _sqlite3.Row
+            rows = conn.execute("""
+                SELECT i.en_name, ds.source_en, ds.source_zh, ds.rarity,
+                       ds.chance, ds.rotation, ds.source_type
+                FROM drop_sources ds
+                JOIN items i ON i.id = ds.item_id
+                ORDER BY ds.chance DESC
+            """).fetchall()
+            conn.close()
+
+            for row in rows:
+                en_name = row['en_name'].lower()
+                if en_name not in idx._sources:
+                    idx._sources[en_name] = []
+                idx._sources[en_name].append({
+                    'location': row['source_en'],
+                    'location_zh': row['source_zh'] or '',
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 0,
+                    'rotation': row['rotation'] or '',
+                    'source_type': row['source_type'] or '',
+                })
+
+            print(f"[DropTooltip] 从数据库加载: {len(rows)} 条掉落记录, {len(idx._sources)} 个物品")
+            return idx
+
+        except Exception as e:
+            print(f"[DropTooltip] 数据库读取失败: {e}, 回退到 all.json")
+            return None
 
 
 # ============================================================
@@ -746,10 +685,15 @@ _index: Optional[DropSourceIndex] = None
 
 
 def get_index() -> DropSourceIndex:
-    """获取全局掉落来源索引（懒加载单例）。"""
+    """获取全局掉落来源索引（懒加载单例）。
+
+    优先从数据库（items_i18n.db）读取，数据库不可用时回退到 all.json 解析。
+    """
     global _index
     if _index is None:
-        _index = DropSourceIndex()
+        _index = DropSourceIndex.from_db()
+        if _index is None:
+            _index = DropSourceIndex()
     return _index
 
 

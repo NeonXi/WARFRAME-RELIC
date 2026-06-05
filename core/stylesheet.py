@@ -213,7 +213,7 @@ QFrame#sep {{
 
     @classmethod
     def _build_dialog(cls, t) -> str:
-        """构建 QDialog / QMessageBox 样式"""
+        """构建 QDialog / QMessageBox / QToolTip 样式"""
         return f"""
 QDialog {{
     background-color: {t.panel_bg};
@@ -249,6 +249,13 @@ QMessageBox QPushButton[text="确定"] {{
 QMessageBox QPushButton[text="Yes"]:hover,
 QMessageBox QPushButton[text="确定"]:hover {{
     background-color: rgba(255, 107, 53, 0.3);
+}}
+QToolTip {{
+    background-color: #0E0E24;
+    color: #C8D0E0;
+    border: 1px solid #1a1a3a;
+    border-radius: 6px;
+    padding: 0px;
 }}
 """
     

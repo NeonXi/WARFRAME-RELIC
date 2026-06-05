@@ -24,6 +24,7 @@ from core.hotkey_config import (
 from core.bg_layer import BgLayerMixin
 from core.panel_styles import PanelStylesMixin
 from core.panel_builder import PanelBuilderMixin
+from core.stylesheet import build_stylesheet
 from data.ui_strings import S
 
 
@@ -127,7 +128,11 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
         self._adjust_window_width()
         hint = self.layout().sizeHint()
         if hint.height() > self.height():
-            self.resize(self.width(), hint.height())
+            # 限制高度不超过屏幕可用高度
+            screen = QApplication.primaryScreen()
+            max_h = screen.availableGeometry().height() if screen else 1080
+            new_h = min(hint.height(), max_h)
+            self.resize(self.width(), new_h)
         self._update_background_size_immediate()
 
     # ============================================================
@@ -141,8 +146,8 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
         return 0
 
     def _adjust_window_width(self):
-        """根据当前内容自动调整窗口宽度。"""
-        nav_w = 140
+        """根据当前内容自动调整窗口宽度，并限制在屏幕范围内。"""
+        nav_w = self._nav_list.width() if self._nav_list else 140
         content_margins = 40
         content_needed_w = 420
         if self._left_widget and self._left_widget.layout():
@@ -157,13 +162,25 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
             content_needed_w += content_margins
 
         theme_w = self._theme_panel_width
-        log_w = 420 if self._update_panel.log_panel_visible else 0
+        log_w = self._update_panel.log_panel_width if self._update_panel.log_panel_visible else 0
         needed_w = nav_w + content_needed_w + theme_w + log_w
         min_w = self.minimumWidth()
-        new_w = max(needed_w, min_w)
 
-        if new_w > self.width():
-            self.resize(new_w, self.height())
+        screen = QApplication.primaryScreen()
+        if screen:
+            screen_geom = screen.availableGeometry()
+            max_w = screen_geom.width()
+            max_h = screen_geom.height()
+        else:
+            max_w = 1920
+            max_h = 1080
+
+        new_w = max(needed_w, min_w)
+        new_w = min(new_w, max_w)
+        new_h = min(self.height(), max_h)
+
+        if new_w != self.width() or new_h != self.height():
+            self.resize(new_w, new_h)
 
     # ============================================================
     # 主题面板交互
@@ -297,9 +314,11 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
 
     def _on_reload_ui(self):
         """完全重载面板 UI：刷新文案、样式、统计、主题。"""
+        self._update_panel.add_log("info", "开始重载 UI...", "_on_reload_ui")
         self.setUpdatesEnabled(False)
         try:
             # 1. 重建所有 UI 文案
+            widget_count = 0
             for widget, category, key in self._text_registry:
                 try:
                     if hasattr(widget, 'setTitle') and type(widget).__name__ == 'QGroupBox':
@@ -308,23 +327,69 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
                         widget.setPlaceholderText(S(category, key))
                     elif hasattr(widget, 'setText'):
                         widget.setText(S(category, key))
+                    widget_count += 1
                 except Exception:
                     pass
+            self._update_panel.add_log("info", f"刷新了 {widget_count} 个 UI 文案", "_on_reload_ui")
+            
             self.setWindowTitle(S("window_title", "management_panel"))
+            self._update_panel.add_log("info", "窗口标题已刷新", "_on_reload_ui")
+            
             self._refresh_nav_labels()
+            self._update_panel.add_log("info", "导航标签已刷新", "_refresh_nav_labels")
+            
             self._refresh_toggle_button_texts()
+            self._update_panel.add_log("info", "切换按钮文字已刷新", "_refresh_toggle_button_texts")
+            
             # 2. 重建全局样式表和内联样式
             self.setStyleSheet(build_stylesheet())
+            self._update_panel.add_log("info", "全局样式表已重建", "build_stylesheet")
+            
             self._refresh_inline_styles()
+            self._update_panel.add_log("info", "内联样式已刷新", "_refresh_inline_styles")
+            
             self._theme_panel.rebuild_swatches()
+            self._update_panel.add_log("info", "主题面板色块已重建", "rebuild_swatches")
+            
             # 3. 主题面板样式
             if self._theme_panel:
                 self._theme_panel.refresh_inline_styles()
+                self._update_panel.add_log("info", "主题面板内联样式已刷新", "refresh_inline_styles")
+            
             # 4. 刷新背景层
             self._apply_opacity_overlay()
+            self._update_panel.add_log("info", "背景遮罩已应用", "_apply_opacity_overlay")
+            
             self._bg_blur_effect.setBlurRadius(theme.background_blur)
+            self._update_panel.add_log("info", f"背景模糊度已设置为 {theme.background_blur}", "setBlurRadius")
+            
             # 5. 刷新数据和统计
             self._update_panel.refresh_stats()
+            self._update_panel.add_log("info", "数据统计已刷新", "refresh_stats")
+            
             self.refresh_price_stats()
+            self._update_panel.add_log("info", "价格统计已刷新", "refresh_price_stats")
+            
+            self._update_panel.add_log("ok", "UI 重载完成", "_on_reload_ui")
         finally:
             self.setUpdatesEnabled(True)
+
+    def _on_open_data_center(self):
+        """切换后台数据处理中心窗口：已开则关，未开则开"""
+        try:
+            from core.data_center import DataCenterWindow
+            win = getattr(self, '_data_center_window', None)
+            if win is not None:
+                try:
+                    if win.isVisible():
+                        win.close()
+                        self._data_center_window = None
+                        self._update_panel.add_log("info", "后台数据处理中心已关闭", "_on_open_data_center")
+                        return
+                except RuntimeError:
+                    pass  # 窗口已被用户通过 X 关闭
+            self._data_center_window = DataCenterWindow()
+            self._data_center_window.show()
+            self._update_panel.add_log("info", "后台数据处理中心已打开", "_on_open_data_center")
+        except Exception as e:
+            self._update_panel.add_log("error", f"打开数据中心失败: {str(e)}", "_on_open_data_center")

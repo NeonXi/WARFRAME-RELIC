@@ -8,6 +8,7 @@ STRINGS = {
     # ── 窗口标题 ──
     "window_title": {
         "management_panel": "WARFRAME-RELIC · 遗物管理控制台",
+        "data_center": "后台数据处理中心",
     },
 
     # ── 主标题 ──
@@ -48,6 +49,7 @@ STRINGS = {
         "mode_translate": "英文翻译",
         "fetch_prices": "拉取 warframe.market 价格数据",
         "open_market_query": "实时挂单查询",
+        "data_center": "后台数据处理",
     },
 
     # ── 导航标签 ──
@@ -63,6 +65,10 @@ STRINGS = {
         "nav_preset":   "语言预设",
         "nav_about":    "关于",
         "nav_reset":    "紧急重置",
+        "data_link": "数据链路",
+        "data_table": "数据表",
+        "task_monitor": "任务监控",
+        "op_log": "操作日志",
     },
 
     # ── 分组标题 ──
@@ -78,6 +84,19 @@ STRINGS = {
         "lang_preset": "语言风格 · 文案预设",
         "about_author": "关于作者",
         "db_status": "数据库状态",
+    },
+
+    # ── 数据中心相关 ──
+    "section_title": {
+        "data_link": "数据链路视图",
+        "table_list": "数据表列表",
+        "task_monitor": "任务监控",
+        "op_log": "操作日志",
+    },
+    "layer_title": {
+        "source_layer": "📥 数据源层",
+        "process_layer": "⚙️ 处理层",
+        "storage_layer": "🗄️ 存储层",
     },
 
     # ── 统计标签 ──
@@ -137,8 +156,8 @@ STRINGS = {
                     "此操作不会影响：主题配色、功能开关、语言预设、数据库。\n"
                     "当快捷键失效、界面卡死或识别异常时，请立即点击此按钮。",
         "bottom_tip": "提示: 按 Ctrl+Shift+G 打开此控制台 | Ctrl+G 框选截图",
-        "data_source_relic": "原始数据源: 来自 WFCD 项目的 all.json + i18n.json\n本地数据库: 从原始数据源派生的 SQLite 数据库文件\n点击「从 GitHub 拉取」自动下载并清洗，或手动选择本地文件后更新",
-        "data_source_db_center": "完整流水线: 拉取 all.json + i18n.json → 清洗 i18n（仅保留 zh/en）→ 格式化 JSON → 更新本地数据库\n点击「从 GitHub 拉取」自动执行全流程，或手动选择本地文件后写入",
+        "data_source_relic": "原始数据源: 来自 WFCD 项目的 all.json + i18n.json\n本地数据库: 从原始数据源派生的 SQLite 数据库文件\n点击「更新基础数据」自动下载并执行完整流水线，或手动选择本地文件后更新",
+        "data_source_db_center": "更新基础数据: all.json → relics.db → items_i18n.db → game_i18n.db (约 2-3 分钟)\n拉取市场价格: warframe.market API → wm_prices.db (约 10-15 分钟，耗时较长请耐心等待)",
         "data_source_trans": "数据来源: WFCD warframe-items 项目（All.json + i18n.json 双文件关联算法）",
         "data_source_items": "数据来源: WFCD warframe-items All.json + i18n.json\n随翻译库 / 遗物数据库自动同步更新",
         "data_source_wm": "数据来源: warframe.market API v2\n仅采集卖价数据，内嵌反压价权重算法\n偏离中位数 >30% 的低价权重降为 0.1\n加权参考价 = Σ(价格×权重) / Σ权重\n建议每数小时拉取一次以保持数据时效性",
@@ -363,13 +382,24 @@ STRINGS = {
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "⏚ WARFRAME-RELIC 数据更新教程\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "本程序使用 WFCD/warframe-drop-data 项目提供的游戏数据，\n"
-            "数据源地址：\n"
-            "https://github.com/WFCD/warframe-drop-data\n\n"
-            "程序需要两个数据文件：\n"
-            "  · all.json    — 遗物与掉落数据\n"
-            "  · i18n.json   — 多语言物品翻译\n\n"
-            "点击「从 GitHub 拉取」可自动下载以上两个文件。\n"
+            "本程序使用多个数据源提供游戏数据支持：\n\n"
+            "┌─ 遗物与掉落数据 ─────────────────────────\n"
+            "│ 来源: WFCD/warframe-drop-data\n"
+            "│ https://github.com/WFCD/warframe-drop-data\n"
+            "│ 文件: all.json (遗物与掉落) / i18n.json (翻译)\n"
+            "│\n"
+            "├─ 市场价格数据 ───────────────────────────\n"
+            "│ 来源: warframe.market API v2\n"
+            "│ https://api.warframe.market/v2/\n"
+            "│ 数据库: data/wm_items.db / data/wm_prices.db\n"
+            "│\n"
+            "└─ 中英对照翻译数据 ───────────────────────\n"
+            "  来源1: warframe-public-export-plus (官方导出)\n"
+            "  来源2: WFCD/warframe-drop-data i18n.json\n"
+            "  来源3: WFCD/warframe-items i18n.json\n"
+            "  数据库: data/game_i18n.db\n\n"
+            "点击「更新基础数据」可自动下载遗物数据并更新所有数据库。\n"
+            "点击「拉取市场价格」单独更新 warframe.market 价格（耗时较长）。\n"
             "GitHub 国内访问较慢时，可使用以下方法：\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "方法一：使用 Watt Toolkit (原名 Steam++) 加速\n"
@@ -396,7 +426,7 @@ STRINGS = {
             "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/i18n.json\n\n"
             "② 将下载好的 all.json 和 i18n.json 放入：\n"
             "   {data_dir}\n\n"
-            "③ 回到本程序，点击「更新数据库」即可。\n\n"
+            "③ 回到本程序，点击「浏览文件」选中该文件，再点「更新基础数据」即可。\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             "⚐ 提示：如果浏览器也无法打开链接，建议先使用方法一\n"
             "   安装 Watt Toolkit 加速网络后再获取。\n"
@@ -424,7 +454,7 @@ STRINGS = {
         "no_items_title": "全物品数据库不存在",
         "no_items_msg": "请先构建全物品中英文对照数据库，\n再拉取市场价格。",
         "fetch_confirm_title": "确认拉取市场价格",
-        "fetch_confirm_msg": "将从 warframe.market API 拉取最新卖价数据。\n\n仅拉取卖价，含反压价权重机制\n偏离中位数 >30% 的低价权重降为 0.1\n\n速率限制: 每秒 3 个请求\n预计耗时: 约 10-15 分钟\n\n确认开始拉取？",
+        "fetch_confirm_msg": "将从 warframe.market API 拉取最新卖价数据，\n并自动更新中英对照翻译数据库。\n\n仅拉取卖价，含反压价权重机制\n偏离中位数 >30% 的低价权重降为 0.1\n\n速率限制: 每秒 3 个请求\n预计耗时: 约 10-15 分钟\n\n确认开始拉取？",
         "fetch_done": "市场价格拉取完成！",
         "fetch_done_title": "拉取完成",
         "fetch_done_msg": "市场价格拉取完成！\n\n总计: {total} 个物品\n有加权卖价: {with_sell}\n检测到异常低价: {with_weighted}\n异常低价次数: {total_abnormal}\n耗时: {elapsed:.0f}s",
