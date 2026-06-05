@@ -91,6 +91,8 @@ rem 1. Create virtual environment
 rem ==========================================
 echo [1/5] Creating virtual environment (venv)...
 
+set USE_SYSTEM_PYTHON=0
+
 if exist "venv\Scripts\python.exe" (
     echo   [SKIP] venv already exists
 ) else (
@@ -111,7 +113,7 @@ if exist "venv\Scripts\python.exe" (
         echo.
         echo   Possible reasons:
         echo   1. Insufficient permissions
-        echo   2. Python venv module not installed
+        echo   2. Python venv module not installed (common with Microsoft Store Python)
         echo   3. Disk space issue
         echo   4. Antivirus blocking
         echo.
@@ -141,28 +143,17 @@ if exist "venv\Scripts\python.exe" (
         echo.
         echo   [ERROR] All methods failed!
         echo.
-        echo   Please try ONE of the following:
+        echo   ============================================
+        echo   Auto-fallback: Using system Python directly
+        echo   ============================================
+        echo   Warning: This will install dependencies globally.
         echo.
-        echo   OPTION 1: Use system Python directly (no venv)
-        echo     1. Open Command Prompt
-        echo     2. Run: pip install -r requirements.txt
-        echo     3. Run: python main.py
-        echo.
-        echo   OPTION 2: Create venv manually
-        echo     1. Open Command Prompt as Administrator
-        echo     2. Navigate to project folder
-        echo     3. Run: python -m venv venv
-        echo     4. Run: venv\Scripts\activate
-        echo     5. Run: pip install -r requirements.txt
-        echo.
-        echo   OPTION 3: Install full Python from official website
-        echo     https://www.python.org/downloads/
-        echo     Make sure to check "Add Python to PATH"
-        echo.
-        pause
-        exit /b 1
+        set USE_SYSTEM_PYTHON=1
+        set VENV_PYTHON=%PYTHON_CMD%
+        goto :venv_created
     )
     echo   [OK] venv created
+    set VENV_PYTHON=venv\Scripts\python.exe
 )
 :venv_created
 
@@ -173,7 +164,7 @@ rem 2. Upgrade pip
 rem ==========================================
 echo [2/5] Upgrading pip...
 
-venv\Scripts\python.exe -m pip install --upgrade pip -i https://mirrors.cloud.tencent.com/pypi/simple --quiet
+%VENV_PYTHON% -m pip install --upgrade pip -i https://mirrors.cloud.tencent.com/pypi/simple --quiet
 if %errorlevel% neq 0 (
     echo   [WARN] pip upgrade failed, continuing...
 ) else (
@@ -189,12 +180,12 @@ echo [3/5] Installing dependencies...
 echo   (Trying Tencent Cloud mirror first, fallback to PyPI)
 echo.
 
-venv\Scripts\python.exe -m pip install -r requirements.txt -i https://mirrors.cloud.tencent.com/pypi/simple
+%VENV_PYTHON% -m pip install -r requirements.txt -i https://mirrors.cloud.tencent.com/pypi/simple
 if %errorlevel% neq 0 (
     echo.
     echo   [WARN] Mirror failed, trying PyPI official...
     echo.
-    venv\Scripts\python.exe -m pip install -r requirements.txt
+    %VENV_PYTHON% -m pip install -r requirements.txt
     if !errorlevel! neq 0 (
         echo.
         echo   [ERROR] Dependency installation failed!
@@ -221,7 +212,7 @@ echo   Checking modules...
 set ALL_OK=1
 
 for %%m in (PyQt6 dxcam keyboard rapidocr_onnxruntime cv2 PIL numpy pypinyin) do (
-    venv\Scripts\python.exe -c "import %%m" >nul 2>&1
+    %VENV_PYTHON% -c "import %%m" >nul 2>&1
     if !errorlevel! equ 0 (
         echo     [+] %%m
     ) else (
