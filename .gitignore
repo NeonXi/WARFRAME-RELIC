@@ -39,12 +39,29 @@ WARFRAME-RELIC.spec
 # Crash log
 crash_log.txt
 
-# Test / sandbox artifacts
-testvenv/
-check_imports.py
-check_startup.py
-setup_output.txt
-setup_error.txt
+# Runtime logs
+debug.log
+launch_log.txt
+startup_log.txt
+
+# Database temp files
+*.db.new
+*.db.backup.*
+
+# User local config (contains machine-specific paths)
+data/mirror_config.json
+data/background_config.json
+data/presets/_active.json
+
+# macOS artifacts
+__MACOSX/
+
+# Packaging scripts
+打包.bat
+打包单文件.bat
+一键打包.bat
+build_exe.py
+build_onefile.py
 
 # Temporary/test files
 

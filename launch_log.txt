@@ -1,2 +1,0 @@
-?? 2026/06/05 20:30:42.53 - Starting WARFRAME-RELIC 
-?? 2026/06/05 20:30:42.54 - Starting main.py 

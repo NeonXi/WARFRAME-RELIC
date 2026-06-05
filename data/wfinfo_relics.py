@@ -5,7 +5,7 @@ WFInfo 遗物掉落表数据库模块
 - 支持模糊匹配（处理 OCR 误识别）
 - 线程安全：使用 threading.Lock 保护连接生命周期
 
-数据源: relics.db (由 migrate_to_sqlite.py 从 relics.json 生成)
+数据源: relics.db (由 data_pipeline.py 从 all.json 生成)
 """
 
 import os
