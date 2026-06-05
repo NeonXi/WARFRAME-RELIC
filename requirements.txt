@@ -1,5 +1,5 @@
 PyQt6>=6.7.0
-dxcam>=0.4.0
+dxcam>=0.3.0
 keyboard>=0.13.5
 rapidocr-onnxruntime>=1.4.3
 Pillow>=10.0.0
