@@ -11,7 +11,8 @@ __pycache__/
 *.pyo
 *.pyd
 
-# SQLite temporary files
+# SQLite databases (generated locally)
+*.db
 *.db-shm
 *.db-wal
 *.db-journal
