@@ -1,8 +1,6 @@
 @echo off
-setlocal enabledelayedexpansion
-chcp 437 >nul 2>&1
 cd /d "%~dp0"
-title Git Push - WARFRAME-RELIC
+title Git Push
 
 echo.
 echo ============================================================
@@ -10,80 +8,120 @@ echo         WARFRAME-RELIC - Git Push
 echo ============================================================
 echo.
 
-rem --- Check if inside a git repo ---
+rem -- check git repo
 git rev-parse --is-inside-work-tree >nul 2>&1
-if !errorlevel! neq 0 (
-    echo [ERROR] Not a Git repository!
+if errorlevel 1 (
+    echo [ERROR] Not a Git repository
     pause
     exit /b 1
 )
 
-rem --- Show current branch ---
-for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD') do set BRANCH=%%i
-echo [Branch] !BRANCH!
-echo.
+rem -- branch
+for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD') do set BR=%%i
+echo Branch: %BR%
 
-rem --- Pull latest changes first ---
-echo [0/4] Pulling latest changes...
-git pull --rebase origin !BRANCH!
-if !errorlevel! neq 0 (
-    echo [WARN] Pull failed or no remote updates. Continuing...
+rem -- commits ahead
+for /f "delims=" %%i in ('git rev-list --count origin/%BR%..HEAD') do set AH=%%i
+if "%AH%"=="" set AH=0
+if %AH% gtr 0 (
+    echo Ahead of remote: %AH% commit(s)
 )
 echo.
 
-rem --- Show changes ---
-echo [Changes]
+rem -- status
+echo ---------- Changes ----------
 git status --short
+echo ------------------------------
 echo.
 
-rem --- Confirm ---
-set /p CONFIRM="Commit and push these changes? (Y/N): "
-if /i not "!CONFIRM!"=="Y" (
+rem -- untracked
+for /f "delims=" %%i in ('git ls-files --others --exclude-standard') do set UT=1
+if "%UT%"=="1" (
+    echo Warning: untracked files exist (will NOT be staged)
+    git ls-files --others --exclude-standard
+    echo.
+)
+
+rem -- check if anything to do
+git diff --quiet
+set D=%errorlevel%
+git diff --cached --quiet
+set S=%errorlevel%
+if %D% equ 0 if %S% equ 0 if %AH% equ 0 (
+    echo Nothing to commit or push.
+    pause
+    exit /b 0
+)
+
+rem -- confirm
+set /p CF="Commit and push? (Y/N): "
+if /i not "%CF%"=="Y" (
     echo Cancelled.
     pause
     exit /b 0
 )
 echo.
 
-rem --- Commit message ---
-set /p COMMIT_MSG="Enter commit message (leave blank for default): "
-if "!COMMIT_MSG!"=="" (
-    set COMMIT_MSG=update
-)
+rem -- commit message
+set /p MS="Commit message (default: update): "
+if "%MS%"=="" set MS=update
 echo.
 
-rem --- Execute git operations ---
-echo [1/4] git add -A ...
-git add -A
-if !errorlevel! neq 0 (
-    echo [ERROR] git add failed!
+rem -- stage
+echo [1/4] Staging changes...
+git add -u
+if errorlevel 1 (
+    echo [ERROR] git add failed
     pause
     exit /b 1
 )
+echo        OK
+echo.
 
-echo [2/4] git commit ...
-git commit -m "!COMMIT_MSG!"
-if !errorlevel! neq 0 (
-    echo [INFO] Nothing to commit, or commit failed.
+rem -- commit (if needed)
+git diff --cached --quiet
+if errorlevel 1 (
+    echo [2/4] Committing...
+    git commit -m "%MS%"
+    if errorlevel 1 (
+        echo [ERROR] Commit failed
+        pause
+        exit /b 1
+    )
+    echo        OK
+    echo.
+) else (
+    echo [2/4] Nothing to commit, pushing existing commits...
+    echo.
 )
 
-echo [3/4] git push ...
-git push origin !BRANCH!
-if !errorlevel! neq 0 (
-    echo [ERROR] Push failed! Check network or remote settings.
+rem -- pull
+echo [3/4] Pulling from remote...
+git pull --rebase origin %BR%
+if errorlevel 1 (
+    echo [WARN] Pull failed, continuing anyway...
     echo.
-    echo Try:
-    echo   1. Check your internet connection
-    echo   2. Use a VPN or proxy if needed
-    echo   3. Run: git push origin !BRANCH!
+) else (
+    echo        OK
+    echo.
+)
+
+rem -- push
+echo [4/4] Pushing...
+git push origin %BR%
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Push failed
+    echo Manual: git push origin %BR%
+    echo.
     pause
     exit /b 1
 )
 
 echo.
 echo ============================================================
-echo        Push Successful!
+echo        Push Successful
 echo ============================================================
 echo.
 pause
-endlocal
+exit /b 0

@@ -2,8 +2,10 @@ import time
 import json
 import os
 import ctypes
+import threading
+from collections import deque
 from PyQt6.QtWidgets import QWidget, QLabel, QApplication, QPushButton
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QCursor
 
 from core.word_wrap_button import WordWrapButton
@@ -50,6 +52,10 @@ class Overlay(QWidget):
     # ★ 新增：功能按钮点击信号，携带 mode 名称
     mode_selected = pyqtSignal(str)
 
+    # ★ 跨线程调度信号：解决 QTimer.singleShot(0) 在 threading.Thread 中不工作的问题
+    #   QTimer.singleShot 在调用线程中创建定时器，但 threading.Thread 没有 Qt 事件循环 → 永不触发
+    _dispatch_signal = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         # ★ DPI 缩放比例：dxcam 物理像素 → Qt 逻辑坐标
@@ -88,7 +94,45 @@ class Overlay(QWidget):
         self._hide_timer.timeout.connect(self._check_auto_hide)
         self._hide_timer.start(100)
 
+        # ★ 跨线程调度基础设施：queue + lock + signal
+        #   threading.Thread 没有 Qt 事件循环，QTimer.singleShot(0) 无法工作
+        #   改用 pyqtSignal 投递到主线程
+        #   ★ 必须显式指定 Qt.QueuedConnection：Qt.AutoConnection 在 sender 和 receiver
+        #     同属主线程时可能误判为 DirectConnection，导致 _handle_dispatch 在后台线程
+        #     执行，进而引发 _dispatch_lock 死锁
+        self._dispatch_queue = deque()
+        self._dispatch_lock = threading.Lock()
+        self._dispatch_signal.connect(self._handle_dispatch,
+                                      type=Qt.ConnectionType.QueuedConnection)
+
         self._load_region()
+
+    def _handle_dispatch(self):
+        """处理跨线程调度队列（在主线程执行）。"""
+        # ★ 先拷贝队列再释放锁，避免在持锁状态下调用 fn() 导致潜在死锁
+        with self._dispatch_lock:
+            queue = list(self._dispatch_queue)
+            self._dispatch_queue.clear()
+        if queue:
+            print(f"[诊断-_handle_dispatch] 处理 {len(queue)} 个调度: {[fn.__name__ for fn, _, _ in queue]}", flush=True)
+        for fn, args, kwargs in queue:
+            try:
+                fn(*args, **kwargs)
+            except Exception as e:
+                print(f"[Overlay._handle_dispatch] 执行 {fn.__name__} 时出错: {e}")
+                import traceback
+                traceback.print_exc()
+
+    def _invoke_on_main(self, fn, *args, **kwargs):
+        """确保 fn 在主线程执行。使用 signal 替代 QTimer.singleShot(0)，
+        因为后者在 threading.Thread 中因缺少事件循环而永不触发。"""
+        if QThread.currentThread() != QApplication.instance().thread():
+            print(f"[诊断-_invoke_on_main] {fn.__name__} 从非主线程调度到主线程", flush=True)
+            with self._dispatch_lock:
+                self._dispatch_queue.append((fn, args, kwargs))
+            self._dispatch_signal.emit()
+        else:
+            fn(*args, **kwargs)
 
     # ========== 鼠标穿透 ==========
 
@@ -143,12 +187,18 @@ class Overlay(QWidget):
         regions: [(x, y, w, h, label), ...] 屏幕物理坐标列表
         duration_ms: 框线显示时长（毫秒），到时自动清除
         """
+        if QThread.currentThread() != QApplication.instance().thread():
+            self._invoke_on_main(self.show_split_regions, regions, duration_ms)
+            return
         self._split_regions = regions
         self._split_regions_until = int(time.time() * 1000) + duration_ms
         self.update()
 
     def _clear_split_regions(self):
         """清除4等分区域框线。"""
+        if QThread.currentThread() != QApplication.instance().thread():
+            self._invoke_on_main(self._clear_split_regions)
+            return
         if self._split_regions:
             self._split_regions = []
             self._split_regions_until = 0
@@ -176,9 +226,9 @@ class Overlay(QWidget):
     # 功能按钮定义：mode_id → S_key
     # 注：显示名通过 S("button", ...) 从 ui_strings 读取，图标从 icons.py 读取
     MODE_DEFS = {
-        "check_status": "mode_check_status",
-        "query_parts":  "mode_query_parts",
-        "query_price":  "mode_query_price",
+        "check_status": "mode_check",
+        "query_parts":  "mode_query",
+        "query_price":  "mode_price",
         "translate":    "mode_translate",
     }
 
@@ -297,7 +347,7 @@ class Overlay(QWidget):
 
     def start_selection(self):
         """启启动区域框选模式。"""
-        self._log("▶ 框选模式启动")
+        self._log(">> 框选模式启动")
         self._annotations = []
         self._hide_mode_buttons()
         self._apply_mouse_passthrough(False)
@@ -335,7 +385,7 @@ class Overlay(QWidget):
         self._save_region()
 
         msg = S.format("overlay", "region_saved", l=left, t=top, r=right, b=bottom, w=w, h=h)
-        self._log(f"✓ {msg}")
+        self._log(f"[ok] {msg}")
         self.label.setText(msg)
         self.label.adjustSize()
         self.label.move(50, 50)
@@ -413,6 +463,9 @@ class Overlay(QWidget):
         self.update()
 
     def clear_annotations(self):
+        if QThread.currentThread() != QApplication.instance().thread():
+            self._invoke_on_main(self.clear_annotations)
+            return
         self._annotations = []
         self._stream_queue = []
         self._stream_timer.stop()
@@ -422,6 +475,13 @@ class Overlay(QWidget):
 
     def show_annotations_stream(self, annotations, auto_hide_ms=5000, interval_ms=30, batch_size=2):
         """逐批显示标注，产生「逐步出现」的动画感。"""
+        import threading
+        print(f"[诊断-标注流] annotations={len(annotations)}, auto_hide={auto_hide_ms}, "
+              f"thread={threading.current_thread().name}", flush=True)
+        if QThread.currentThread() != QApplication.instance().thread():
+            self._invoke_on_main(self.show_annotations_stream,
+                                 annotations, auto_hide_ms, interval_ms, batch_size)
+            return
         self.clear_annotations()
 
         # 预处理所有标注项（复用归一化逻辑）
@@ -430,6 +490,8 @@ class Overlay(QWidget):
 
         # 启动定时器
         self._stream_timer.start(interval_ms)
+        print(f"[诊断-标注流] timer started, interval={interval_ms}, "
+              f"queue={len(self._stream_queue)}, timer_active={self._stream_timer.isActive()}", flush=True)
 
     def _stream_tick(self):
         """每次定时器触发：从队列弹出 batch_size 条追加到显示列表"""
@@ -441,11 +503,16 @@ class Overlay(QWidget):
         self._stream_queue = self._stream_queue[self._stream_batch_size:]
 
         self._annotations.extend(batch)
+        if len(self._annotations) <= 4:
+            print(f"[诊断-stream_tick] annotations={len(self._annotations)}, "
+                  f"queue={len(self._stream_queue)}, "
+                  f"first=({batch[0].x},{batch[0].y}) '{batch[0].text[:30]}'", flush=True)
         self.update()
 
         # 队空则停
         if not self._stream_queue:
             self._stream_timer.stop()
+            print(f"[诊断-stream_tick] 全部完成, annotations={len(self._annotations)}", flush=True)
 
     # ========== 绘制 ==========
 
@@ -455,6 +522,8 @@ class Overlay(QWidget):
 
         now = int(time.time() * 1000)
         active = [a for a in self._annotations if not a.is_expired(now)]
+        if self._annotations and not active:
+            print(f"[诊断-paintEvent] annotations={len(self._annotations)} but all expired!", flush=True)
         if active:
             painter.setFont(QFont("Microsoft YaHei", 12))
             for a in active:
@@ -544,6 +613,9 @@ class Overlay(QWidget):
     # ========== 显示信息 ==========
 
     def display(self, text, auto_hide_ms=5000, pos=None):
+        if QThread.currentThread() != QApplication.instance().thread():
+            self._invoke_on_main(self.display, text, auto_hide_ms, pos)
+            return
         self.label.setText(text)
         self.label.adjustSize()
         if pos:
@@ -586,9 +658,9 @@ class Overlay(QWidget):
                     self._preview_label.hide()
                 self._hide_at = 0
                 if had_annotations:
-                    self._log("🗑 右键清除标注")
+                    self._log("[x] 右键清除标注")
                 if had_buttons:
-                    self._log("🗑 右键关闭功能选择")
+                    self._log("[x] 右键关闭功能选择")
             self._right_was_down = right_now
 
         # 自动隐藏计时器

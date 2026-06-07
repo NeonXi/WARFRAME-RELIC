@@ -240,7 +240,7 @@ class MainWindow(QMainWindow):
         # Status
         status = str(order_data.get('status', 'offline'))
         status_item = QTableWidgetItem(get_status_text(status))
-        status_item.setForeground(QColor(get_status_color(status)))
+        status_item.setForeground(QColor(str(get_status_color(status))))
         self._results_table.setItem(row, 1, status_item)
         
         # Price

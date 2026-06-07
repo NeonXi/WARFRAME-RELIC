@@ -12,7 +12,7 @@
 """
 
 from typing import Optional
-from data.items_i18n import search_items
+from data.item_index import search_items
 import sqlite3
 import os
 import re
@@ -56,7 +56,7 @@ def _en_part_to_cn(en_name: str) -> str:
 
 
 def _upsert_part_to_db(item: dict) -> None:
-    """将部件直通发现的新物品写入 items_i18n.db（增量补充）。
+    """将部件直通发现的新物品写入 warframe.db（增量补充）。
 
     写入前会尝试从 zh_en_dict.json 查找官方中文名，找不到则用程序拼接的中文名。
     这样下次 OCR 识别时就能直接精确匹配，无需再走 part_direct 路径。
@@ -71,62 +71,60 @@ def _upsert_part_to_db(item: dict) -> None:
 
     # ★ 拒绝写入不含 Prime 的战甲/守护部件（必为 OCR 错误）
     if 'Prime' not in en_name and category in ('Warframe Parts', 'Sentinel Parts'):
-        print(f"[DB-补充] ✗ 跳过非 Prime 部件（OCR 可能漏了 Prime）: \"{en_name}\"", flush=True)
+        print(f"[DB-补充] [x] 跳过非 Prime 部件（OCR 可能漏了 Prime）: \"{en_name}\"", flush=True)
         return
 
     try:
         db_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-        db_path = os.path.join(db_dir, 'items_i18n.db')
+        db_path = os.path.join(db_dir, 'warframe.db')
         if not os.path.exists(db_path):
             return
 
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, check_same_thread=False)
         cur = conn.cursor()
 
         # 检查是否已存在（避免重复写入）
-        cur.execute("SELECT id FROM items WHERE en_name = ?", (en_name,))
+        cur.execute("SELECT rowid FROM items WHERE name = ?", (en_name,))
         if cur.fetchone():
             conn.close()
             return
 
-        # 尝试从 zh_en_dict.json 获取更好的中文名
-        zh_dict_path = os.path.join(db_dir, 'zh_en_dict.json')
-        if os.path.exists(zh_dict_path):
-            try:
-                import json
-                with open(zh_dict_path, 'r', encoding='utf-8') as f:
-                    zh_en_list = json.load(f)
-                en_lower = en_name.lower()
-                for entry in zh_en_list:
-                    if isinstance(entry, list) and len(entry) >= 2:
-                        if entry[1].strip().lower() == en_lower:
-                            zh_name = entry[0].strip()
-                            break
-            except Exception:
-                pass
+        # 尝试从 warframe.db 的 game_translations 表获取更好的中文名
+        try:
+            import sqlite3
+            conn = sqlite3.connect(db_path, check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT zh FROM game_translations WHERE en = ?", (en_name,)
+            ).fetchone()
+            if row and row['zh']:
+                zh_name = row['zh']
+            conn.close()
+        except Exception:
+            pass
 
         # 构造 unique_name
         slug = en_name.lower().replace(' ', '_').replace("'", "").replace('-', '_')
         unique_name = f"/Lotus/Supplement/{slug}"
 
         is_prime = 1 if 'Prime' in en_name else 0
-        is_tradable = 1
+        tradable = 1
         rarity = 'Prime' if is_prime else ''
 
         cur.execute(
             """INSERT OR IGNORE INTO items
-               (unique_name, zh_name, en_name, category, item_type,
-                is_tradable, is_prime, rarity, mr_requirement, image_name,
+               (unique_name, name, zh_name, category, type,
+                tradable, is_prime, rarity, mr_requirement, image_name,
                 description_zh, description_en)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (unique_name, zh_name, en_name, category, '',
-             is_tradable, is_prime, rarity, 0, '', '', '')
+            (unique_name, en_name, zh_name, category, '',
+             tradable, is_prime, rarity, 0, '', '', '')
         )
         conn.commit()
         conn.close()
-        print(f"[DB-补充] ✓ 已写入数据库: \"{en_name}\" → \"{zh_name}\"", flush=True)
+        print(f"[DB-补充] [ok] 已写入数据库: \"{en_name}\" -> \"{zh_name}\"", flush=True)
     except Exception as e:
-        print(f"[DB-补充] ✗ 写入失败: {e}", flush=True)
+        print(f"[DB-补充] [x] 写入失败: {e}", flush=True)
 
 
 def _split_camel_case(text: str) -> str:
@@ -157,25 +155,25 @@ def _is_part_prime_only(en_name: str) -> bool:
         import sqlite3
 
         db_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-        db_path = os.path.join(db_dir, 'items_i18n.db')
+        db_path = os.path.join(db_dir, 'warframe.db')
         if not os.path.exists(db_path):
             return False
 
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, check_same_thread=False)
         conn.row_factory = sqlite3.Row
 
         # 提取基础名（前 1~2 个单词）
         words = en_name.split()
         for n in range(min(2, len(words)), 0, -1):
             base = ' '.join(words[:n])
-            sql = "SELECT en_name FROM items WHERE is_tradable = 1 AND en_name LIKE ?"
+            sql = "SELECT name FROM items WHERE tradable = 1 AND name LIKE ?"
             rows = conn.execute(sql, (f"{base} %",)).fetchall()
 
             if rows:
                 _WARFRAME_PARTS = {'Chassis', 'Systems', 'Neuroptics'}
                 _SENTINEL_PARTS = {'Carapace', 'Cerebrum'}
 
-                has_prime = any('Prime' in r['en_name'] for r in rows)
+                has_prime = any('Prime' in r['name'] for r in rows)
                 if not has_prime:
                     conn.close()
                     return False
@@ -183,7 +181,7 @@ def _is_part_prime_only(en_name: str) -> bool:
                 # 检查部件词类型
                 all_parts = set()
                 for r in rows:
-                    for w in r['en_name'].split():
+                    for w in r['name'].split():
                         if w in _WARFRAME_PARTS:
                             all_parts.add('warframe')
                         elif w in _SENTINEL_PARTS:
@@ -195,7 +193,7 @@ def _is_part_prime_only(en_name: str) -> bool:
                     return True
 
                 # 武器：所有条目都含 Prime
-                all_prime = all('Prime' in r['en_name'] for r in rows)
+                all_prime = all('Prime' in r['name'] for r in rows)
                 conn.close()
                 return all_prime
 
@@ -260,11 +258,11 @@ def _match_one_item(
         if item.get('en_name', '').lower() == search_text.lower():
             # ★ 排除整套（Set），永远不要查套装价格
             if item.get('en_name', '').endswith(' Set'):
-                print(f"[匹配-精确] ✗ 排除套装: \"{item['en_name']}\"", flush=True)
+                print(f"[匹配-精确] [x] 排除套装: \"{item['en_name']}\"", flush=True)
                 continue
             matched = item
             match_quality = 'exact'
-            print(f"[匹配-精确] ✓ \"{item['en_name']}\"", flush=True)
+            print(f"[匹配-精确] [ok] \"{item['en_name']}\"", flush=True)
             break
 
     # ---- 第2轮: 模糊匹配 ----
@@ -273,15 +271,15 @@ def _match_one_item(
         if best:
             matched = best
             match_quality = 'fuzzy'
-            print(f"[匹配-模糊] ✓ \"{matched['en_name']}\"", flush=True)
+            print(f"[匹配-模糊] [ok] \"{matched['en_name']}\"", flush=True)
         else:
-            print(f"[匹配-模糊] ✗ 无合理匹配: {[i['en_name'] for i in items[:5]]}", flush=True)
+            print(f"[匹配-模糊] [x] 无合理匹配: {[i['en_name'] for i in items[:5]]}", flush=True)
 
     # ---- 第3轮: 纠错候选 ----
     if not matched and variants:
         matched, match_quality = _try_variants(ocr_text, variants)
         if matched:
-            print(f"[匹配-候选] ✓ \"{matched['en_name']}\" (quality={match_quality})", flush=True)
+            print(f"[匹配-候选] [ok] \"{matched['en_name']}\" (quality={match_quality})", flush=True)
 
     # ---- 第4轮: 部件蓝图直通 ----
     if not matched and _is_warframe_part(ocr_text):
@@ -300,7 +298,7 @@ def _match_one_item(
         if 'Prime' not in best_name and _is_part_prime_only(best_name):
             # 在部件词前插入 Prime（如 "Ash Neuroptics Blueprint" → "Ash Prime Neuroptics Blueprint"）
             best_name = _insert_prime_before_part(best_name)
-            print(f"[匹配-部件直通] 自动补全 Prime: \"{ocr_text}\" → \"{best_name}\"", flush=True)
+            print(f"[匹配-部件直通] 自动补全 Prime: \"{ocr_text}\" -> \"{best_name}\"", flush=True)
 
         matched = {
             'en_name': best_name,
@@ -308,13 +306,13 @@ def _match_one_item(
             'category': 'Warframe Parts',
         }
         match_quality = 'part_direct'
-        print(f"[匹配-部件直通] ✓ \"{best_name}\" → zh=\"{matched['zh_name']}\"", flush=True)
+        print(f"[匹配-部件直通] [ok] \"{best_name}\" -> zh=\"{matched['zh_name']}\"", flush=True)
 
         # ★ 将新发现的部件同步写入数据库，下次就能精确匹配
         _upsert_part_to_db(matched)
 
     if not matched:
-        print(f"[匹配-失败] ✗ \"{ocr_text}\" 所有轮次均失败", flush=True)
+        print(f"[匹配-失败] [x] \"{ocr_text}\" 所有轮次均失败", flush=True)
 
     return matched, match_quality
 
@@ -379,7 +377,7 @@ def _fuzzy_match(search_text: str, items: list[dict]) -> Optional[dict]:
             best_item = item
 
     if best_item:
-        print(f"[匹配-编辑距离] ✓ \"{best_item['en_name']}\" (dist={best_dist})", flush=True)
+        print(f"[匹配-编辑距离] [ok] \"{best_item['en_name']}\" (dist={best_dist})", flush=True)
     return best_item
 
 
@@ -418,7 +416,7 @@ def _try_variants(ocr_text: str, variants: list[str]) -> tuple[Optional[dict], s
             if v_item.get('en_name', '').lower() == variant.lower():
                 # ★ 排除整套（Set）
                 if v_item.get('en_name', '').endswith(' Set'):
-                    print(f"[匹配-候选] ✗ 排除套装: \"{v_item['en_name']}\"", flush=True)
+                    print(f"[匹配-候选] [x] 排除套装: \"{v_item['en_name']}\"", flush=True)
                     continue
                 return v_item, 'variant'
         # 模糊
@@ -516,7 +514,7 @@ def _filter_relic_refinements(results: list[dict]) -> list[dict]:
                         base_matched = bi
                         break
                 if base_matched:
-                    print(f"[精炼过滤] '{en_name}' → '{base_matched.get('en_name', base_name)}'", flush=True)
+                    print(f"[精炼过滤] '{en_name}' -> '{base_matched.get('en_name', base_name)}'", flush=True)
                     item['en_name'] = base_matched.get('en_name', base_name)
                     item['zh_name'] = base_matched.get('zh_name', item.get('zh_name', ''))
                     item['category'] = base_matched.get('category', item.get('category', ''))
@@ -587,7 +585,7 @@ def match_and_price(
     for item in base_results:
         en_name = item.get('en_name', '')
         if en_name.endswith(' Set'):
-            print(f"[价格查询] ✗ 排除套装: \"{en_name}\"", flush=True)
+            print(f"[价格查询] [x] 排除套装: \"{en_name}\"", flush=True)
             continue
         filtered.append(item)
 

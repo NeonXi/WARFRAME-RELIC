@@ -84,9 +84,9 @@ CYBER_BORDER   = _proxy('border')
 CYBER_TEXT     = _proxy('text')
 CYBER_TEXT_DIM = _proxy('text_dim')
 
-# 遗物状态：统一使用霓虹主色
-COLOR_VAULTED   = _proxy('cyber_green')
-COLOR_AVAILABLE = _proxy('cyber_red')
+# 遗物状态：入库=红色(不可获取)，出库=绿色(可获取)
+COLOR_VAULTED   = _proxy('cyber_red')
+COLOR_AVAILABLE = _proxy('cyber_green')
 COLOR_UNKNOWN   = _proxy('color_unknown')
 FALLBACK_COLOR  = _proxy('color_unknown')
 
@@ -124,3 +124,22 @@ PROGRESS_GRADIENT_END = _proxy('progress_gradient_end')
 LOG_TIMESTAMP = _proxy('text_dim')
 FETCH_MANUAL_HINT = _proxy('fetch_manual_hint')
 FETCH_ERROR_COLOR = _proxy('fetch_error_color')
+
+# ---- 辅助色 ----
+SUBTLE_BORDER = _proxy('subtle_border')
+MUTED_TEXT = _proxy('muted_text')
+LIGHT_TEXT = _proxy('light_text')
+COLOR_BLACK = _proxy('color_black')
+COLOR_DARK_GRAY = _proxy('color_dark_gray')
+COLOR_ENEMY = _proxy('color_enemy')
+COLOR_PURPLE = _proxy('color_purple')
+LINK_COLOR = _proxy('link_color')
+
+# ---- 在线状态 ----
+STATUS_ONLINE = _proxy('status_online')
+STATUS_INGAME = _proxy('status_ingame')
+STATUS_OFFLINE = _proxy('status_offline')
+STATUS_AWAY = _proxy('status_away')
+
+# ---- JSON 查看器 ----
+JSON_BOOLEAN = _proxy('json_boolean')

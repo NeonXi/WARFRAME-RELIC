@@ -1,0 +1,45 @@
+{
+  "mirrors": [
+    "https://github.com.cnpmjs.org/{owner}/{repo}.git",
+    "https://ghfast.top/https://github.com/{owner}/{repo}.git",
+    "https://mirror.ghproxy.com/https://github.com/{owner}/{repo}.git",
+    "https://ghproxy.com/https://github.com/{owner}/{repo}.git",
+    "https://gitclone.com/github.com/{owner}/{repo}.git",
+    "https://github.com/{owner}/{repo}.git"
+  ],
+  "repo_test_results": {
+    "warframe-items": {
+      "tested_mirrors": {
+        "0": false,
+        "1": true,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false
+      },
+      "last_successful_index": 1
+    },
+    "warframe-drop-data": {
+      "tested_mirrors": {
+        "0": false,
+        "1": true,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false
+      },
+      "last_successful_index": 1
+    },
+    "warframe-public-export-plus": {
+      "tested_mirrors": {
+        "0": false,
+        "1": true,
+        "2": false,
+        "3": false,
+        "4": false,
+        "5": false
+      },
+      "last_successful_index": 1
+    }
+  }
+}

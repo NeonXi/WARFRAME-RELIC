@@ -10,6 +10,7 @@ import subprocess
 import sys
 import os
 import time
+import threading
 import traceback
 from datetime import datetime
 
@@ -28,15 +29,28 @@ def log(msg: str):
     print(f"[{timestamp()}] {msg}")
 
 
-def write_crash_log(returncode: int, stderr: str = ''):
+def _safe_decode(data: bytes) -> str:
+    """安全解码字节数据，尝试多种编码。"""
+    encodings = ['utf-8', 'gbk', 'gb18030', 'cp936', 'big5']
+    for encoding in encodings:
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return data.decode('utf-8', errors='replace')
+
+
+def write_crash_log(returncode: int, stderr: str = '', stdout_tail: str = ''):
     """将崩溃信息写入 crash_log.txt"""
     try:
-        with open(CRASH_LOG, 'a', encoding='utf-8') as f:
+        with open(CRASH_LOG, 'a', encoding='utf-8', errors='replace') as f:
             f.write(f"\n{'=' * 60}\n")
             f.write(f"崩溃时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"退出码: {returncode}\n")
+            f.write(f"退出码: {returncode} (0x{returncode & 0xFFFFFFFF:08X})\n")
             if stderr:
                 f.write(f"stderr:\n{stderr}\n")
+            if stdout_tail:
+                f.write(f"stdout 最后输出:\n{stdout_tail}\n")
             f.write(f"{'=' * 60}\n")
     except Exception:
         pass
@@ -91,18 +105,23 @@ def _find_python() -> str:
 
 def start_process(capture_output: bool = False) -> subprocess.Popen:
     """启动 main.py 子进程（继承当前环境变量，确保 venv 可用）。
-    
+
     watch 模式下始终捕获 stderr 用于崩溃日志记录。
+    ★ 始终捕获 stdout 用于崩溃时回溯最后几行输出。
     """
     kwargs = {'env': os.environ.copy()}
+    # Windows: 隐藏控制台窗口（防止 keyboard 钩子注册时弹出黑窗）
+    if sys.platform == 'win32':
+        kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
     if capture_output:
         kwargs['stdout'] = subprocess.PIPE
         kwargs['stderr'] = subprocess.STDOUT
-        kwargs['text'] = True
+        kwargs['text'] = False
     else:
-        # watch 模式：只捕获 stderr，stdout 仍输出到控制台
+        # ★ 始终捕获 stdout 和 stderr，用于崩溃时回溯
+        kwargs['stdout'] = subprocess.PIPE
         kwargs['stderr'] = subprocess.PIPE
-        kwargs['text'] = True
+        kwargs['text'] = False
     return subprocess.Popen([_find_python(), 'main.py'], **kwargs)
 
 
@@ -132,6 +151,8 @@ def run_once(capture_output: bool = False):
     try:
         if capture_output and proc.stdout:
             for line in proc.stdout:
+                if isinstance(line, bytes):
+                    line = line.decode('utf-8', errors='replace')
                 sys.stdout.write(line)
                 sys.stdout.flush()
         else:
@@ -147,8 +168,16 @@ def run_once(capture_output: bool = False):
         returncode = proc.poll()
 
     if returncode != 0:
+        stderr_text = ""
+        if proc.stderr:
+            try:
+                stderr_bytes = proc.stderr.read()
+                if isinstance(stderr_bytes, bytes):
+                    stderr_text = stderr_bytes.decode('utf-8', errors='replace')
+            except:
+                pass
         log(f"WARNING: Process exited, code: {returncode}")
-        write_crash_log(returncode)
+        write_crash_log(returncode, stderr_text)
     else:
         log("OK: Process exited normally")
 
@@ -158,10 +187,33 @@ def run_watch():
     proc = start_process()
     last_mtimes = get_mtimes()
     restart_count = 0
+    stdout_lines = []  # ★ 保留最近的 stdout 行用于崩溃诊断
+    MAX_TAIL = 50
+
+    # 启动 stdout 读取线程
+    def _reader(pipe, buf):
+        """后台线程：持续读取子进程 stdout，保留最近行。"""
+        while True:
+            try:
+                line = pipe.readline()
+                if not line:
+                    break
+                decoded = _safe_decode(line).rstrip('\n\r')
+                buf.append(decoded)
+                if len(buf) > MAX_TAIL:
+                    buf.pop(0)
+                # 同时输出到 dev_runner 控制台
+                print(decoded, flush=True)
+            except Exception:
+                break
+
+    stdout_thread = threading.Thread(
+        target=_reader, args=(proc.stdout, stdout_lines), daemon=True)
+    stdout_thread.start()
 
     # 启动时清空旧崩溃日志
     try:
-        with open(CRASH_LOG, 'w', encoding='utf-8') as f:
+        with open(CRASH_LOG, 'w', encoding='utf-8', errors='replace') as f:
             f.write(f"=== dev_runner 崩溃日志 (启动: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ===\n")
     except Exception:
         pass
@@ -174,21 +226,36 @@ def run_watch():
             ret = proc.poll()
             if ret is not None and ret != 0:
                 restart_count += 1
-                # 读取 stderr
                 stderr_text = ""
+                stdout_tail = ""
                 if proc.stderr:
                     try:
-                        stderr_text = proc.stderr.read()
-                    except Exception:
-                        pass
+                        stderr_bytes = proc.stderr.read()
+                        if isinstance(stderr_bytes, bytes):
+                            stderr_text = stderr_bytes.decode('utf-8', errors='replace')
+                        else:
+                            stderr_text = str(stderr_bytes)
+                    except Exception as e:
+                        try:
+                            stderr_text = str(proc.stderr.read(), errors='replace')
+                        except:
+                            stderr_text = "Failed to read stderr"
+                # ★ 获取 stdout 最后输出
+                stdout_tail = '\n'.join(stdout_lines[-30:])
                 log(f"WARNING: Process crashed (exit code: {ret}), writing crash log...")
                 if stderr_text.strip():
                     log(f"   Error: {stderr_text.strip().split(chr(10))[-1]}")
-                write_crash_log(ret, stderr_text)
+                if stdout_tail:
+                    log(f"   Last stdout: {stdout_tail.split(chr(10))[-1]}")
+                write_crash_log(ret, stderr_text, stdout_tail)
                 # 等待 1 秒再重启，避免频繁崩溃循环
                 time.sleep(1)
                 log(">> Restarting main.py ...")
+                stdout_lines.clear()
                 proc = start_process()
+                stdout_thread = threading.Thread(
+                    target=_reader, args=(proc.stdout, stdout_lines), daemon=True)
+                stdout_thread.start()
                 last_mtimes = get_mtimes()  # 重启后刷新时间戳
                 continue
 
@@ -219,7 +286,7 @@ def run_watch():
                 if changed:
                     # 最多显示前 5 个文件
                     for f in changed[:5]:
-                        print(f"     → {f}")
+                        print(f"     -> {f}")
                     if len(changed) > 5:
                         print(f"     ... 还有 {len(changed) - 5} 个文件")
 

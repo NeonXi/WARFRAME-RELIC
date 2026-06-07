@@ -37,6 +37,11 @@ class RelicNameRecognizer(BaseOCR):
         r'(Lith|Meso|Neo|Axi|Requiem|Vanguard)\s*([A-Za-z0-9]{2,3})\s*Relic',
         re.IGNORECASE)
 
+    # 英文纪元正则（无 Relic 后缀）: Lith C7 / Axi A12
+    EN_PATTERN_NO_RELIC = re.compile(
+        r'^(Lith|Meso|Neo|Axi|Requiem|Vanguard)\s+([A-Za-z0-9]{2,3})$',
+        re.IGNORECASE)
+
     # 垃圾文本过滤
     TRASH_PATTERN = re.compile(
         r'^[xX]\d+$|^$$.*[$$】]$|^不装备遗物$|^(?:无|没有|No)\s*(?:遗物|Relic)', re.IGNORECASE)
@@ -69,20 +74,49 @@ class RelicNameRecognizer(BaseOCR):
 
     @classmethod
     def _fix_ocr_number(cls, code: str) -> str:
-        """将 OCR 识别出的代码修复为标准格式：[A-Z]\\d{1,2}。"""
+        """将 OCR 识别出的代码修复为标准格式：[A-Z]\\d{1,2}。
+
+        策略：
+        1. 先尝试直接修复（首位数字→字母，其余字母→数字）
+        2. 如果修复后不合法，尝试去掉首位（OCR 可能多识别了一个字符）
+        3. 验证格式 [A-Z]\\d{1,2}，不合法则返回原值
+        """
         if not code or len(code) < 2 or len(code) > 3:
             return code
 
-        chars = list(code)
-        chars[0] = chars[0].upper().translate(cls._DIGIT_TO_ALPHA)
-        for i in range(1, len(chars)):
-            if not chars[i].isdigit():
-                chars[i] = chars[i].translate(cls._ALPHA_TO_DIGIT)
+        # 策略1：直接修复
+        result = cls._apply_fix(code)
+        if cls._VALID_CODE.match(result):
+            return result
 
-        result = ''.join(chars)
-        if not cls._VALID_CODE.match(result):
-            return code
-        return result
+        # 策略2：首位是数字且修复后不合法 → 去掉首位重试
+        # 例如 "0C7" → 去掉 "0" → "C7"
+        if code[0].isdigit() and len(code) > 2:
+            stripped = code[1:]
+            result = cls._apply_fix(stripped)
+            if cls._VALID_CODE.match(result):
+                return result
+
+        return code
+
+    @classmethod
+    def _apply_fix(cls, code: str) -> str:
+        """对代码应用 OCR 修复：首位数字→字母，其余字母→数字。"""
+        chars = list(code)
+        # 首位：数字→字母（0→O, 1→I 等）
+        first = chars[0].upper()
+        if first.isdigit():
+            first = first.translate(cls._DIGIT_TO_ALPHA)
+        chars[0] = first
+
+        # 其余位：字母→数字（O→0, I→1 等）
+        for i in range(1, len(chars)):
+            c = chars[i]
+            if not c.isdigit():
+                c = c.translate(cls._ALPHA_TO_DIGIT)
+            chars[i] = c
+
+        return ''.join(chars)
 
     @classmethod
     def _pre_fix_text(cls, text: str) -> str:
@@ -128,8 +162,21 @@ class RelicNameRecognizer(BaseOCR):
                     res.append((name, box))
                 return res
 
-            # 2) 英文纪元匹配
+            # 2) 英文纪元匹配（带 Relic 后缀）
             en_matches = self.EN_PATTERN.findall(attempt)
+            for era_en, code in en_matches:
+                era_en_title = era_en.title()
+                era_cn = _EN_TIER_MAP.get(era_en_title)
+                if not era_cn:
+                    continue
+                code = self._fix_ocr_number(code)
+                name = f"{era_cn} {code}"
+                res.append((name, box))
+            if res:
+                return res
+
+            # 3) 英文纪元匹配（无 Relic 后缀，品质标签清理后常见）
+            en_matches = self.EN_PATTERN_NO_RELIC.findall(attempt)
             for era_en, code in en_matches:
                 era_en_title = era_en.title()
                 era_cn = _EN_TIER_MAP.get(era_en_title)
@@ -209,7 +256,7 @@ class RelicNameRecognizer(BaseOCR):
                         matched.extend(hits)
                         merged_set.add(i)
                         merged_set.add(j)
-                        print(f"[OCR] 合并行: '{text_i}' + '{text_j}' → '{combined}'", flush=True)
+                        print(f"[OCR] 合并行: '{text_i}' + '{text_j}' -> '{combined}'", flush=True)
                         break
 
                     combined2 = f"{text_j} {text_i}"
@@ -218,7 +265,7 @@ class RelicNameRecognizer(BaseOCR):
                         matched.extend(hits2)
                         merged_set.add(i)
                         merged_set.add(j)
-                        print(f"[OCR] 合并行: '{text_j}' + '{text_i}' → '{combined2}'", flush=True)
+                        print(f"[OCR] 合并行: '{text_j}' + '{text_i}' -> '{combined2}'", flush=True)
                         break
 
             still_unmatched = [unmatched[i][0] for i in range(len(unmatched)) if i not in merged_set]

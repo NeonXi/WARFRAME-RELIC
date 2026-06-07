@@ -343,12 +343,21 @@ _RE_TRASH = re.compile(
     r'^(RANK|RANK\s*\d+|MAX|MAXED)$|'
     r'^(DRAIN|COST|CAPACITY)\b|'
     r'^(POLARITY|AURA|STANCE)\b|'
-    r'^(INTACT|EXCEPTIONAL|FLAWLESS|RADIANT)$|'
+    r'^(INTACT|EXCEPTIONAL|FLAWLESS|RADIANT|COMMON|UNCOMMON|RARE|LEGENDARY)$|'
     r'^(OWNED|EQUIP|UPGRADE|FUSION|SOLD|SELL|BUY|TRADE)\b|'
     r'^(CONFIG|LOADOUT|APPEARANCE|MODS|ARSENAL)\b|'
     r'^(ALL|SEARCH|REFINEMENT|EXIT|VOID|RELICS|MARKET)\b|'
     r'^(BLUEPRINT|PRICE|PLATINUM|CREDITS|DAMAGE)\b|'
-    r'^[A-Z]{1,2}$',
+    r'^(Remote|Observer|Festive|Interior|Decorations?|Ornaments?|Placement|Preview|'
+    r'Customize|Customization|Display|Purchase|Confirm|Cancel|Default|Palette|'
+    r'Animation|Emote|Emblem|Sigil|Syandana|Attachments|Ephemera|'
+    r'Change|Select|Apply|Remove|Copy|Paste|Reset|Save|Back|Options?|'
+    r'Navigation|Mission|Foundry|Incubator|Helminth|Relay|Dojo|Orbiter|'
+    r'Clan|Alliance|Inbox|News|Store|Bundle|Pack|Collection|'
+    r'Accessories?|Cosmetic|Regalia|Badge|Trophy|Statue|Poster|'
+    r'Ship|Crew|Railjack|Necramech|Archwing|K-Drive|Plexus|Parazon|'
+    r'Heavy|Scythe|Tonfa|Whip|Claw|Sparring|Nunchaku|Warfan|Glaive|Gunblade|'
+    r'Rifle|Pistol|Shotgun|Sniper|Crossbow|Speargun|Cannon|Launcher)$',
     re.IGNORECASE
 )
 
@@ -358,7 +367,8 @@ _RE_RELIC = re.compile(
 )
 
 _RE_NOT_ITEM = re.compile(
-    r'^[a-z]|^\d|^\+|%$|^[A-Z][a-z]{1,4}$'
+    r'^\d|^\+|%$',  # 只过滤纯数字、+开头、%结尾
+    re.IGNORECASE
 )
 
 # 中文部件词集合（用于判断文本是否含有效部件词，允许通过过滤）
@@ -374,21 +384,23 @@ def _contains_part_cn(text: str) -> bool:
 
 
 def _is_valid_item_text(text: str) -> bool:
-    """判断文本是否为有效物品相关文本（英文名/中文部件/中英混合）。"""
-    # 1. 纯中文文本：只要包含已知部件词就算有效
+    """判断文本是否为有效物品相关文本（大幅放松规则，保留所有可能有用的）。"""
+    # 0. 只要文本长度足够，就先保留
+    if len(text) >= 8:
+        return True
+
+    # 1. 纯中文文本：只要长度>=1就保留（可能是碎片）
     if _is_all_cjk(text):
-        return _contains_part_cn(text)
+        return len(text) >= 1
 
-    # 2. 纯英文文本：用原有规则
+    # 2. 纯英文文本：只要不是明显的垃圾就保留
     if not _has_cjk(text):
-        return bool(_RE_EN_NAME.match(text) and not _RE_TRASH.search(text))
+        # 只要有字母、长度>=1就保留，不检查格式
+        has_letter = bool(re.search(r'[a-zA-Z]', text))
+        return has_letter
 
-    # 3. 中英混合文本（如 "AshPrime头部"）：检查是否含英文名+中文部件
-    #    分离英文和中文部分分别检查
-    #    至少含有一个大写字母开头的英文词 + 一个已知中文部件词
-    has_en = bool(_RE_EN_NAME.match(text) or re.search(r'[A-Z][a-zA-Z]{2,}', text))
-    has_part = _contains_part_cn(text)
-    return has_en and has_part
+    # 3. 中英混合：只要长度>=2就保留
+    return len(text) >= 2
 
 
 # ============================================================
@@ -726,12 +738,12 @@ def _fuzzy_search_cn_in_db(cn_name: str, max_distance: int = 2) -> str | None:
 
     try:
         import sqlite3
-        from data.items_i18n import DB_PATH
+        from data.item_index import DB_PATH
 
         if not os.path.exists(DB_PATH):
             return None
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
 
         # ★ 用每个字符做模糊搜索，取候选集
@@ -807,8 +819,8 @@ def _fuzzy_search_cn_in_db(cn_name: str, max_distance: int = 2) -> str | None:
                 else:
                     print(f"[OCR-FUZZY] 所有候选均为 Set 套装，跳过: \"{cn_name}\"", flush=True)
                     return None
-            print(f"[OCR-FUZZY] 最佳匹配: \"{cn_name}\" → \"{best['zh_name']}\""
-                  f" → \"{en_result}\" (距离={best_dist})", flush=True)
+            print(f"[OCR-FUZZY] 最佳匹配: \"{cn_name}\" -> \"{best['zh_name']}\""
+                  f" -> \"{en_result}\" (距离={best_dist})", flush=True)
             return en_result
         else:
             print(f"[OCR-FUZZY] 无满足距离阈值的匹配: \"{cn_name}\"", flush=True)
@@ -829,12 +841,12 @@ def _fuzzy_search_cn_in_db_with_dist(cn_name: str, max_distance: int = 2) -> tup
 
     try:
         import sqlite3
-        from data.items_i18n import DB_PATH
+        from data.item_index import DB_PATH
 
         if not os.path.exists(DB_PATH):
             return (999, None)
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
 
         conditions = []
@@ -907,17 +919,61 @@ def _fuzzy_search_cn_in_db_with_dist(cn_name: str, max_distance: int = 2) -> tup
 _INVALID_EN_SUFFIXES = (
     ' Set',        # 整套物品（如 "Guandao Prime Set"）
     ' Glyph',      # 浮印
+    ' Helmet',     # 头盔
 )
 _INVALID_EN_WORDS = (
     'Glyph',       # 浮印
     ' Skin',       # 外观
     ' Helmet',     # 头盔（非可交易部件）
     ' Prex',       # Prex 卡片
+    ' Prex Card',  # Prex 卡片
+    'Decorations', # 装饰品
+    'Decoration',  # 装饰品
+    'Ornament',    # 装饰物
+    'Ornaments',   # 装饰物
+    'Sigil',       # 纹章
+    'Plushie',     # 玩偶
+    'Plush',       # 玩偶
+    'BobbleHead',  # 摇头娃娃
+    'Noggle',      # Noggle 摇头娃娃
+    'Floof',       # 玩偶毛绒
+    'Thyrus',      # 酒神杖
+    'Amaru',       # 羽蛇神
+    'Graxx',       # G之风格
+    'Kresnik',     # 火神
+    'Syandana',    # 披饰
+    'Imperator',   # 凯旋将军
+    'Ephmera',     # 飘带
+    'Ephemera',    # 飘带
+    'Sugatra',     # 链珠
+    'Poncho',      # 斗篷
+    'Cape',        # 披风
+    'Animation',   # 动画
+    'Emote',       # 表情
+    'Landing',     # 落地动作
+    'Tilt',        # 倾斜动作
+    'Idle',        # 待机动作
+    'Emblem',      # 徽章
+    'Foremount',   # 颅骨前侧部分（前置定位物品）
+    'Locator',     # 定位装置（前置定位物品）
+    'Theorem',     # 定理（前置定位物品）
+    'Cerebrum',    # 守护头部（前置定位物品）
+    'Carapace',    # 守护外壳（前置定位物品）
 )
 _INVALID_ZH_PATTERNS = (
     '浮印',        # Glyph
     '外观',        # Skin
     '头盔',        # Helmet
+    '装饰',        # Decoration
+    '玩偶',        # Plushie
+    '纹章',        # Sigil
+    '披饰',        # Syandana
+    '披风',        # Cape
+    '斗篷',        # Poncho
+    '徽章',        # Emblem
+    '定位装置',    # Locator
+    '定理',        # Theorem
+    '前侧部分',    # Foremount
 )
 
 
@@ -985,12 +1041,12 @@ def _is_prime_only_base(en_name: str) -> bool:
 
     try:
         import sqlite3
-        from data.items_i18n import DB_PATH
+        from data.item_index import DB_PATH
 
         if not os.path.exists(DB_PATH):
             return False
 
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
 
         # 搜索以此名为前缀的可交易条目
@@ -1030,7 +1086,7 @@ def _is_prime_only_base(en_name: str) -> bool:
         # 武器类：需要所有可交易条目都含 Prime
         all_prime = all('Prime' in r['en_name'] for r in rows)
         if all_prime:
-            print(f"[PRIME-CHECK] \"{en_name}\" 武器仅 Prime 可交易 → 自动补全 Prime", flush=True)
+            print(f"[PRIME-CHECK] \"{en_name}\" 武器仅 Prime 可交易 -> 自动补全 Prime", flush=True)
             return True
 
         return False
@@ -1050,23 +1106,28 @@ def _translate_cn_unique_name(cn_name: str) -> str | None:
 
     注意：自动过滤 Set（整套）、Glyph（浮印）、Skin（外观）等非道具条目。
     """
+    import time
+    t_start = time.perf_counter()
     try:
-        from data.items_i18n import search_items
+        from data.item_index import search_items
         # 策略1: 整体翻译（仅对含中文的查询执行数据库搜索）
         if re.search(r'[\u4e00-\u9fff]', cn_name):
+            # ★ 用 is_tradable=True 限定：避免 Cranial Foremount 等非可交易杂项混入
             # 1a: 原始查询精确搜索
-            items = search_items(cn_name, is_tradable=False, limit=30)
+            t_db = time.perf_counter()
+            items = search_items(cn_name, is_tradable=True, limit=30)
             valid = _filter_valid_translations(cn_name, items)
             if valid:
+                print(f"[OCR-TRANSLATE] 精确匹配 \"{cn_name}\" -> \"{valid[0]}\" ({(time.perf_counter() - t_db) * 1000:.0f}ms)", flush=True)
                 return valid[0]
 
             # 1b: 形近字变体精确搜索（OCR 字符误识别纠正）
             for variant in _generate_cjk_variants(cn_name):
-                items_v = search_items(variant, is_tradable=False, limit=30)
+                items_v = search_items(variant, is_tradable=True, limit=30)
                 valid_v = _filter_valid_translations(variant, items_v)
                 if valid_v:
-                    print(f"[OCR-CN-FIX] 形近字精确匹配: \"{cn_name}\" → \"{variant}\""
-                          f" → \"{valid_v[0]}\"", flush=True)
+                    print(f"[OCR-CN-FIX] 形近字精确匹配: \"{cn_name}\" -> \"{variant}\""
+                          f" -> \"{valid_v[0]}\"", flush=True)
                     return valid_v[0]
     except Exception:
         pass
@@ -1089,7 +1150,7 @@ def _translate_cn_unique_name(cn_name: str) -> str | None:
             if result and dist < best_dist:
                 best_dist = dist
                 best_result = result
-                print(f"[OCR-CN-FIX] 形近字纠错: \"{cn_name}\" → \"{variant}\""
+                print(f"[OCR-CN-FIX] 形近字纠错: \"{cn_name}\" -> \"{variant}\""
                       f" → \"{result}\" (距离={dist})", flush=True)
 
         if best_result:
@@ -1122,53 +1183,43 @@ def _translate_one_cn_part(part: str) -> str | None:
     例如 "关刀Prime刀刃" → 剥离已知部件词和英文 → "关刀" → 翻译为 "Guandao"
     """
     try:
-        from data.items_i18n import search_items
+        from data.item_index import search_items
 
-        def _pick_first_non_set(items, cn_clean):
-            """从结果中选最合适的非 Set 条目。
+        def _pick_first_valid(items, cn_clean):
+            """从结果中选最合适的非 Set/Glyph/Skin/Helmet/Decoration 等无效条目。
 
-            优先级：精确 zh_name 匹配 > 不含部件词的基础名 > 任意非 Set 条目。
+            优先级：精确 zh_name 匹配 > 不含部件词的基础名 > 任意非无效条目。
             """
             if not items:
                 return None
-            non_set = [it for it in items
-                       if it.get('en_name', '') and not it.get('en_name', '').endswith(' Set')]
-            if not non_set:
+            # ★ 先用 _filter_valid_translations 过滤掉所有无效条目（Set/Glyph/Skin/Helmet/Decoration 等）
+            valid_ens = _filter_valid_translations(cn_clean, items)
+            if not valid_ens:
                 return None
-            # 优先：zh_name 精确匹配（基础名）
-            for it in non_set:
-                if it.get('zh_name', '') == cn_clean:
-                    return it['en_name']
-            # 其次：不含部件词（Blueprint/Stock/Receiver/Barrel/String/Link/Blade/Handle 等）
-            PART_EN_WORDS = ('Blueprint', 'Stock', 'Receiver', 'Barrel',
-                            'String', 'Link', 'Blade', 'Handle', 'Guard',
-                            'Head', 'Chassis', 'Systems', 'Neuroptics')
-            for it in non_set:
-                en = it.get('en_name', '')
-                if not any(w in en for w in PART_EN_WORDS):
-                    return en
-            # 兜底：第一个非 Set
-            return non_set[0]['en_name']
+            # valid_ens 是按 score 排序的 en_name 列表，返第一个即可
+            return valid_ens[0]
 
-        # 先去除非中文字符，用纯中文名搜索
+        # ★ 搜 "Gauss 部" 之类必须找 Prime 物品，所以用 is_tradable=True
+        #    is_tradable=False 会把 Prime 蓝图全排除（它们是 is_tradable=1）
         cn_clean = re.sub(r'[^\u4e00-\u9fff\s]', '', part).strip()
-        if cn_clean:
-            items = search_items(cn_clean, is_tradable=False, limit=10)
-            result = _pick_first_non_set(items, cn_clean)
+        if cn_clean and len(cn_clean) >= 2:
+            # 限定 is_tradable=True：避免 Cranial Foremount 这类非可交易杂项混入候选
+            items = search_items(cn_clean, is_tradable=True, limit=10)
+            result = _pick_first_valid(items, cn_clean)
             if result:
                 return result
 
         # 纯中文搜索失败 → 剥离已知中文部件词后再试
         # 例如 "关刀刀刃" → 去掉"刀刃" → "关刀"
-        if cn_clean:
+        if cn_clean and len(cn_clean) >= 2:
             # 按长优先排序的部件词列表剥离
             sorted_parts = sorted(PART_CN_TO_EN.keys(), key=len, reverse=True)
             for cn_part in sorted_parts:
                 if cn_clean.endswith(cn_part) and len(cn_clean) > len(cn_part):
                     cn_base = cn_clean[:-len(cn_part)].strip()
-                    if cn_base:
-                        items = search_items(cn_base, is_tradable=False, limit=10)
-                        result = _pick_first_non_set(items, cn_base)
+                    if cn_base and len(cn_base) >= 2:
+                        items = search_items(cn_base, is_tradable=True, limit=10)
+                        result = _pick_first_valid(items, cn_base)
                         if result:
                             return result
                     break
@@ -1209,6 +1260,11 @@ class ItemNameRecognizer(BaseOCR):
 
     TRASH_PATTERN = _RE_TRASH
     MERGE_SEPARATOR = ' '
+
+    # 颜色过滤：已禁用
+    _color_filter_enabled = False
+    _color_filter_lower = (8, 80, 40)      # HSV 下限
+    _color_filter_upper = (26, 255, 255)    # HSV 上限
 
     # ---- OCR 纠错 ----
 
@@ -1331,20 +1387,15 @@ class ItemNameRecognizer(BaseOCR):
 
     # ---- 主识别流程 ----
 
-    def recognize_all_with_boxes(
-        self, image: np.ndarray
-    ) -> list[tuple[str, list, list[str]]]:
-        """识别截图中所有物品名称。
-
-        使用位置启发式分组识别。
+    def recognize_all_lines(self, image: np.ndarray) -> list[str]:
+        """识别截图中所有文本行（只识别，不分组，不过滤，保留所有）。
+        
+        用于价格查询场景：对单个格子做OCR，然后把所有文本拼起来搜索。
         """
-        t0 = time.perf_counter()
-
         result, scale = self._run_ocr(image)
         if result is None:
             return []
 
-        # -- 收集所有 OCR 行 --
         lines = []
         for item in result:
             if len(item) != 3:
@@ -1355,23 +1406,79 @@ class ItemNameRecognizer(BaseOCR):
             text = text.strip().rstrip('!?.,;:\'"\\')
             if not text:
                 continue
+            lines.append(text)
+
+        return lines
+
+    def recognize_all_with_boxes(
+        self, image: np.ndarray
+    ) -> list[tuple[str, list, list[str]]]:
+        """识别截图中所有物品名称。
+
+        使用位置启发式分组识别。
+        """
+        t0 = time.perf_counter()
+
+        result, scale = self._run_ocr(image)
+        t_ocr_done = time.perf_counter()
+        if result is None:
+            return []
+
+        # -- 收集所有 OCR 行（含过滤） --
+        lines = []
+        filtered_count = 0
+        filtered_texts = []
+        for item in result:
+            if len(item) != 3:
+                continue
+            box, text, score = item
+            if not isinstance(text, str):
+                continue
+            text = text.strip().rstrip('!?.,;:\'"\\')
+            if not text:
+                continue
+
+            # ★ 新增：过滤垃圾文本行
+            if not self._filter_text(text):
+                filtered_count += 1
+                filtered_texts.append(text)
+                continue
+
             box = self._scale_box(box, scale)
             lines.append((text, box))
 
         raw_texts = [t for t, _ in lines]
-        print(f"[OCR-RAW] 全部 {len(raw_texts)} 行: {raw_texts}", flush=True)
+        print(f"[OCR-RAW] 全部 {len(raw_texts)} 行 (过滤掉 {filtered_count} 行): {raw_texts}", flush=True)
+        if filtered_texts:
+            print(f"[OCR-RAW] 被过滤的文本: {filtered_texts}", flush=True)
 
         if not lines:
             return []
 
-        slots = self._group_by_slot(lines)
-        print(f"[OCR-SLOTS] 识别到 {len(slots)} 个格子", flush=True)
+        # ★ 优先按图像宽度等分为 4 个 slot（价格查询场景固定 4 物品布局）
+        h, w = image.shape[:2]
+        t_quadrant = time.perf_counter()
+        slots_by_quadrant = self._split_into_quadrants(lines, w)
+        if slots_by_quadrant is not None:
+            slots = slots_by_quadrant
+            print(f"[OCR-SLOTS] 按4等分切分: {len(slots)} 个格子", flush=True)
+        else:
+            slots = self._group_by_slot(lines)
+            print(f"[OCR-SLOTS] 启发式分组: {len(slots)} 个格子", flush=True)
 
+        t_process = time.perf_counter()
         results = self._process_slots(slots)
+        t_process_done = time.perf_counter()
 
         elapsed = (time.perf_counter() - t0) * 1000
         names = [r[0] for r in results]
         print(f"[OCR-RESULT] 最终 {len(results)} 个物品: {names} (耗时={elapsed:.0f}ms)", flush=True)
+        # ★ 分段耗时
+        print(f"[OCR-TIMING] _run_ocr: {(t_ocr_done - t0) * 1000:.0f}ms | 行过滤: {(t_quadrant - t_ocr_done) * 1000:.0f}ms | "
+              f"象限分组: {(t_process - t_quadrant) * 1000:.0f}ms | _process_slots: {(t_process_done - t_process) * 1000:.0f}ms",
+              flush=True)
+        if self._timing:
+            print(f"[OCR-TIMING] 推理耗时: {self._timing.get('ocr_inference', '?')}ms", flush=True)
         return results
 
     @staticmethod
@@ -1379,10 +1486,13 @@ class ItemNameRecognizer(BaseOCR):
         slots: list[tuple[list[str], list]]
     ) -> list[tuple[str, list, list[str]]]:
         """处理位置分组的结果（提取特征词、翻译等）。"""
+        import time
         results = []
         for idx, (slot_texts, slot_box) in enumerate(slots):
             if not slot_texts:
                 continue
+
+            t_slot = time.perf_counter()
 
             print(f"\n{'─'*50}", flush=True)
             print(f"[OCR-PROCESS][格子{idx+1}] ── 开始处理 ──", flush=True)
@@ -1396,31 +1506,52 @@ class ItemNameRecognizer(BaseOCR):
 
             print(f"[OCR-PROCESS][格子{idx+1}] 合并后文本: \"{slot_text}\"", flush=True)
 
-            en_name, features = _extract_features(slot_text)
+            # ★ 驼峰拆分 + 变体词纠错（OCR 可能把 "Ash"+"Prime" 合并成 "AshPre"）
+            slot_text_fixed = ItemNameRecognizer._split_camel_case(slot_text)
+            if slot_text_fixed != slot_text:
+                print(f"[OCR-PROCESS][格子{idx+1}] 驼峰拆分: \"{slot_text}\" -> \"{slot_text_fixed}\"", flush=True)
+            slot_text_fixed = _fuzzy_fix_variant_words(slot_text_fixed)
+            if slot_text_fixed != slot_text:
+                print(f"[OCR-PROCESS][格子{idx+1}] 变体词纠错: -> \"{slot_text_fixed}\"", flush=True)
+
+            en_name, features = _extract_features(slot_text_fixed)
             print(f"[OCR-PROCESS][格子{idx+1}] 提取特有名: \"{en_name}\"", flush=True)
             print(f"[OCR-PROCESS][格子{idx+1}] 提取特征词: {features}", flush=True)
 
             translation_failed = False
             if en_name and re.search(r'[\u4e00-\u9fff]', en_name):
-                translated = _translate_cn_unique_name(en_name)
-                if translated:
-                    # ★ 永远不要翻译成 Set（套装）
-                    if translated.endswith(' Set'):
-                        print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" → \"{translated}\" (排除套装)", flush=True)
-                        translation_failed = True
+                # ★ 优先：尝试翻译整个 slot_text_fixed（包含 features 信息，匹配更精准）
+                #    例如 "Prime Gauss 部神经光元" 比 "Gauss 部" 更可能命中正确的 Prime 物品
+                full_translated = _translate_cn_unique_name(slot_text_fixed)
+                if full_translated and not full_translated.endswith(' Set'):
+                    # 从翻译结果提取特有名（取第一个英文片段）
+                    # 例如 "Gauss Prime 头部神经光元 蓝图" -> "Gauss"
+                    m = re.match(r'^([A-Za-z][A-Za-z\s]*?)\s+Prime\b', full_translated)
+                    if m:
+                        full_en_name = m.group(1).strip()
+                        if full_en_name and full_en_name != en_name:
+                            print(f"[OCR-PROCESS][格子{idx+1}] 整体翻译特有名: \"{en_name}\" -> \"{full_en_name}\" (从 \"{full_translated}\")", flush=True)
+                            en_name = full_en_name
+                if en_name and re.search(r'[\u4e00-\u9fff]', en_name):
+                    # 仍有中文部分，逐词翻译
+                    translated = _translate_cn_unique_name(en_name)
+                    if translated:
+                        if translated.endswith(' Set'):
+                            print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" -> \"{translated}\" (排除套装)", flush=True)
+                            translation_failed = True
+                        else:
+                            print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" -> \"{translated}\"", flush=True)
+                            en_name = translated
                     else:
-                        print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" → \"{translated}\"", flush=True)
-                        en_name = translated
-                else:
-                    print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" → 翻译失败!", flush=True)
-                    translation_failed = True
+                        print(f"[OCR-PROCESS][格子{idx+1}] 翻译特有名: \"{en_name}\" -> 翻译失败!", flush=True)
+                        translation_failed = True
 
             # ★ 自动补全 Prime：OCR 可能漏掉 "Prime" 字样
             #    当物品名是 Prime-only 基础名（如 Ash）且 features 中没有 Prime 时，
             #    自动在 features 最前面插入 "Prime"
             if en_name and 'Prime' not in features and _is_prime_only_base(en_name):
                 features.insert(0, 'Prime')
-                print(f"[OCR-PROCESS][格子{idx+1}] 自动补全 Prime → 特征词: {features}", flush=True)
+                print(f"[OCR-PROCESS][格子{idx+1}] 自动补全 Prime -> 特征词: {features}", flush=True)
 
             if en_name:
                 assembled = ' '.join([en_name] + features)
@@ -1429,9 +1560,9 @@ class ItemNameRecognizer(BaseOCR):
 
             # ★ 如果翻译失败且 assembled 仍含中文，尝试对整个 assembled 做模糊搜索
             if translation_failed and re.search(r'[\u4e00-\u9fff]', assembled):
-                fuzzy_full = _fuzzy_search_cn_in_db(slot_text)
+                fuzzy_full = _fuzzy_search_cn_in_db(slot_text_fixed)
                 if fuzzy_full:
-                    print(f"[OCR-PROCESS][格子{idx+1}] 整体模糊搜索: \"{slot_text}\" → \"{fuzzy_full}\"", flush=True)
+                    print(f"[OCR-PROCESS][格子{idx+1}] 整体模糊搜索: \"{slot_text_fixed}\" -> \"{fuzzy_full}\"", flush=True)
                     assembled = fuzzy_full
                     # 重新提取特有名（用纠正后的纯英文结果）
                     en_name, features = _extract_features(fuzzy_full)
@@ -1452,8 +1583,171 @@ class ItemNameRecognizer(BaseOCR):
 
             all_variants = variants + assembled_variants
             print(f"[OCR-PROCESS][格子{idx+1}] 最终结果: \"{assembled}\" | 候选: {all_variants}", flush=True)
+            print(f"[OCR-PROCESS][格子{idx+1}] 耗时: {(time.perf_counter() - t_slot) * 1000:.0f}ms", flush=True)
 
             results.append((assembled, slot_box, all_variants))
+
+        return results
+
+    @staticmethod
+    def _split_into_quadrants(
+        lines: list[tuple[str, list]], image_width: int
+    ) -> list | None:
+        """价格查询场景：4 物品横向布局，每物品有 2 行（英文+中文）。
+
+        算法：DBSCAN 风格的一维 x 轴密度聚类 + 强制 4 类
+        1. 收集所有行的中心 x
+        2. 用 KMeans (k=4) 找出 4 个聚类中心，初始化为图像 4 等分点
+        3. 迭代 5 次重新分配 x 到最近的聚类中心，再更新中心
+        4. 不足 4 类时回退到 4 等分
+        5. 对每类内的行按 y 排序、按 x 聚类成 2 行（英文+中文）→ 1 个 slot
+        """
+        if len(lines) < 4 or image_width <= 0:
+            return None
+
+        def _cx(box):
+            xs = [p[0] for p in box]
+            return sum(xs) / len(xs)
+
+        def _cy(box):
+            ys = [p[1] for p in box]
+            return sum(ys) / len(ys)
+
+        def _box_xs(box):
+            return [p[0] for p in box]
+
+        def _box_ys(box):
+            return [p[1] for p in box]
+
+        # ---- 1. KMeans (k=4) 在 x 上一维聚类 ----
+        # 初始中心：图像 4 等分点
+        centers = [image_width * (2 * i + 1) / 8 for i in range(4)]
+        cxs = [_cx(b) for _, b in lines]
+        assignments = [0] * len(lines)
+        print(f"[OCR-GROUP] 原始 {len(lines)} 行，每行 x 坐标: {[round(x,1) for x in cxs]}", flush=True)
+        print(f"[OCR-GROUP] 初始4等分中心: {[round(c,1) for c in centers]}", flush=True)
+
+        for _ in range(10):  # 收敛迭代
+            new_assignments = []
+            for cx in cxs:
+                nearest = min(range(4), key=lambda i: abs(cx - centers[i]))
+                new_assignments.append(nearest)
+            if new_assignments == assignments:
+                break
+            assignments = new_assignments
+            # 更新中心：每个类内 x 的均值；空类保留原中心
+            for i in range(4):
+                cluster = [cxs[j] for j in range(len(lines)) if assignments[j] == i]
+                if cluster:
+                    centers[i] = sum(cluster) / len(cluster)
+        print(f"[OCR-GROUP] 收敛后分组: assign={assignments}, centers={[round(c,1) for c in centers]}", flush=True)
+
+        # ---- 2. 校验：希望凑齐 4 类 ----
+        counts = [assignments.count(i) for i in range(4)]
+        # 如果有类为空，但总行数足够（>= 期望数量），尝试重平衡
+        # 策略：把"最多"那个类的最远点重新分给空类
+        max_iter = 20
+        while any(c == 0 for c in counts) and max_iter > 0:
+            max_iter -= 1
+            empty_class = counts.index(0)
+            # 找非空类里行数最多的
+            fullest = max(range(4), key=lambda i: counts[i] if i != empty_class else -1)
+            # 从 fullest 里挑出离 empty_class 中心最远的那行
+            cluster_xs = [cxs[j] for j in range(len(lines)) if assignments[j] == fullest]
+            if not cluster_xs:
+                break
+            cluster_mean = sum(cluster_xs) / len(cluster_xs)
+            # 找属于 fullest 的、离 empty_class 中心最远的行
+            farthest_idx = -1
+            farthest_dist = -1
+            for j in range(len(lines)):
+                if assignments[j] != fullest:
+                    continue
+                dist = abs(cxs[j] - centers[empty_class])
+                if dist > farthest_dist:
+                    farthest_dist = dist
+                    farthest_idx = j
+            if farthest_idx < 0:
+                break
+            assignments[farthest_idx] = empty_class
+            # 更新两个类的中心
+            for cls_idx in (fullest, empty_class):
+                cls_cxs = [cxs[j] for j in range(len(lines)) if assignments[j] == cls_idx]
+                if cls_cxs:
+                    centers[cls_idx] = sum(cls_cxs) / len(cls_cxs)
+            counts = [assignments.count(i) for i in range(4)]
+
+        # ---- 3. 按聚类中心 x 升序输出 4 个 slot，缺失的填空 ----
+        # 把行分到 4 个 cluster
+        cluster_lines = [[] for _ in range(4)]
+        for idx, line in enumerate(lines):
+            cluster_lines[assignments[idx]].append(line)
+
+        sorted_classes = sorted(range(4), key=lambda i: centers[i])
+        results = []
+
+        for cls in sorted_classes:
+            cluster = cluster_lines[cls]
+            if not cluster:
+                # 该 slot 没有任何 OCR 行（识别失败），填空文本
+                cx = centers[cls]
+                cy = image_width * 0.1  # 锚定在图像垂直中段
+                half = image_width * 0.05
+                empty_box = [
+                    [cx - half, cy], [cx + half, cy],
+                    [cx + half, cy + 1], [cx - half, cy + 1]
+                ]
+                results.append(([], empty_box))
+                continue
+
+            # 按 y 排序，分上下两行
+            cluster.sort(key=lambda l: _cy(l[1]))
+            ys = [_cy(b) for _, b in cluster]
+            y_diffs = [ys[k+1] - ys[k] for k in range(len(ys) - 1)]
+
+            if len(cluster) == 1:
+                # 单行 slot
+                only_line = cluster[0]
+                xs_all = _box_xs(only_line[1])
+                ys_all = _box_ys(only_line[1])
+                slot_box = [
+                    [min(xs_all), min(ys_all)],
+                    [max(xs_all), min(ys_all)],
+                    [max(xs_all), max(ys_all)],
+                    [min(xs_all), max(ys_all)],
+                ]
+                results.append(([only_line[0]], slot_box))
+                continue
+
+            # 找最大 y gap 作为上下分界
+            max_gap_idx = y_diffs.index(max(y_diffs))
+            upper = cluster[:max_gap_idx + 1]
+            lower = cluster[max_gap_idx + 1:]
+
+            en_text = ' '.join(t for t, _ in upper)
+            cn_text = ' '.join(t for t, _ in lower)
+
+            all_boxes = [b for _, b in upper] + [b for _, b in lower]
+            xs_all = []
+            ys_all = []
+            for b in all_boxes:
+                xs_all.extend(_box_xs(b))
+                ys_all.extend(_box_ys(b))
+            slot_box = [
+                [min(xs_all), min(ys_all)],
+                [max(xs_all), min(ys_all)],
+                [max(xs_all), max(ys_all)],
+                [min(xs_all), max(ys_all)],
+            ]
+
+            slot_texts = [en_text] + ([cn_text] if cn_text else [])
+            results.append((slot_texts, slot_box))
+
+        # ★ 新增：打印分组详情
+        print(f"\n[OCR-GROUP-DETAIL] ── 分组结果 ──", flush=True)
+        for idx, (slot_texts, _) in enumerate(results):
+            print(f"[OCR-GROUP-DETAIL] 格子{idx+1}: {slot_texts}", flush=True)
+        print(f"[OCR-GROUP-DETAIL] ────────────────\n", flush=True)
 
         return results
 
@@ -1633,4 +1927,4 @@ class ItemNameRecognizer(BaseOCR):
 # 向后兼容：重导出匹配函数
 # ============================================================
 
-from recognizers.matcher import match_and_price, match_and_translate  # noqa: E402, F401
+from recognizers.matcher import match_and_translate  # noqa: E402, F401

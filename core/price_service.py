@@ -106,11 +106,11 @@ def build_display_name(item: dict) -> str:
 
 
 def _translate_weapon_name(weapon_name: str) -> Optional[str]:
-    """通过 items_i18n.db 翻译武器名。"""
+    """通过 warframe.db 翻译武器名。"""
     if not weapon_name:
         return None
     try:
-        from data.items_i18n import translate_item
+        from data.item_index import translate_item
         result = translate_item(weapon_name)
         if result:
             return result.get('zh_name')

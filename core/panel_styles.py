@@ -8,6 +8,7 @@ WARFRAME-RELIC 内联样式刷新 Mixin
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QGroupBox, QApplication
 from core.constants import theme
+from core.theme_proxy import CYBER_RED
 from core.stylesheet import build_stylesheet
 
 
@@ -256,11 +257,11 @@ class PanelStylesMixin:
                     font-weight: bold;
                 }}
                 QPushButton:hover {{
-                    background-color: #cc3333;
+                    background-color: {CYBER_RED};
                     border-color: {t.cyber_yellow};
                 }}
                 QPushButton:pressed {{
-                    background-color: #aa2222;
+                    background-color: {CYBER_RED};
                 }}
             """)
         if hasattr(self, '_btn_reload_hotkeys'):

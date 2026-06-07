@@ -30,7 +30,7 @@ def _log_exception(exc_type, exc_value, exc_tb):
     error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))
     try:
         os.makedirs(os.path.dirname(_CRASH_LOG_PATH), exist_ok=True)
-        with open(_CRASH_LOG_PATH, 'a', encoding='utf-8') as f:
+        with open(_CRASH_LOG_PATH, 'a', encoding='utf-8', errors='replace') as f:
             f.write(f"\n{'=' * 60}\n")
             f.write(f"崩溃时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"类型: {exc_type.__name__}: {exc_value}\n")
@@ -54,6 +54,72 @@ def _on_exit():
         pass
 
 
+def _install_seh_filter():
+    """安装 Windows 结构化异常处理 (SEH) 过滤器。
+
+    捕获 C 层面的崩溃（如 STATUS_STACK_BUFFER_OVERRUN / 0xC0000409），
+    在进程终止前将异常代码和模块信息写入 crash_log。
+
+    注意：SEH 回调中不能做任何复杂操作（如 ctypes 指针读取），
+    否则可能触发递归崩溃或 OverflowError。
+    """
+    if sys.platform != 'win32':
+        return
+
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+
+        # LPTOP_LEVEL_EXCEPTION_FILTER 类型
+        EXC_FILTER = ctypes.CFUNCTYPE(
+            ctypes.c_long,   # LONG return
+            ctypes.c_void_p, # _EXCEPTION_POINTERS*
+        )
+
+        _original_filter = None
+
+        def _seh_handler(exception_pointers):
+            """SEH 异常回调：在 C 崩溃终止进程前记录信息。
+
+            此函数必须极其简单——不能调用任何可能失败的 Python 代码，
+            不能做 ctypes 指针操作，不能触发新的异常。
+            """
+            try:
+                msg = (
+                    f"\n{'=' * 60}\n"
+                    f"** C 层面崩溃 (SEH 异常) **\n"
+                    f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    f"异常指针: {exception_pointers}\n"
+                    f"{'=' * 60}\n"
+                )
+
+                # 写入 crash log
+                os.makedirs(os.path.dirname(_CRASH_LOG_PATH), exist_ok=True)
+                with open(_CRASH_LOG_PATH, 'a', encoding='utf-8', errors='replace') as f:
+                    f.write(msg)
+
+                # 也输出到 stderr（dev_runner 可捕获）
+                print(msg, file=sys.stderr, flush=True)
+            except Exception:
+                pass
+
+            # 传递给原始过滤器
+            if _original_filter:
+                try:
+                    return ctypes.cast(_original_filter, EXC_FILTER)(exception_pointers)
+                except Exception:
+                    pass
+            return 1  # EXCEPTION_EXECUTE_HANDLER
+
+        _our_filter = EXC_FILTER(_seh_handler)
+        _original_filter = kernel32.SetUnhandledExceptionFilter(_our_filter)
+
+    except Exception as e:
+        # SEH 过滤器安装失败不应阻止程序启动
+        print(f"[SEH] 安装异常过滤器失败: {e}", flush=True)
+
+
 def install_crash_handlers():
     """安装全局异常钩子和退出清理。"""
     # 确保日志目录存在
@@ -64,6 +130,9 @@ def install_crash_handlers():
 
     sys.excepthook = _log_exception
     atexit.register(_on_exit)
+
+    # ★ 安装 Windows SEH 异常过滤器，捕获 C 层崩溃（如 0xC0000409）
+    _install_seh_filter()
 
 
 # ================================================================
@@ -82,7 +151,7 @@ def _check_admin() -> bool:
 def _warn_not_admin() -> bool:
     """弹出管理员权限提示窗口。
     返回 True 表示用户选择继续，False 表示退出。"""
-    title = "⚠ 权限不足 - WARFRAME-RELIC"
+    title = "[!] 权限不足 - WARFRAME-RELIC"
     msg = (
         "未以管理员身份运行！\n\n"
         "全局热键注册需要管理员权限，否则快捷键（框选、查询等）将无法生效。\n\n"
@@ -136,7 +205,7 @@ def _acquire_singleton() -> bool:
 
 def _warn_already_running():
     """弹出"已有实例运行"提示窗口。"""
-    title = "⚠ 程序已在运行 - WARFRAME-RELIC"
+    title = "[!] 程序已在运行 - WARFRAME-RELIC"
     msg = (
         "WARFRAME-RELIC 已经在运行中，不能同时启动多个实例。\n\n"
         "请在系统托盘中查找程序图标，或检查任务管理器。"

@@ -16,9 +16,9 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal, QObject
 
 from core.constants import theme
+from core.theme_proxy import LINK_COLOR
 from core.stylesheet import build_stylesheet, build_dialog_button_style
 from data.ui_strings import S
-from data.items_i18n import get_db_stats as get_items_i18n_stats
 
 
 # ============================================================
@@ -26,28 +26,28 @@ from data.items_i18n import get_db_stats as get_items_i18n_stats
 # ============================================================
 
 def get_db_stats(db_path: str) -> dict:
-    """读取数据库统计信息。"""
+    """读取 warframe.db 统计信息。"""
     if not os.path.exists(db_path):
         return {
-            'exists': False, 'relics': 0, 'parts': 0, 'aliases': 0,
-            'vaulted': 0, 'available': 0, 'voidtrader': 0,
+            'exists': False, 'relics': 0, 'parts': 0,
+            'vaulted': 0, 'available': 0,
             'db_size': 0, 'db_mtime': '',
         }
     try:
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, check_same_thread=False)
         cur = conn.cursor()
-        total = cur.execute("SELECT COUNT(*) FROM relics").fetchone()[0]
-        vaulted = cur.execute("SELECT COUNT(*) FROM relics WHERE vaulted=1").fetchone()[0]
-        voidtrader = cur.execute("SELECT COUNT(*) FROM relics WHERE vaulted=2").fetchone()[0]
-        aliases = cur.execute("SELECT COUNT(*) FROM relic_aliases").fetchone()[0]
-        parts = cur.execute("SELECT COUNT(*) FROM relic_parts").fetchone()[0]
+        total = cur.execute("SELECT COUNT(DISTINCT tier || ' ' || relic_name) FROM relics").fetchone()[0]
+        vaulted = cur.execute("SELECT COUNT(DISTINCT tier || ' ' || relic_name) FROM relics WHERE vaulted=1").fetchone()[0]
+        parts = cur.execute("SELECT COUNT(*) FROM relic_rewards").fetchone()[0]
+        items = cur.execute("SELECT COUNT(*) FROM items").fetchone()[0]
+        translations = cur.execute("SELECT COUNT(*) FROM game_translations").fetchone()[0]
         conn.close()
         stat = os.stat(db_path)
         return {
             'exists': True, 'relics': total, 'parts': parts,
-            'aliases': aliases, 'vaulted': vaulted,
-            'available': total - vaulted - voidtrader,
-            'voidtrader': voidtrader, 'db_size': stat.st_size,
+            'vaulted': vaulted, 'available': total - vaulted,
+            'items': items, 'translations': translations,
+            'db_size': stat.st_size,
             'db_mtime': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
         }
     except sqlite3.DatabaseError as e:
@@ -91,7 +91,7 @@ class UpdatePanel(QObject):
         self._parent = parent_widget
         self._data_dir = data_dir
         self._db_path = db_path
-        self._alljson_path = str(data_dir / 'all.json')
+        self._alljson_path = str(data_dir / 'warframe.db')
         self._add_log = add_log
 
         self._log_panel_auto_show = True
@@ -104,10 +104,7 @@ class UpdatePanel(QObject):
 
         # UI 组件引用（由 ManagementPanel 的 _build_* 方法设置）
         self._source_label = None
-        self._i18n_source_label = None
         self._db_files_label = None
-        self._progress = None
-        self._progress_text = None
         self._btn_update_base = None
         self._btn_fetch_prices = None
         self._btn_browse = None
@@ -125,14 +122,9 @@ class UpdatePanel(QObject):
 
     # ---- 属性设置器（由 ManagementPanel._build_* 调用） ----
 
-    def set_source_label(self, label, i18n_label=None, db_files_label=None):
+    def set_source_label(self, label, db_files_label=None):
         self._source_label = label
-        self._i18n_source_label = i18n_label
         self._db_files_label = db_files_label
-
-    def set_progress(self, progress, progress_text):
-        self._progress = progress
-        self._progress_text = progress_text
 
     def set_buttons(self, btn_update_base=None, btn_fetch_prices=None,
                     btn_browse=None, btn_browse_db=None, btn_tutorial=None):
@@ -181,31 +173,24 @@ class UpdatePanel(QObject):
 
         _relics = stats['relics']
         _parts = stats['parts']
-        _aliases = stats['aliases']
         _vaulted = stats['vaulted']
         _available = stats['available']
-        _voidtrader = stats.get('voidtrader', 0)
+        _items = stats.get('items', 0)
+        _translations = stats.get('translations', 0)
 
         _fmt = lambda key, **kw: S.format("stat_fmt", key, **kw)
 
         if 'relics_summary' in self._stat_labels:
             self._stat_labels['relics_summary'].setText(
-                _fmt("relics_summary", relics=_relics, parts=_parts, aliases=_aliases))
+                _fmt("relics_summary", relics=_relics, parts=_parts))
         if 'relic_vault' in self._stat_labels:
             self._stat_labels['relic_vault'].setText(
-                _fmt("relic_vault", available=_available, vaulted=_vaulted, voidtrader=_voidtrader))
+                _fmt("relic_vault", available=_available, vaulted=_vaulted))
 
-        # 物品库概要
+        # 物品库概要（从 warframe.db 统一查询）
         if 'items_summary' in self._stat_labels:
-            try:
-                i_stats = get_items_i18n_stats()
-                if i_stats.get('exists'):
-                    self._stat_labels['items_summary'].setText(
-                        _fmt("items_summary", total=i_stats['total'], has_cn=i_stats['has_cn'], size=i_stats['db_size']/1024.0))
-                else:
-                    self._stat_labels['items_summary'].setText(S("status", "items_summary_none"))
-            except Exception:
-                self._stat_labels['items_summary'].setText(S("status", "items_summary_error"))
+            self._stat_labels['items_summary'].setText(
+                _fmt("items_summary", total=_items, has_cn=_translations, size=stats['db_size']/1024.0))
 
         # 数据库占用
         if 'db_size' in self._stat_labels:
@@ -219,10 +204,10 @@ class UpdatePanel(QObject):
         # 源文件状态
         if self._source_label:
             if os.path.exists(self._alljson_path):
-                alljson_size = os.path.getsize(self._alljson_path)
+                db_size = os.path.getsize(self._alljson_path)
                 self._source_label.setText(
                     S.format("update", "source_current", path=self._alljson_path) +
-                    f" ({alljson_size/1024/1024:.1f} MB)")
+                    f" ({db_size/1024:.1f} KB)")
                 self._source_label.setStyleSheet(f"color: {theme.cyber_green};")
             else:
                 self._source_label.setText(S.format("update", "source_not_found", path=self._alljson_path))
@@ -236,8 +221,7 @@ class UpdatePanel(QObject):
         if not self._db_files_label:
             return
         db_files = [
-            ("relics.db", "遗物数据库"),
-            ("items_i18n.db", "全物品索引"),
+            ("warframe.db", "统一数据库 (25 张表)"),
         ]
         lines = []
         for fname, label in db_files:
@@ -304,8 +288,7 @@ class UpdatePanel(QObject):
         """)
 
         # 数据状态颜色
-        for key, color_key in [('vaulted', 'cyber_green'), ('available', 'cyber_red'),
-                                ('voidtrader', 'cyber_cyan')]:
+        for key, color_key in [('vaulted', 'cyber_green'), ('available', 'cyber_red')]:
             lbl = self._stat_labels.get(key)
             if lbl:
                 lbl.setStyleSheet(f"color: {getattr(t, color_key)}; font-weight: bold;")
@@ -362,13 +345,13 @@ class UpdatePanel(QObject):
     def on_browse(self):
         path, _ = QFileDialog.getOpenFileName(
             self._parent, S("update", "browse_dialog_title"), str(self._data_dir),
-            S("update", "browse_filter"))
+            "数据库文件 (*.db);;所有文件 (*.*)")
         if path:
             self._alljson_path = path
-            alljson_size = os.path.getsize(self._alljson_path)
+            db_size = os.path.getsize(self._alljson_path)
             self._source_label.setText(
                 S.format("update", "source_current", path=self._alljson_path) +
-                f" ({alljson_size/1024/1024:.1f} MB)")
+                f" ({db_size/1024:.1f} KB)")
             self._source_label.setStyleSheet(f"color: {theme.cyber_yellow};")
             self.refresh_stats()
 
@@ -382,7 +365,7 @@ class UpdatePanel(QObject):
         html = text_content.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         html = html.replace('\n', '<br>')
         url_pattern = r'(https?://[^\s<>"]+)'
-        html = re.sub(url_pattern, r'<a href="\1" style="color: #5dade2;">\1</a>', html)
+        html = re.sub(url_pattern, rf'<a href="\1" style="color: {LINK_COLOR};">\1</a>', html)
         return html
 
     def _build_text_dialog(self, title: str, text_content: str,

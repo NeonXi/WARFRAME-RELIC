@@ -17,16 +17,19 @@ import time
 import re
 import numpy as np
 import cv2
-from PIL import Image
 
 from core.constants import (
-    OCR_UPSCALE_MIN_WIDTH, OCR_UPSCALE_SCALE,
-    OCR_ADAPTIVE_UPSCALE_ENABLED, OCR_ADAPTIVE_BASE_WIDTH, 
-    OCR_ADAPTIVE_MAX_SCALE, OCR_ADAPTIVE_MIN_SCALE,
     OCR_ENHANCE_CONTRAST, OCR_CLAHE_CLIP_LIMIT, OCR_CLAHE_GRID_SIZE,
-    OCR_DYNAMIC_PARAMS_ENABLED, OCR_LARGE_IMAGE_TEXT_SCORE,
-    OCR_LARGE_IMAGE_BOX_THRESH, OCR_LARGE_IMAGE_THRESHOLD,
+    OCR_COLOR_FILTER_ENABLED, OCR_COLOR_FILTER_LOWER, OCR_COLOR_FILTER_UPPER,
+    OCR_DEBUG_SAVE_ENABLED, OCR_DEBUG_SAVE_DIR,
 )
+
+# 锐化内核（增强文字边缘）
+_SHARPEN_KERNEL = np.array([
+    [0, -1, 0],
+    [-1, 5, -1],
+    [0, -1, 0],
+], dtype=np.float32)
 
 
 class BaseOCR:
@@ -44,6 +47,16 @@ class BaseOCR:
     MERGE_VERTICAL_GAP_RATIO: float = 1.2   # 垂直间距 < 平均行高 * 此值
     MERGE_OVERLAP_RATIO: float = 0.3         # 水平重叠 > 此值
 
+    # 颜色过滤配置（子类覆盖以启用）
+    _color_filter_enabled: bool = OCR_COLOR_FILTER_ENABLED
+    _color_filter_lower: tuple = OCR_COLOR_FILTER_LOWER   # HSV 下限
+    _color_filter_upper: tuple = OCR_COLOR_FILTER_UPPER   # HSV 上限
+
+    # ★ 颜色过滤后是否跳过锐化/灰度化，直接送彩色图给 OCR
+    # 当颜色过滤已能清晰分离文字时，锐化+灰度化反而会损失信息
+    # 当前关闭：因为颜色过滤后字符边缘有白晕，需要锐化+灰度进一步清理
+    _skip_post_color_filter: bool = False
+
     def __init__(self):
         # ★ 直接使用 RapidOCR（老架构，简单可靠）
         from rapidocr_onnxruntime import RapidOCR
@@ -56,100 +69,114 @@ class BaseOCR:
             det_limit_side_len=RAPIDOCR_DET_LIMIT_SIDE_LEN,
             det_limit_type=RAPIDOCR_DET_LIMIT_TYPE
         )
-        self._large_image_ocr = None  # 延迟初始化，用于大图优化
+        self._timing = {}  # 耗时统计
     
     def _get_ocr_engine(self, image_width: int):
-        """根据图像宽度选择合适的OCR引擎。
-        
-        对于大图（全屏截图），使用更宽松的阈值以提高召回率。
-        """
-        if not OCR_DYNAMIC_PARAMS_ENABLED or image_width < OCR_LARGE_IMAGE_THRESHOLD:
-            return self._ocr
-        
-        # 延迟初始化大图OCR引擎（更宽松的阈值）
-        if self._large_image_ocr is None:
-            self._large_image_ocr = self._create_large_image_engine()
-        
-        return self._large_image_ocr
-    
-    def _create_large_image_engine(self):
-        """创建大图专用的 RapidOCR 引擎（更宽松的阈值）。"""
-        from rapidocr_onnxruntime import RapidOCR
-        from core.constants import RAPIDOCR_DET_LIMIT_SIDE_LEN, RAPIDOCR_DET_LIMIT_TYPE
-        
-        print(f"[OCR] 初始化大图RapidOCR引擎 (width>{OCR_LARGE_IMAGE_THRESHOLD}px)", flush=True)
-        return RapidOCR(
-            text_score=OCR_LARGE_IMAGE_TEXT_SCORE,
-            box_thresh=OCR_LARGE_IMAGE_BOX_THRESH,
-            det_limit_side_len=RAPIDOCR_DET_LIMIT_SIDE_LEN,
-            det_limit_type=RAPIDOCR_DET_LIMIT_TYPE
-        )
+        """返回 OCR 引擎（统一使用主引擎）。"""
+        return self._ocr
 
     # ---- 图片工具 ----
 
     @staticmethod
     def _resize_fast(img: np.ndarray, scale: float) -> np.ndarray:
-        """快速放大图片（PIL BILINEAR）。"""
+        """快速放大图片（cv2 INTER_CUBIC，比 PIL BILINEAR 更快）。"""
         h, w = img.shape[:2]
-        pil_img = Image.fromarray(img)
-        pil_img = pil_img.resize((int(w * scale), int(h * scale)), Image.BILINEAR)
-        return np.array(pil_img)
+        new_w, new_h = int(w * scale), int(h * scale)
+        return cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
 
     @staticmethod
     def _enhance_contrast(img: np.ndarray) -> np.ndarray:
-        """增强图像对比度（CLAHE自适应直方图均衡化）。
-        
-        适用于全屏截图等复杂背景场景，提高文字边缘清晰度。
+        """增强图像对比度：CLAHE 自适应直方图均衡化（LAB 亮度通道）。
+
+        优化：跳过 HSV 饱和度掩码，直接 CLAHE 处理 LAB 的 L 通道。
+        减少 4→2 次色彩空间转换，大幅降低 CPU 开销。
         """
         if not OCR_ENHANCE_CONTRAST:
             return img
-        
         if len(img.shape) != 3:
             return img
-        
-        # 转换到LAB色彩空间
+
         lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
-        
-        # 对L通道应用CLAHE
+
         clahe = cv2.createCLAHE(
-            clipLimit=OCR_CLAHE_CLIP_LIMIT, 
+            clipLimit=OCR_CLAHE_CLIP_LIMIT,
             tileGridSize=(OCR_CLAHE_GRID_SIZE, OCR_CLAHE_GRID_SIZE)
         )
-        cl = clahe.apply(l)
+        l_enhanced = clahe.apply(l)
+
+        merged = cv2.merge((l_enhanced, a, b))
+        return cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
+
+    @staticmethod
+    def _sharpen(img: np.ndarray) -> np.ndarray:
+        """锐化图像，增强文字边缘清晰度。"""
+        return cv2.filter2D(img, -1, _SHARPEN_KERNEL)
+
+    @staticmethod
+    def _filter_by_color(img: np.ndarray, lower: tuple, upper: tuple) -> np.ndarray:
+        """基于 HSV 颜色范围过滤图像，与原图混合增强文字同时保留细节。
         
-        # 合并通道并转回BGR
-        merged = cv2.merge((cl, a, b))
-        enhanced = cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
+        Args:
+            img: BGR 图像
+            lower: HSV 下限 (H, S, V)
+            upper: HSV 上限 (H, S, V)
         
-        return enhanced
+        Returns:
+            增强后的 BGR 图像
+        """
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, np.array(lower, dtype=np.uint8), np.array(upper, dtype=np.uint8))
+        # 形态学操作
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_open)
+        # 颜色过滤结果
+        filtered = cv2.bitwise_and(img, img, mask=mask)
+        # ★ 与原图按比例混合 (0.7原图 + 0.3过滤)
+        # 既保留文字颜色增强，又不丢失背景上下文
+        return cv2.addWeighted(img, 0.7, filtered, 0.3, 0)
+
+    @staticmethod
+    def _save_debug_image(stage: str, img: np.ndarray):
+        """保存 OCR 中间处理图到本地（调参用）。"""
+        if not OCR_DEBUG_SAVE_ENABLED:
+            return
+        import os
+        import time
+        try:
+            appdata = os.path.join(os.getenv('APPDATA'), 'WARFRAME-RELIC', OCR_DEBUG_SAVE_DIR)
+            os.makedirs(appdata, exist_ok=True)
+            ts = int(time.time() * 1000)
+            path = os.path.join(appdata, f"ocr_{ts}_{stage}.png")
+            cv2.imwrite(path, img)
+            print(f"[OCR-DEBUG] 保存 {stage} -> {path}", flush=True)
+        except Exception as e:
+            print(f"[OCR-DEBUG] 保存失败 {stage}: {e}", flush=True)
 
     @staticmethod
     def _calculate_adaptive_scale(width: int, height: int) -> float:
         """根据图像尺寸计算自适应上采样倍数。
-        
-        策略：
-        - 小图（宽 < 900px）：不放大，保持原始质量
-        - 中图（900-1920px）：线性插值 1.4x ~ 1.8x
-        - 大图（> 1920px）：动态计算，确保文字像素密度足够
+
+        核心策略：统一目标宽度，让所有尺寸的图放大到相近的文字像素密度。
+        全屏截图(1920px)效果好的关键是文字像素足够大，
+        所以让小图也放大到同样的文字密度。
+
+        目标宽度 2400px（经验值：全屏1.25x=2400px 时 OCR 效果和速度最佳）
+        - 小图(<400px): 放大到 2400px → 约 6x（文字极小，需要激进放大）
+        - 中图(400-1920px): 线性插值到 2400px → 1.25x~6x
+        - 大图(>1920px): 不放大或轻微放大
         """
-        if not OCR_ADAPTIVE_UPSCALE_ENABLED:
-            return OCR_UPSCALE_SCALE if width > OCR_UPSCALE_MIN_WIDTH else 1.0
-        
-        # 小图：不放大
-        if width < OCR_UPSCALE_MIN_WIDTH:
+        TARGET_WIDTH = 2400  # 目标像素宽度（平衡 OCR 精度和速度）
+
+        if width >= TARGET_WIDTH:
+            # 大图已经足够，不需要放大
             return 1.0
-        
-        # 中图：线性插值
-        if width <= 1920:
-            ratio = (width - OCR_UPSCALE_MIN_WIDTH) / (1920 - OCR_UPSCALE_MIN_WIDTH)
-            scale = 1.4 + ratio * 0.4  # 1.4 ~ 1.8
-            return min(scale, OCR_ADAPTIVE_MAX_SCALE)
-        
-        # 大图：基于基准宽度计算，确保文字不会太小
-        base_scale = OCR_ADAPTIVE_BASE_WIDTH / width
-        adaptive_scale = max(OCR_ADAPTIVE_MIN_SCALE, 1.0 / base_scale * 1.5)
-        return min(adaptive_scale, OCR_ADAPTIVE_MAX_SCALE)
+
+        # 小图和中图：放大到目标宽度
+        scale = TARGET_WIDTH / width
+        return min(scale, 6.0)  # 最大6倍，避免过度放大
 
     # ---- 框工具 ----
 
@@ -267,44 +294,57 @@ class BaseOCR:
     def _run_ocr(self, image: np.ndarray) -> tuple[list, float]:
         """执行 OCR 并返回原始结果列表 + 使用的 scale。
         
-        优化流程：
-        1. 自适应上采样（根据图像尺寸动态调整放大倍数）
-        2. 对比度增强（CLAHE，适用于复杂背景）
-        3. 灰度化处理
-        4. OCR识别
+        优化流程（精简为4步，减少冗余处理）：
+        1. 自适应上采样（统一目标宽度，小图激进放大）
+        2. 灰度化 + CLAHE 对比度增强（合并为一步）
+        3. 锐化（增强文字边缘）
+        4. OCR 识别
         """
         
         h, w = image.shape[:2]
-        
-        # 步骤1：计算自适应上采样倍数
+        self._save_debug_image("00_original", image)
+
+        # 步骤1：自适应上采样
         scale = self._calculate_adaptive_scale(w, h)
-        
         if scale > 1.0:
             big = self._resize_fast(image, scale)
-            print(f"[OCR] 图像尺寸 {w}x{h}, 上采样倍数 {scale:.2f}x", flush=True)
+            print(f"[OCR] 自适应上采样: {w}x{h} -> {big.shape[1]}x{big.shape[0]} (scale={scale:.2f}x)", flush=True)
         else:
             big = image
-        
-        # 步骤2：对比度增强（仅对大图/全屏截图启用）
-        if scale >= 1.5 and len(big.shape) == 3:
-            big = self._enhance_contrast(big)
-            print(f"[OCR] 已应用对比度增强", flush=True)
-        
-        # 步骤3：灰度化（去掉颜色干扰，保留原始纹理）
+        self._save_debug_image("01_upscaled", big)
+
+        # 步骤2：颜色过滤（可选，仅保留目标颜色文字）
+        if self._color_filter_enabled and len(big.shape) == 3:
+            big = self._filter_by_color(big, self._color_filter_lower, self._color_filter_upper)
+            print(f"[OCR] 已应用颜色过滤 HSV({self._color_filter_lower}~{self._color_filter_upper})", flush=True)
+        self._save_debug_image("02_color_filtered", big)
+
+        # 步骤3：灰度化 + CLAHE 对比度增强（合并为一步，减少色彩空间转换开销）
         if len(big.shape) == 3:
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
-            gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         else:
-            gray = big
+            gray = big.copy()
 
-        # 步骤4：选择合适的OCR引擎并执行识别
+        if OCR_ENHANCE_CONTRAST:
+            clahe = cv2.createCLAHE(
+                clipLimit=OCR_CLAHE_CLIP_LIMIT,
+                tileGridSize=(OCR_CLAHE_GRID_SIZE, OCR_CLAHE_GRID_SIZE)
+            )
+            gray = clahe.apply(gray)
+        self._save_debug_image("03_contrast", gray)
+
+        # 步骤4：锐化（增强文字边缘）
+        gray = self._sharpen(gray)
+        self._save_debug_image("04_sharpened", gray)
+
+        # 步骤5：OCR 识别
         ocr_engine = self._get_ocr_engine(w)
-        
+
+        t_ocr = time.perf_counter()
         result, _ = ocr_engine(gray)
-        
-        if scale > 1.0:
-            print(f"[OCR] 识别完成，使用{'大图优化' if ocr_engine is not self._ocr else '标准'}引擎", flush=True)
-        
+        self._timing['ocr_inference'] = (time.perf_counter() - t_ocr) * 1000
+        self._save_debug_image("05_ocr_input", gray)
+
         return (result, scale)
 
     def _iter_ocr_lines(self, result, scale: float) -> list[tuple[str, list]]:

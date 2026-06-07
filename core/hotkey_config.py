@@ -113,30 +113,87 @@ def _item_region_config_path() -> str:
     return str(data_dir / "item_region.json")
 
 
-def load_item_region() -> dict | None:
-    """加载用户设置的物品区域。返回 {'x','y','w','h'} 或 None。"""
+def _load_item_regions_raw() -> dict:
+    """加载完整的物品区域配置（含所有槽位和选中状态）。"""
     path = _item_region_config_path()
+    default = {"active": "1", "regions": {"1": None, "2": None, "3": None}}
     if not os.path.exists(path):
-        return None
+        return default
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
+        # 兼容旧格式: 直接是 {'x','y','w','h'}
         if isinstance(data, dict) and all(k in data for k in ('x', 'y', 'w', 'h')):
+            return {"active": "1", "regions": {"1": data, "2": None, "3": None}}
+        # 新格式
+        if isinstance(data, dict) and "regions" in data:
+            if "active" not in data:
+                data["active"] = "1"
+            for k in ("1", "2", "3"):
+                if k not in data["regions"]:
+                    data["regions"][k] = None
             return data
     except Exception:
         pass
-    return None
+    return default
 
 
-def save_item_region(region: dict) -> bool:
-    """保存物品区域到配置文件。"""
+def _save_item_regions_raw(data: dict) -> bool:
+    """保存完整的物品区域配置。"""
     path = _item_region_config_path()
     try:
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(region, f, indent=2, ensure_ascii=False)
+            json.dump(data, f, indent=2, ensure_ascii=False)
         return True
     except Exception:
         return False
+
+
+def load_item_region() -> dict | None:
+    """加载当前选中的物品区域。返回 {'x','y','w','h'} 或 None。"""
+    cfg = _load_item_regions_raw()
+    active = cfg.get("active", "1")
+    return cfg["regions"].get(active)
+
+
+def load_all_item_regions() -> dict:
+    """加载所有物品区域配置（含 active 和 regions）。"""
+    return _load_item_regions_raw()
+
+
+def get_active_region_key() -> str:
+    """获取当前选中的区域槽位 key: '1', '2', '3'。"""
+    return _load_item_regions_raw().get("active", "1")
+
+
+def save_item_region(region: dict, slot: str = "1") -> bool:
+    """保存物品区域到指定槽位。
+
+    Args:
+        region: {'x','y','w','h'} 或 None（清除）
+        slot: '1', '2', '3'
+    """
+    cfg = _load_item_regions_raw()
+    cfg["regions"][slot] = region
+    return _save_item_regions_raw(cfg)
+
+
+def clear_item_region(slot: str = "1") -> bool:
+    """清除指定槽位的物品区域。"""
+    return save_item_region(None, slot)
+
+
+def set_active_region(slot: str) -> bool:
+    """切换当前选中的物品区域槽位。
+
+    Args:
+        slot: '1', '2', '3'
+    """
+    if slot not in ("1", "2", "3"):
+        return False
+    cfg = _load_item_regions_raw()
+    cfg["active"] = slot
+    return _save_item_regions_raw(cfg)
 
 def _get_feature_toggle_label(key: str) -> str:
     """动态获取功能开关标签（跟随语言预设）。"""
@@ -146,10 +203,9 @@ def _get_feature_toggle_label(key: str) -> str:
     except Exception:
         pass
     return {
-        "check_status": "遗物出/入库态判定（光墓查询）",
-        "query_parts": "遗物内含物逆向解析（破壁人协议）",
-        "query_price": "跨维度市场价值评估（黑暗森林博弈）",
-        "translate": "跨语种符号学映射（智子翻译）",
+        "check_status": "出入库查询",
+        "query_parts": "遗物内容查询",
+        "translate": "自动翻译",
     }.get(key, key)
 
 
@@ -206,153 +262,3 @@ def save_feature_toggles(toggles: dict) -> bool:
         return True
     except Exception:
         return False
-
-
-# ============================================================
-# GitHub 镜像 / 代理配置
-# ============================================================
-
-DEFAULT_GITHUB_MIRROR = ""  # 默认直连，如需加速可填 https://gh-proxy.com/
-
-
-def _mirror_config_path() -> str:
-    from pathlib import Path
-    data_dir = Path(__file__).resolve().parent.parent / "data"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    return str(data_dir / "mirror_config.json")
-
-
-def load_github_mirror() -> str:
-    """加载 GitHub 镜像配置。"""
-    path = _mirror_config_path()
-    if not os.path.exists(path):
-        return DEFAULT_GITHUB_MIRROR
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return str(data.get("github_mirror", DEFAULT_GITHUB_MIRROR)).strip()
-    except (json.JSONDecodeError, Exception):
-        return DEFAULT_GITHUB_MIRROR
-
-
-def save_github_mirror(mirror: str, gitee_username: str = None) -> bool:
-    """保存 GitHub 镜像配置。
-
-    Args:
-        mirror: 镜像类型 ("", "jsdelivr", "gitee", 或代理 URL)
-        gitee_username: Gitee 用户名（当 mirror 为 "gitee" 时使用）
-    """
-    path = _mirror_config_path()
-    try:
-        with open(path, "w", encoding="utf-8") as f:
-            config = {"github_mirror": mirror.strip()}
-            if gitee_username:
-                config["gitee_username"] = gitee_username.strip()
-            json.dump(config, f, indent=2, ensure_ascii=False)
-        return True
-    except Exception:
-        return False
-
-
-def load_gitee_username() -> str:
-    """加载 Gitee 用户名。"""
-    path = _mirror_config_path()
-    if not os.path.exists(path):
-        return ""
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return str(data.get("gitee_username", "")).strip()
-    except (json.JSONDecodeError, Exception):
-        return ""
-
-
-# jsDelivr CDN 多源端点（按优先级排序）
-JSDELIVR_ENDPOINTS = [
-    "cdn.jsdelivr.net",      # 主端点
-    "fastly.jsdelivr.net",   # Fastly CDN 备份
-    "gcore.jsdelivr.net",    # Gcore CDN 备份
-]
-
-# 当前使用的 jsDelivr 端点索引
-_current_jsdelivr_index = 0
-
-
-def resolve_github_url(url: str, mirror: str = None) -> str:
-    """将 GitHub raw URL 解析为实际下载地址。
-
-    - 如果 mirror 为空，返回原始 URL
-    - 如果 mirror 以 http:// 或 https:// 开头，作为前缀代理（如 ghproxy.com）
-    - 如果 mirror 是 "jsdelivr"，使用 jsDelivr CDN 格式（多源容灾）
-    - 如果 mirror 是 "gitee"，使用 Gitee 镜像（需配置用户名）
-    - 否则作为域名替换（如 raw.kgithub.com 替换 raw.githubusercontent.com）
-
-    jsDelivr 格式转换示例：
-    - 原始: https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json
-    - jsDelivr: https://cdn.jsdelivr.net/gh/WFCD/warframe-drop-data@main/data/all.json
-
-    Gitee 格式转换示例：
-    - 原始: https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json
-    - Gitee: https://gitee.com/{username}/warframe-drop-data/raw/main/data/all.json
-    """
-    import re
-    if mirror is None:
-        mirror = load_github_mirror()
-    mirror = mirror.strip()
-    if not mirror:
-        return url
-
-    if mirror == "gitee":
-        # Gitee 镜像模式
-        # 仅支持 warframe-drop-data 仓库（已成功导入 Gitee）
-        # 其他仓库（如 warframe-items）保持原始 URL
-        gitee_username = load_gitee_username()
-        if not gitee_username:
-            # 未配置 Gitee 用户名，回退到直连
-            return url
-        # 匹配 GitHub raw URL: https://raw.githubusercontent.com/{user}/{repo}/{branch}/{path}
-        match = re.match(r"https?://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.*)", url)
-        if match:
-            user, repo, branch, path = match.groups()
-            # warframe-drop-data 仓库使用 Gitee
-            if repo == "warframe-drop-data":
-                return f"https://gitee.com/{gitee_username}/{repo}/raw/{branch}/{path}"
-            # 其他仓库保持原始 URL
-        return url
-
-    if mirror == "jsdelivr":
-        # → https://{endpoint}/gh/{user}/{repo}@{branch}/{path}
-        import re
-        match = re.match(r"https?://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.*)", url)
-        if match:
-            user, repo, branch, path = match.groups()
-            endpoint = JSDELIVR_ENDPOINTS[_current_jsdelivr_index]
-            return f"https://{endpoint}/gh/{user}/{repo}@{branch}/{path}"
-        return url
-    if mirror.startswith("http://") or mirror.startswith("https://"):
-        # 前缀代理模式: https://ghproxy.com/https://raw.githubusercontent.com/...
-        return mirror.rstrip("/") + "/" + url
-    else:
-        # 域名替换模式: raw.kgithub.com 替换 raw.githubusercontent.com
-        return url.replace("raw.githubusercontent.com", mirror)
-
-
-def switch_jsdelivr_endpoint() -> str:
-    """切换到下一个 jsDelivr CDN 端点（用于故障切换）。
-
-    Returns:
-        新的端点域名
-    """
-    global _current_jsdelivr_index
-    _current_jsdelivr_index = (_current_jsdelivr_index + 1) % len(JSDELIVR_ENDPOINTS)
-    return JSDELIVR_ENDPOINTS[_current_jsdelivr_index]
-
-
-def get_current_jsdelivr_endpoint() -> str:
-    """获取当前使用的 jsDelivr CDN 端点。"""
-    return JSDELIVR_ENDPOINTS[_current_jsdelivr_index]
-
-
-def get_all_jsdelivr_endpoints() -> list:
-    """获取所有可用的 jsDelivr CDN 端点。"""
-    return JSDELIVR_ENDPOINTS.copy()

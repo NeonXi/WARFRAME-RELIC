@@ -5,6 +5,7 @@
 """
 import os
 from core.theme_config import theme
+from core.theme_proxy import CYBER_ORANGE, CYBER_CARD_BG, LIGHT_TEXT, SUBTLE_BORDER
 
 
 class StyleSheetBuilder:
@@ -243,17 +244,17 @@ QMessageBox QPushButton:hover {{
 QMessageBox QPushButton[text="Yes"], 
 QMessageBox QPushButton[text="确定"] {{
     background-color: rgba(255, 107, 53, 0.15);
-    border-color: #FF6B35;
-    color: #FF6B35;
+    border-color: {CYBER_ORANGE};
+    color: {CYBER_ORANGE};
 }}
 QMessageBox QPushButton[text="Yes"]:hover,
 QMessageBox QPushButton[text="确定"]:hover {{
     background-color: rgba(255, 107, 53, 0.3);
 }}
 QToolTip {{
-    background-color: #0E0E24;
-    color: #C8D0E0;
-    border: 1px solid #1a1a3a;
+    background-color: {CYBER_CARD_BG};
+    color: {LIGHT_TEXT};
+    border: 1px solid {SUBTLE_BORDER};
     border-radius: 6px;
     padding: 0px;
 }}

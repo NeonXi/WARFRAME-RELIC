@@ -35,6 +35,7 @@ class ColorSwatch(QLabel):
             f"background-color: {color}; border: none; border-radius: 2px;")
 
 from core.constants import theme, ThemeConfig
+from core.theme_proxy import CYBER_CYAN
 from core.theme_fields import THEME_FIELDS
 from data.ui_strings import S
 
@@ -163,7 +164,7 @@ class ThemePanel:
         self._btn_apply_preset.clicked.connect(self._on_apply_preset)
         preset_row.addWidget(self._btn_apply_preset)
 
-        self._btn_close_panel = QPushButton("关闭")
+        self._btn_close_panel = QPushButton(S("management", "close"))
         self._btn_close_panel
         self._btn_close_panel.clicked.connect(self.collapse)
         preset_row.addWidget(self._btn_close_panel)
@@ -182,7 +183,7 @@ class ThemePanel:
         bg_group_layout.setSpacing(6)
         
         # 背景图标题
-        bg_title = QLabel("自定义背景")
+        bg_title = QLabel(S("theme", "custom_bg"))
         bg_title.setStyleSheet(f"color: {theme.cyber_cyan}; font-weight: bold; font-size: 12px;")
         bg_group_layout.addWidget(bg_title)
         
@@ -215,11 +216,11 @@ class ThemePanel:
                 height: 6px; background: {theme.panel_bg}; border-radius: 3px;
             }}
             QSlider::handle:horizontal {{
-                background: {theme.cyber_cyan}; width: 20px; height: 20px;
+                background: {CYBER_CYAN}; width: 20px; height: 20px;
                 border-radius: 10px; margin: -7px 0;
             }}
             QSlider::handle:horizontal:hover {{
-                background: #00e5ff;
+                background: {CYBER_CYAN};
             }}
         """)
         # 透明度即时响应（只更新一行 QSS，无需防抖）
@@ -240,11 +241,11 @@ class ThemePanel:
                 height: 6px; background: {theme.panel_bg}; border-radius: 3px;
             }}
             QSlider::handle:horizontal {{
-                background: {theme.cyber_cyan}; width: 20px; height: 20px;
+                background: {CYBER_CYAN}; width: 20px; height: 20px;
                 border-radius: 10px; margin: -7px 0;
             }}
             QSlider::handle:horizontal:hover {{
-                background: #00e5ff;
+                background: {CYBER_CYAN};
             }}
         """)
         self._blur_slider.valueChanged.connect(self._on_blur_changed)
@@ -266,11 +267,11 @@ class ThemePanel:
                 height: 6px; background: {theme.panel_bg}; border-radius: 3px;
             }}
             QSlider::handle:horizontal {{
-                background: {theme.cyber_cyan}; width: 20px; height: 20px;
+                background: {CYBER_CYAN}; width: 20px; height: 20px;
                 border-radius: 10px; margin: -7px 0;
             }}
             QSlider::handle:horizontal:hover {{
-                background: #00e5ff;
+                background: {CYBER_CYAN};
             }}
         """)
         self._panel_overlay_slider.valueChanged.connect(self._on_panel_overlay_changed)

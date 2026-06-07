@@ -14,6 +14,7 @@ HotkeyCaptureButton - 快捷键捕获按钮
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QMouseEvent
+from data.ui_strings import S
 
 
 # 修饰键的显示顺序（固定，保证输出一致性）
@@ -104,11 +105,11 @@ class HotkeyCaptureButton(QLineEdit):
             if self._pressed_keys:
                 self.setText(self._build_current_combo())
             else:
-                self.setText("按下组合键...")
+                self.setText(S("hotkey_capture", "press_combo"))
         elif self._hotkey:
             self.setText(self._hotkey.upper())
         else:
-            self.setText("点击设置")
+            self.setText(S("hotkey_capture", "click_to_set"))
 
     def _build_current_combo(self) -> str:
         """根据 _pressed_keys 构建当前显示字符串。

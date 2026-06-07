@@ -1,0 +1,28 @@
+* text=auto
+
+# Python files
+*.py text=auto
+
+# Markdown files
+*.md text=auto
+
+# JSON files
+*.json text eol=lf
+
+# YAML files
+*.yml text=auto
+*.yaml text=auto
+
+# Shell scripts (use LF)
+*.sh text eol=lf
+
+# Batch files (use CRLF)
+*.bat text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.db binary

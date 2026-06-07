@@ -5,7 +5,7 @@ warframe.market 价格数据库模块 (wm_prices.db)
   - warframe.market API v2: https://api.warframe.market/v2/
 
 关联方式:
-  - 通过物品英文名 (en_name) 与 items_i18n.db 的 items 表匹配
+  - 通过物品英文名 (en_name) 与 warframe.db 的 items 表匹配
 
 表结构:
   item_prices:    物品价格表（仅卖价，含反压价权重机制）
@@ -48,7 +48,7 @@ except ImportError:
 # ===== 路径 =====
 BASE_DIR = os.path.dirname(__file__)
 DB_PATH = os.path.join(BASE_DIR, 'wm_prices.db')
-ITEMS_I18N_DB = os.path.join(BASE_DIR, 'items_i18n.db')
+WARFRAME_DB = os.path.join(BASE_DIR, 'warframe.db')
 
 # ===== API 配置 =====
 WM_API_BASE = 'https://api.warframe.market/v2'
@@ -70,7 +70,7 @@ SELL_ORDER_SAMPLE = 20           # 拉取前 N 个卖单做权重分析
 SCHEMA = """
 -- 物品价格表（仅卖价）
 CREATE TABLE IF NOT EXISTS item_prices (
-    item_id         INTEGER NOT NULL,           -- 关联 items_i18n.db items.id
+    item_id         INTEGER NOT NULL,           -- 关联 warframe.db items.rowid
     en_name         TEXT NOT NULL DEFAULT '',    -- 物品英文名（直接查询用，不依赖JOIN）
     slug            TEXT NOT NULL,               -- warframe.market 物品 slug
     sell_min        INTEGER,                     -- 最低卖价 (白金) - 前 5 中的最低
@@ -105,8 +105,7 @@ CREATE TABLE IF NOT EXISTS price_meta (
 def get_price(en_name: str) -> Optional[dict]:
     """根据英文名查询物品价格。
 
-    优先用 en_name 直接查询（wm_prices.db 自带 en_name 列），
-    兼容旧数据库（通过 items_i18n.db JOIN）。
+    直接用 en_name 查询（wm_prices.db 自带 en_name 列）。
 
     Args:
         en_name: 物品英文名
@@ -119,39 +118,21 @@ def get_price(en_name: str) -> Optional[dict]:
     if not os.path.exists(DB_PATH):
         return None
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
-    # 尝试直接用 en_name 查询（新版数据库自带 en_name 列）
+    # 用 en_name 直接查询
     row = conn.execute(
         "SELECT * FROM item_prices WHERE en_name = ?",
         (en_name,)
     ).fetchone()
 
     if row is None:
-        # 精确模糊匹配（处理名称差异，如 Prime Set vs Set）
+        # 模糊匹配（处理名称差异，如 Prime Set vs Set）
         row = conn.execute(
             "SELECT * FROM item_prices WHERE en_name LIKE ? ORDER BY LENGTH(en_name) ASC LIMIT 1",
             (f"%{en_name}%",)
         ).fetchone()
-
-    if row is None and os.path.exists(ITEMS_I18N_DB):
-        # 兼容旧数据库：通过 items_i18n JOIN 查询
-        conn.execute(f"ATTACH DATABASE '{ITEMS_I18N_DB}' AS items_i18n_db")
-        row = conn.execute("""
-            SELECT p.* FROM item_prices p
-            INNER JOIN items_i18n_db.items i ON p.item_id = i.id
-            WHERE i.en_name = ?
-        """, (en_name,)).fetchone()
-
-        if row is None:
-            row = conn.execute("""
-                SELECT p.* FROM item_prices p
-                INNER JOIN items_i18n_db.items i ON p.item_id = i.id
-                WHERE i.en_name LIKE ?
-                ORDER BY LENGTH(i.en_name) ASC
-                LIMIT 1
-            """, (f"%{en_name}%",)).fetchone()
 
     conn.close()
     if row is None:
@@ -196,7 +177,7 @@ def fetch_price_realtime(en_name: str, timeout: float = REALTIME_TIMEOUT) -> Opt
         print(f"[wm_prices] fetch_price_realtime: 无 slug for \"{en_name}\"，fallback 本地DB", flush=True)
         return get_price(en_name)
 
-    print(f"[wm_prices] fetch_price_realtime: en_name=\"{en_name}\" → slug=\"{slug}\"", flush=True)
+    print(f"[wm_prices] fetch_price_realtime: en_name=\"{en_name}\" -> slug=\"{slug}\"", flush=True)
 
     # 2. 尝试实时 API 查询
     try:
@@ -207,7 +188,7 @@ def fetch_price_realtime(en_name: str, timeout: float = REALTIME_TIMEOUT) -> Opt
         print(f"[wm_prices] API 成功: /orders/item/{slug}", flush=True)
     except Exception as e:
         # API 失败/超时 → fallback 本地 DB
-        print(f"[wm_prices] API 失败: {e} → fallback 本地DB", flush=True)
+        print(f"[wm_prices] API 失败: {e} -> fallback 本地DB", flush=True)
         return get_price(en_name)
 
     # 3. 解析实时卖单数据
@@ -280,37 +261,45 @@ def _name_to_slug(en_name: str) -> str:
 def _get_slug(en_name: str) -> Optional[str]:
     """从本地 DB 获取物品的 warframe.market slug。
 
-    优先用 en_name 直接查询（新版数据库），兼容旧数据库 JOIN。
-    如果本地 DB 中没有，则尝试从名称直接构造 slug。
+    优先从 wm_prices.db 的 en_name 列查询，
+    如果没有则从 warframe.db 的 market_items 表查询，
+    最后尝试从名称直接构造 slug。
     """
     if os.path.exists(DB_PATH):
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(DB_PATH, check_same_thread=False)
             conn.row_factory = sqlite3.Row
 
-            # 新版数据库：直接 en_name 查询
+            # 从 wm_prices.db 直接查询
             row = conn.execute(
                 "SELECT slug FROM item_prices WHERE en_name = ?",
                 (en_name,)
             ).fetchone()
-
-            if not row:
-                # 兼容旧数据库：JOIN 查询
-                conn.execute(f"ATTACH DATABASE '{ITEMS_I18N_DB}' AS items_i18n_db")
-                row = conn.execute("""
-                    SELECT p.slug FROM item_prices p
-                    INNER JOIN items_i18n_db.items i ON p.item_id = i.id
-                    WHERE i.en_name = ?
-                """, (en_name,)).fetchone()
 
             conn.close()
             if row and row['slug']:
                 return row['slug']
         except Exception:
             pass
+
+    # 从 warframe.db 的 market_items 表查询
+    if os.path.exists(WARFRAME_DB):
+        try:
+            conn = sqlite3.connect(WARFRAME_DB, check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT slug FROM market_items WHERE en_name = ?",
+                (en_name,)
+            ).fetchone()
+            conn.close()
+            if row and row['slug']:
+                return row['slug']
+        except Exception:
+            pass
+
     # 本地没有，从名称构造 slug
     constructed = _name_to_slug(en_name)
-    print(f"[wm_prices] _get_slug: 本地DB无 \"{en_name}\" 的slug → 从名称构造: \"{constructed}\"", flush=True)
+    print(f"[wm_prices] _get_slug: 本地DB无 \"{en_name}\" 的slug -> 从名称构造: \"{constructed}\"", flush=True)
     return constructed
 
 
@@ -336,7 +325,7 @@ def _parse_statistics(data: dict) -> dict:
 def get_prices_batch(en_names: list[str]) -> dict[str, dict]:
     """批量查询多个物品的价格。
 
-    优先用 en_name 直接查询（新版数据库），兼容旧数据库 JOIN。
+    直接用 en_name 查询（wm_prices.db 自带 en_name 列）。
 
     Args:
         en_names: 物品英文名列表
@@ -347,25 +336,16 @@ def get_prices_batch(en_names: list[str]) -> dict[str, dict]:
     if not en_names or not os.path.exists(DB_PATH):
         return {}
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
     placeholders = ','.join('?' * len(en_names))
 
-    # 新版数据库：直接 en_name 查询
+    # 直接 en_name 查询
     rows = conn.execute(
         f"SELECT * FROM item_prices WHERE en_name IN ({placeholders})",
         en_names
     ).fetchall()
-
-    if not rows and os.path.exists(ITEMS_I18N_DB):
-        # 兼容旧数据库：JOIN 查询
-        conn.execute(f"ATTACH DATABASE '{ITEMS_I18N_DB}' AS items_i18n_db")
-        rows = conn.execute(f"""
-            SELECT p.* FROM item_prices p
-            INNER JOIN items_i18n_db.items i ON p.item_id = i.id
-            WHERE i.en_name IN ({placeholders})
-        """, en_names).fetchall()
 
     result = {}
     for row in rows:
@@ -375,13 +355,9 @@ def get_prices_batch(en_names: list[str]) -> dict[str, dict]:
                 d['sell_top3'] = json.loads(d['sell_top3'])
             except (json.JSONDecodeError, TypeError):
                 d['sell_top3'] = []
-        # 使用 en_name 列（如果存在）或需要从 items_i18n 获取
         key = d.get('en_name', '')
         if key:
             result[key] = d
-        else:
-            # 旧格式，需要通过 JOIN 获取 en_name
-            pass
 
     conn.close()
     return result
@@ -395,7 +371,7 @@ def get_price_stats() -> dict:
             'db_size': 0, 'db_mtime': '',
         }
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         cur = conn.cursor()
 
         total = cur.execute("SELECT COUNT(*) FROM item_prices").fetchone()[0]
@@ -482,26 +458,29 @@ def _fetch_wm_items(log_cb=None) -> list[dict]:
 
 
 def _match_items(wm_items: list[dict], log_cb=None) -> list[dict]:
-    """将 warframe.market 物品与本地 items_i18n.db 匹配。
+    """将 warframe.market 物品与本地 warframe.db 匹配。
 
     Returns:
         [{item_id, en_name, zh_name, slug, ...}, ...]
     """
-    if not os.path.exists(ITEMS_I18N_DB):
+    if not os.path.exists(WARFRAME_DB):
         if log_cb:
-            log_cb('error', 'items_i18n.db 不存在，无法匹配物品')
+            log_cb('error', 'warframe.db 不存在，无法匹配物品')
         return []
 
-    conn = sqlite3.connect(ITEMS_I18N_DB)
+    conn = sqlite3.connect(WARFRAME_DB, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
     # 构建 en_name → item 映射
+    # warframe.db items 表: name(=en_name), zh_name, category, tradable(=is_tradable)
     all_items = conn.execute(
-        "SELECT id, en_name, zh_name, category, is_tradable FROM items"
+        "SELECT rowid AS id, name AS en_name, zh_name, category, tradable AS is_tradable FROM items"
     ).fetchall()
 
     # 精确匹配索引
     en_map = {row['en_name'].lower(): dict(row) for row in all_items}
+
+    conn.close()
 
     matched = []
     exact_count = 0
@@ -561,8 +540,6 @@ def _match_items(wm_items: list[dict], log_cb=None) -> list[dict]:
                     'ducats': wm['ducats'],
                 })
                 fuzzy_count += 1
-
-    conn.close()
 
     if log_cb:
         log_cb('ok', f'物品匹配完成: 精确 {exact_count}, 模糊 {fuzzy_count}, '
@@ -1048,7 +1025,7 @@ def fetch_all_prices(log_cb=None, progress_cb=None) -> dict:
 
     if not matched:
         if log_cb:
-            log_cb('error', '没有匹配到任何物品，请先确保 items_i18n.db 已构建')
+            log_cb('error', '没有匹配到任何物品，请先确保 warframe.db 已构建')
         return {'total': 0, 'error': 'no_match'}
 
     # 步骤 3: 批量拉取价格并写入
@@ -1114,14 +1091,14 @@ if _HAS_PYQT:
 
                 # 步骤 2
                 self.step_changed.emit(2, '匹配本地物品数据库')
-                _log('info', '正在与本地 items_i18n.db 进行物品匹配...')
+                _log('info', '正在与本地 warframe.db 进行物品匹配...')
                 matched = _match_items(wm_items, _log)
 
                 if self._cancelled:
                     return
 
                 if not matched:
-                    _log('error', '没有匹配到任何物品，请先确保 items_i18n.db 已构建')
+                    _log('error', '没有匹配到任何物品，请先确保 warframe.db 已构建')
                     self.error.emit('no_match')
                     return
 
@@ -1156,7 +1133,7 @@ if __name__ == '__main__':
     import sys
 
     def _print_log(level, msg):
-        prefix = {'ok': '  ✓', 'warn': '  ⚠', 'error': '  ✗'}.get(level, '   ')
+        prefix = {'ok': '  [ok]', 'warn': '  [!]', 'error': '  [x]'}.get(level, '   ')
         print(f'{prefix} {msg}')
 
     def _print_progress(current, total):

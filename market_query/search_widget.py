@@ -19,21 +19,22 @@ if _src_root not in sys.path:
 
 from core.theme_config import theme
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'wm_items.db')
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'warframe.db')
 
 # Excluded categories (non-tradable cosmetics)
 _EXCLUDE_ZH = ('浮印', '外观', '遗物', '摇头娃娃', '披饰', '站姿')
 _EXCLUDE_EN = ('Glyph', 'Skin', 'Animation', 'Helmet')
 
 _SEARCH_SQL = f"""
-    SELECT * FROM items 
-    WHERE (zh_name LIKE ? OR en_name LIKE ? OR zh_pinyin LIKE ?)
-    AND is_tradable = 1
+    SELECT rowid AS id, name AS en_name, zh_name
+    FROM items
+    WHERE (zh_name LIKE ? OR name LIKE ? OR zh_pinyin LIKE ?)
+    AND tradable = 1
     AND zh_name NOT LIKE '%{"%' AND zh_name NOT LIKE '%".join(_EXCLUDE_ZH)}%'
-    AND en_name NOT LIKE '%{"%' AND en_name NOT LIKE '%".join(_EXCLUDE_EN)}%'
-    ORDER BY 
-        CASE WHEN zh_name LIKE '%一套%' OR en_name LIKE '%Set%' THEN 0 ELSE 1 END,
-        CASE WHEN zh_name LIKE '%蓝图%' OR en_name LIKE '%Blueprint%' THEN 0 ELSE 1 END,
+    AND name NOT LIKE '%{"%' AND name NOT LIKE '%".join(_EXCLUDE_EN)}%'
+    ORDER BY
+        CASE WHEN zh_name LIKE '%一套%' OR name LIKE '%Set%' THEN 0 ELSE 1 END,
+        CASE WHEN zh_name LIKE '%蓝图%' OR name LIKE '%Blueprint%' THEN 0 ELSE 1 END,
         zh_name
     LIMIT 20
 """
@@ -55,9 +56,22 @@ class SearchWidget(QWidget):
     def _get_conn(self):
         """Get or create persistent SQLite connection"""
         if self._conn is None:
-            self._conn = sqlite3.connect(DB_PATH)
+            self._conn = sqlite3.connect(DB_PATH, check_same_thread=False)
             self._conn.row_factory = sqlite3.Row
+            from data.db_connections import db_conn_registry
+            db_conn_registry.register("search_widget", self.close_db)
         return self._conn
+
+    def close_db(self):
+        """Close the persistent database connection (for registry)."""
+        if self._conn is not None:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
+        from data.db_connections import db_conn_registry
+        db_conn_registry.unregister("search_widget")
     
     def _init_ui(self):
         """Initialize UI components"""
@@ -205,7 +219,7 @@ class SearchWidget(QWidget):
             cur = conn.cursor()
             cur.execute(_SEARCH_SQL, [pattern, pattern, pattern])
             db_results = [dict(row) for row in cur.fetchall()]
-            
+
             return [{
                 'id': item['id'],
                 'en_name': item['en_name'],

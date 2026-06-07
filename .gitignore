@@ -71,5 +71,14 @@ build_onefile.py
 # Debug screenshots
 debug/
 
+# Gitee sync cache
+data/.gitee_sync_cache/
+
+# External data sources (downloaded via scripts)
+external/
+
+# Build tools
+upx.exe
+
 nul
 

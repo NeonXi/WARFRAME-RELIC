@@ -10,6 +10,7 @@
 import sqlite3
 from pathlib import Path
 
+from data.ui_strings import S
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QStackedWidget, QFrame, QSplitter,
@@ -20,6 +21,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, qRgba
 
 from core.constants import theme
+from core.json_viewer import JsonViewerPage
 
 
 # ============================================================
@@ -29,48 +31,41 @@ from core.constants import theme
 class DataRepository:
     def __init__(self):
         self._data_dir = Path("data")
-        self._relic_db_path = self._data_dir / "relics.db"
-        self._items_db_path = self._data_dir / "items_i18n.db"
-        self._wm_prices_db_path = self._data_dir / "wm_prices.db"
-        self._game_i18n_db_path = self._data_dir / "game_i18n.db"
+        self._db_path = self._data_dir / "warframe.db"
 
     @property
     def available(self) -> bool:
-        return self._relic_db_path.exists()
+        return self._db_path.exists()
 
     @property
     def items_available(self) -> bool:
-        return self._items_db_path.exists()
+        return self._db_path.exists()
 
     def all_databases(self) -> list[dict]:
-        """返回所有可用数据库的元信息"""
-        db_defs = [
-            ("relics.db",           self._relic_db_path,        "遗物数据库 (WAL)"),
-            ("items_i18n.db",       self._items_db_path,        "全物品索引 (v6)"),
-            ("game_i18n.db",        self._game_i18n_db_path,    "中英对照翻译库 (WAL)"),
-            ("wm_prices.db",        self._wm_prices_db_path,    "WM 价格缓存 (WAL)"),
+        """返回数据库元信息。"""
+        return [
+            {"name": "warframe.db", "path": self._db_path, "label": "Warframe 统一数据库", "exists": self._db_path.exists()}
         ]
-        return [{"name": n, "path": p, "label": l} for n, p, l in db_defs if p.exists()]
 
     def tables(self, db_path: Path = None) -> list[str]:
-        db_path = db_path or self._relic_db_path
+        db_path = db_path or self._db_path
         if not db_path.exists():
             return []
         try:
-            with sqlite3.connect(db_path) as conn:
+            with sqlite3.connect(db_path, check_same_thread=False) as conn:
                 rows = conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
                 ).fetchall()
             return [r[0] for r in rows]
         except Exception:
             return []
 
     def schema(self, table: str, db_path: Path = None) -> list[dict]:
-        db_path = db_path or self._relic_db_path
+        db_path = db_path or self._db_path
         if not db_path.exists():
             return []
         try:
-            with sqlite3.connect(db_path) as conn:
+            with sqlite3.connect(db_path, check_same_thread=False) as conn:
                 cols = conn.execute(f"PRAGMA table_info({table})").fetchall()
             return [
                 {"cid": c[0], "name": c[1], "type": c[2],
@@ -81,11 +76,11 @@ class DataRepository:
             return []
 
     def count(self, table: str, db_path: Path = None) -> int:
-        db_path = db_path or self._relic_db_path
+        db_path = db_path or self._db_path
         if not db_path.exists():
             return 0
         try:
-            with sqlite3.connect(db_path) as conn:
+            with sqlite3.connect(db_path, check_same_thread=False) as conn:
                 return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         except Exception:
             return 0
@@ -95,11 +90,11 @@ class DataRepository:
 
     def query(self, sql: str, db_path: Path = None, params: tuple = ()) -> tuple[list[str], list[tuple]]:
         """执行 SELECT 查询，返回 (列名列表, 行数据列表)"""
-        db_path = db_path or self._relic_db_path
+        db_path = db_path or self._db_path
         if not db_path.exists():
             return [], []
         try:
-            with sqlite3.connect(db_path) as conn:
+            with sqlite3.connect(db_path, check_same_thread=False) as conn:
                 cur = conn.execute(sql, params)
                 cols = [d[0] for d in cur.description] if cur.description else []
                 rows = cur.fetchall()
@@ -217,6 +212,7 @@ MAIN_TABS = [
     ("📊", "数据链路", 0, True),
     ("🗄️", "数据表",   1, True),
     ("📝", "操作日志", 2, False),
+    ("📂", "源数据浏览", 3, False),
 ]
 
 SIDE_NAV = {
@@ -224,7 +220,7 @@ SIDE_NAV = {
     1: [("tables", "表列表"), ("structure", "表结构"), ("query", "数据查询")],
 }
 
-SIDE_TITLES = {0: "数据链路", 1: "数据表", 2: "操作日志"}
+SIDE_TITLES = {0: "数据链路", 1: "数据表", 2: "操作日志", 3: "源数据浏览"}
 
 
 # ============================================================
@@ -245,9 +241,9 @@ class DataCenterWindow(QWidget):
         self.setMinimumSize(1000, 600)
         self.setWindowFlags(Qt.WindowType.Window)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.showMaximized()
 
         self._build()
+        self.showMaximized()
 
     def closeEvent(self, event):
         super().closeEvent(event)
@@ -330,6 +326,7 @@ class DataCenterWindow(QWidget):
         self._content.addWidget(self._link_page())
         self._content.addWidget(self._table_page())
         self._content.addWidget(self._demo_page(2))
+        self._content.addWidget(JsonViewerPage())
         splitter.addWidget(self._content)
 
         splitter.setSizes([200, 800])
@@ -382,134 +379,86 @@ class DataCenterWindow(QWidget):
     # ── 阶段分组定义 ──
     LINK_SECTIONS = [
         ("数据源", [
-            ("🌐", "all.json", "WFCD warframe-drop-data",
-             "主数据源，包含 relics 定义、missionRewards / bountyRewards / keyRewards 掉落表",
+            ("🌐", "All.json", "WFCD warframe-items",
+             "全物品详细数据 (16,629 条)，含 name / category / type / tradable / rarity / mr\nabilities / attacks / components / drops / patchlogs 等完整属性",
              True),
-            ("🌐", "all_items.json", "WFCD warframe-drop-data",
-             "多语言翻译数据，uniqueName → zh.name / en.name 映射",
+            ("🌐", "i18n.json", "WFCD warframe-items",
+             "多语言翻译数据，uniqueName → 14 种语言的 {name, description}\n共 232,568 条翻译记录",
              True),
-            ("🌐", "All.json", "WFCD warframe-drop-data",
-             "全物品详细数据，15,729 个物品的 name / category / type / tradable / rarity / mr 等属性",
-             True),
-            ("🌐", "zh_en_dict.json", "AdminRoc 中英对照词典",
-             "最全面的中英对照数据源，16,907 条记录，含 382 条 Blueprint 部件翻译",
+            ("🌐", "all.json", "WFCD warframe-drop-data (DE 官方)",
+             "DE 官方掉落数据，包含 relics / missionRewards / modLocations\nenemyModTables / blueprintLocations / sortieRewards / bountyRewards\ntransientRewards / keyRewards / syndicates 等完整掉落信息",
              True),
             ("🌐", "dict.en.json", "calamity-inc/warframe-public-export-plus",
-             "DE 官方 Public Export 英文翻译数据，a 类可靠来源",
+             "DE 官方 Public Export 英文翻译数据，35,381 条\n/Lotus/Language/... key → 英文值",
              True),
             ("🌐", "dict.zh.json", "calamity-inc/warframe-public-export-plus",
-             "DE 官方 Public Export 中文翻译数据，a 类可靠来源",
+             "DE 官方 Public Export 中文翻译数据，35,381 条\n/Lotus/Language/... key → 中文值",
              True),
         ]),
         ("数据拉取", [
-            ("⬇️", "下载 all.json", "GitHub Raw → HTTPS",
-             "分块下载 (8KB/块) → 进度回调 → 超时重试(2次) → 速度统计",
+            ("⬇️", "Git 稀疏检出", "WFCD/warframe-items → 本地",
+             "clone --depth=1 --filter=blob:none --sparse\n→ All.json / i18n.json (16,629 物品 + 14 语言翻译)",
              True),
-            ("⬇️", "下载 all_items.json", "GitHub Raw → HTTPS",
-             "多语言翻译数据下载，失败跳过不阻塞主流程",
+            ("⬇️", "Git 稀疏检出", "WFCD/warframe-drop-data → 本地",
+             "clone --depth=1 --filter=blob:none --sparse\n→ all.json (DE 官方掉落数据，含遗物/任务/敌人掉落)",
              True),
-            ("⬇️", "下载 dict.en.json", "GitHub Raw → HTTPS",
-             "DE 官方英文翻译数据下载，约 1.5MB JSON",
+            ("⬇️", "Git 稀疏检出", "public-export-plus → 本地",
+             "clone --depth=1 --branch=senpai --filter=blob:none --sparse\n→ dict.en.json / dict.zh.json (35,381 条游戏术语翻译)",
              True),
-            ("⬇️", "下载 dict.zh.json", "GitHub Raw → HTTPS",
-             "DE 官方中文翻译数据下载，约 1.5MB JSON",
+            ("⬇️", "WM API 拉取", "warframe.market/v2/items",
+             "HTTP GET → 市场物品映射 (slug, en_name, id)\n网络不通时跳过，不影响核心数据",
              True),
         ]),
         ("数据解析", [
             ("🧪", "JSON 格式验证", "json.loads",
-             "验证 JSON 格式正确性 → 输出顶层字段列表 (relics, missionRewards, ...)",
+             "验证 5 个 JSON 文件格式正确性 → 输出记录数统计",
              True),
-            ("📁", "文件备份", "old → .bak",
-             "旧文件重命名为 .bak 备份，防止数据丢失",
+            ("📦", "All.json 解析", "build_warframe_db.py",
+             "16,629 条物品 → items 主表 (uniqueName, name, type, category, tradable, ...)\n类型专属属性 → item_type_attrs (JSON 扩展，6,907 条)\n技能 → item_abilities (501 条)\n攻击模式 → item_attacks (1,779 条)\n制造组件 → item_components (5,969 条)\n掉落来源 → item_drops (44,700 条)\n更新日志 → item_patchlogs (32,129 条)",
              True),
-            ("💾", "JSON 格式化保存", "json.dump",
-             "ensure_ascii=False, indent=2 → 格式化保存 all.json 到本地",
+            ("🌍", "i18n.json 解析", "build_warframe_db.py",
+             "232,568 条翻译 → item_translations (uniqueName, lang, name, description)\n中文翻译回填 items.zh_name / items.description_zh (16,427 条)",
              True),
-            ("✂️", "i18n 语言清洗", "lang filter",
-             "遍历每个 uniqueName 的翻译字典，仅保留 zh / en 语言，移除其余语言",
+            ("🎯", "all.json 遗物解析", "build_warframe_db.py",
+             "3,014 条遗物 → relics (tier, relic_name, state, vaulted)\n18,086 条奖励 → relic_rewards (item_name, rarity, chance)\nitemName 关联 items.uniqueName 构建跨表关联",
              True),
-            ("🗺️", "纪元映射", "TIER_MAP",
-             "Lith→古纪, Meso→前纪, Neo→中纪, Axi→后纪, Requiem→安魂, Vanguard→先锋",
+            ("🗺️", "all.json 任务掉落解析", "build_warframe_db.py",
+             "24 个星球 → planets\n431 个节点 → mission_nodes (planet_id, game_mode)\n10,287 条奖励 → mission_rewards (rotation A/B/C)",
              True),
-            ("🔍", "掉落数据扫描", "extract_dropping_relics",
-             "递归遍历 missionRewards / bountyRewards / keyRewards 等所有 rewards 数组\n收集含 'Relic' 的 itemName 条目",
+            ("⚔️", "all.json 敌人掉落解析", "build_warframe_db.py",
+             "Mod 掉落 → mod_drops (6,494 条) + enemy_mod_tables (6,517 条)\n蓝图掉落 → blueprint_drops (311 条) + enemy_bp_tables (311 条)",
              True),
-            ("🧹", "正则解析掉落名", "re.match",
-             "r'(\\w+)\\s+(\\S+)\\s+Relic' → \"Lith C14 Relic\" → \"古纪 C14\"\n\"Lith C14 Relic (Radiant)\" → \"古纪 C14\"（自动忽略后缀）",
+            ("🏆", "all.json 特殊奖励解析", "build_warframe_db.py",
+             "突击 → sortie_rewards (17 条)\n赏金 → bounty_rewards (2,221 条，6 个来源: cetus/solaris/deimos/zariman/entrati_lab/hex)\n临时 → transient_rewards (744 条，仲裁等)\n钥匙 → key_rewards (108 条)\n集团 → syndicate_rewards (1,707 条)",
              True),
-            ("📋", "State 去重", "(tier, relicName) dedup",
-             "同遗物存在 Intact / Exceptional / Flawless / Radiant 四种 state\n按 (tier, relicName) 去重，优先保留 Intact 状态",
+            ("📖", "dict.en/zh.json 解析", "build_warframe_db.py",
+             "35,381 条翻译 → game_translations (key, en, zh, category)\n从 /Lotus/Language/... 路径推断分类 (Missions/Items/Relics/...)",
              True),
-            ("🚦", "vaulted 状态推断", "三级优先级判定",
-             "虚空商人(2) > 出库/有掉落(1) > 入库/无掉落(0)\nname in vt_set → vaulted=2\nname in dropping_set → vaulted=1\nelse → vaulted=0",
+            ("💰", "WM 物品映射", "build_warframe_db.py",
+             "WM API → market_items (id, slug, en_name, item_unique)\nen_name 关联 items.uniqueName 构建跨表关联",
              True),
-            ("🏷️", "别名生成", "generate_aliases",
-             "每个遗物生成 5 个别名变体:\n\"古纪 C7\" / \"古纪C7\" / \"lith c7\" / \"lithc7\" / 原始名\n用于 OCR 模糊匹配和搜索容错",
+            ("🔗", "跨表关联构建", "name_map",
+             "All.json name → uniqueName 映射 (16,629 条)\n用于 all.json 的 itemName → items.unique_name 关联\n遗物奖励/任务奖励/敌人掉落均通过此映射关联到物品主表",
              True),
-            ("📖", "zh_en_dict 加载", "json.load",
-             "主数据源加载，16,907 条中英对照，含 382 条 Blueprint 部件翻译",
-             True),
-            ("📖", "all_items.json 加载", "json.load",
-             "辅助数据源，15,729 个物品 → 构建 en_name → (category, tradable, rarity, ...) 查找表",
-             True),
-            ("📖", "all_items.json 翻译补充", "json.load",
-             "补充翻译源，uniqueName → zh.name，用于 zh_en_dict 未覆盖的条目",
-             True),
-            ("🧩", "部件名推导", "_derive_zh_from_pattern",
-             "在 zh_en_dict 中查找 \"X Prime Chassis Blueprint\" → 去 Prime → 得 \"X 机体 蓝图\"\n支持 14 种部件关键词: chassis, neuroptics, systems, barrel, receiver, stock, blade, handle, link, grip, gauntlet, string, upper limb, lower limb",
-             True),
-            ("🏆", "Prime 推导", "模式匹配",
-             "非 Prime 物品尝试从 Prime 版本推导中文名\n\"acceltra blueprint\" → try \"acceltra prime blueprint\" → \"Acceltra 蓝图\"",
-             True),
-            ("📐", "资源蓝图推导", "regex: x\\d+",
-             "\"adramal alloy x20\" → 匹配 \"adramal alloy\" → \"阿德拉玛合金 x20 蓝图\"",
-             True),
-            ("�", "拼音生成", "pypinyin",
-             "中文名 → 全拼 + 首字母 → \"古纪C7\" → \"gujic7 gjc7\"\n用于拼音搜索和 OCR 容错匹配",
-             True),
-            ("🔗", "数据关联", "uniqueName 精确匹配",
-             "zh_en_dict.en_name ↔ all_items.name 以 uniqueName 为主键关联\n确保中英文对应准确无误",
-             True),
-            ("📊", "数据优先级", "三级合并策略",
-             "zh_en_dict (16,907条) > all_items.json (15,729条) > all_items.json (补充)\n中文名: zh_en_dict > English fallback\n属性: all_items.json (category, tradable, rarity, ...)",
-             True),
-            ("🔗", "中英数据合并", "key 对齐",
-             "dict.en + dict.zh 以 /Lotus/Language/... key 对齐合并\n统计: 中英皆有 / 仅英文 / 仅中文",
-             True),
-            ("✅", "双重交叉验证", "public-export-plus ↔ WFCD i18n",
-             "以 dict.*.json 为主数据源，WFCD all_items.json 为补充源\n若 dict 缺失翻译 → 从 zh_en_dict 补充\n若 zh_en_dict 有独有 key → 追加到数据库",
-             True),
-            ("🏷️", "分类提取", "路径解析",
-             "/Lotus/Language/Missions/... → Missions\n/Lotus/Language/Items/... → Items\n/Lotus/Language/Relics/... → Relics\n共 30+ 分类",
+            ("🛡️", "类型安全转换", "_safe_str/_safe_int/_safe_float",
+             "JSON 字段类型不一致时的安全处理:\nintroduced (dict→JSON str), description (list→JSON str)\n数值字段 None→NULL, 非数值→NULL",
              True),
         ]),
         ("数据存储", [
-            ("🏗️", "relics.db 建表", "SCHEMA_SQL",
-             "relics 表 (id, name, era, code, vaulted)\nrelic_parts 表 (relic_id, part_name, rarity, chance)\nrelic_aliases 表 (relic_id, alias)\nPRAGMA journal_mode=WAL · PRAGMA foreign_keys=ON",
+            ("🏗️", "warframe.db 建表", "SCHEMA_SQL",
+             "25 张表，统一单库设计:\n核心物品: items / item_type_attrs / item_abilities / item_attacks / item_components / item_drops / item_patchlogs\n翻译: item_translations / game_translations\n遗物: relics / relic_rewards\n任务掉落: planets / mission_nodes / mission_rewards\n敌人掉落: mod_drops / enemy_mod_tables / blueprint_drops / enemy_bp_tables\n特殊奖励: sortie_rewards / bounty_rewards / transient_rewards / key_rewards / syndicate_rewards\n市场: market_items\n元数据: db_meta\nPRAGMA journal_mode=WAL · PRAGMA foreign_keys=ON",
              True),
-            ("🏗️", "items_i18n.db 建表", "SCHEMA",
-             "items 表 (unique_name, zh_name, en_name, category, item_type, tradable, is_prime, rarity, mr, zh_pinyin, description)\nitems_meta 表 (key, value)\nitems_i18n 表 (多语言翻译)",
+            ("📊", "索引创建", "CREATE INDEX",
+             "items: name / zh_name / type / category / tradable / is_prime\nrelic_rewards: relic_id / item_name / item_unique\nmission_rewards: node_id / item_name / rotation\nmod_drops: mod_name / enemy_name\ngame_translations: category / en / zh\nmarket_items: slug / en_name / zh_name / item_unique",
              True),
-            ("📊", "relics 索引", "CREATE INDEX",
-             "idx_relic_parts_relic_id — 部件→遗物关联\nidx_aliases_alias — OCR 别名匹配\nidx_aliases_relic_id — 别名→遗物反向\nidx_relics_era — 纪元筛选\nidx_relics_vaulted — 出入库过滤",
+            ("✅", "批量写入", "executemany + commit",
+             "每步解析完成后批量 INSERT + 统一事务提交\nitems: 16,629 | translations: 232,568 | relic_rewards: 18,086\nmission_rewards: 10,287 | drops: 6,494 | patchlogs: 32,129",
              True),
-            ("📊", "items 索引", "CREATE INDEX",
-             "idx_items_zh — 中文名搜索\nidx_items_en — 英文名搜索\nidx_items_pinyin — 拼音搜索\nidx_items_category — 分类筛选\nidx_items_type — 子类型筛选\nidx_items_prime — Prime 过滤\nidx_items_tradable — 可交易过滤",
+            ("🔄", "数据库优化", "VACUUM",
+             "全量写入后执行 VACUUM 压缩\n最终大小约 124 MB，构建耗时约 7-8 秒",
              True),
-            ("✅", "事务提交", "conn.commit()",
-             "批量 INSERT 后统一提交事务\nrelics 表: ~300 条遗物 + ~1,200 个部件 + ~1,500 个别名\nitems 表: ~16,000 条物品",
-             True),
-            ("🔄", "DB 文件替换", "finalize_db",
-             "若原 DB 被占用 → 写入 .new 临时文件 → shutil.move 替换\n否则直接覆盖写入原文件",
-             True),
-            ("🏗️", "game_i18n.db 建表", "CREATE TABLE",
-             "translations 表 (key PRIMARY KEY, en, zh, category, source, verified)\nidx_category — 分类索引\nidx_source — 来源索引\nPRAGMA journal_mode=WAL",
-             True),
-            ("📊", "game_i18n 批量写入", "executemany",
-             "5,000 条/批次批量 INSERT → 统一事务提交\n总计约 30,000+ 条中英对照记录",
-             True),
-            ("📊", "game_i18n 分类统计", "GROUP BY category",
-             "Missions / Items / Relics / Menu / 1999 / ... 等 30+ 分类\n每个分类标注记录数和来源",
+            ("📋", "元数据记录", "db_meta",
+             "schema_version: 1\nbuild_time: 构建时间\nbuild_elapsed_sec: 耗时\ndrop_data_hash / items_commit / i18n_commit: 数据版本追踪",
              True),
         ]),
     ]
@@ -639,14 +588,21 @@ class DataCenterWindow(QWidget):
                 padding: 8px 14px;
                 border: none;
             }}
+            QHeaderView {{
+                background: {theme.panel_bg};
+            }}
             QHeaderView::section {{
-                background: rgba(0,0,0,0.40);
-                color: rgba(255,255,255,0.20);
+                background: {theme.panel_bg};
+                color: rgba(255,255,255,0.65);
                 font-size: 12px;
                 font-weight: 600;
                 padding: 10px 14px;
                 border: none;
                 border-bottom: 1px solid rgba(255,255,255,0.03);
+            }}
+            QTableCornerButton::section {{
+                background: {theme.panel_bg};
+                border: none;
             }}
         """
 
@@ -669,8 +625,23 @@ class DataCenterWindow(QWidget):
 
     # ── 子页面: 表列表 ──
 
+    # 表分类标签
+    _TABLE_CATEGORIES = {
+        'items': '核心物品', 'item_type_attrs': '核心物品', 'item_abilities': '核心物品',
+        'item_attacks': '核心物品', 'item_components': '核心物品', 'item_drops': '核心物品',
+        'item_patchlogs': '核心物品', 'item_translations': '核心物品',
+        'relics': '遗物', 'relic_rewards': '遗物',
+        'planets': '任务掉落', 'mission_nodes': '任务掉落', 'mission_rewards': '任务掉落',
+        'mod_drops': 'Mod掉落', 'enemy_mod_tables': 'Mod掉落',
+        'blueprint_drops': '蓝图掉落', 'enemy_bp_tables': '蓝图掉落',
+        'sortie_rewards': '特殊奖励', 'bounty_rewards': '特殊奖励',
+        'transient_rewards': '特殊奖励', 'key_rewards': '特殊奖励', 'syndicate_rewards': '特殊奖励',
+        'game_translations': '翻译', 'market_items': '市场',
+        'db_meta': '元数据',
+    }
+
     def _table_list_page(self) -> QWidget:
-        """列出所有数据库及其表"""
+        """列出数据库所有表，含状态指示"""
         pg = QWidget()
         layout = QVBoxLayout(pg)
         layout.setContentsMargins(32, 28, 32, 28)
@@ -680,21 +651,39 @@ class DataCenterWindow(QWidget):
         title.setStyleSheet(f"font-size: 22px; font-weight: 600; color: {theme.cyber_cyan};")
         layout.addWidget(title)
 
-        desc = QLabel("所有已注册数据库的表及其属性概览")
+        desc = QLabel("warframe.db 统一数据库 — 所有表及其属性概览")
         desc.setStyleSheet(f"font-size: 13px; color: {theme.text_dim};")
         layout.addWidget(desc)
 
+        # 汇总卡
+        db = self._repo.all_databases()[0]
+        total_tables = len(self._repo.tables(db["path"])) if db["exists"] else 0
+        total_rows = sum(self._repo.count(t, db["path"]) for t in self._repo.tables(db["path"])) if db["exists"] else 0
+        db_size = db["path"].stat().st_size / 1024 / 1024 if db["exists"] else 0
+        status_text = "🟢 已构建" if db["exists"] else "🔴 未构建"
+        summary = QLabel(f"{status_text}  |  {total_tables} 张表  |  {total_rows:,} 行数据  |  {db_size:.1f} MB")
+        summary.setStyleSheet(f"font-size: 12px; color: {theme.cyber_green}; padding: 4px 0;")
+        layout.addWidget(summary)
+
         # 构建数据
-        headers = ["数据库", "表名", "行数", "列数"]
+        headers = ["分类", "表名", "行数", "列数"]
         rows_data = []
         self._table_row_db: list[tuple] = []  # (db_path, table_name) 供选中查询
-        for db in self._repo.all_databases():
-            db_path = db["path"]
-            for table in self._repo.tables(db_path):
-                cnt = self._repo.count(table, db_path)
-                cols = len(self._repo.schema(table, db_path))
-                rows_data.append([db["label"], table, f"{cnt:,}", str(cols)])
-                self._table_row_db.append((db_path, table))
+
+        if db["exists"]:
+            tables = self._repo.tables(db["path"])
+            for table in tables:
+                cnt = self._repo.count(table, db["path"])
+                cols = len(self._repo.schema(table, db["path"]))
+                category = self._TABLE_CATEGORIES.get(table, '其他')
+                rows_data.append({
+                    "category": category,
+                    "table": table,
+                    "rows": f"{cnt:,}",
+                    "cols": str(cols),
+                    "db_path": db["path"],
+                })
+                self._table_row_db.append((db["path"], table))
 
         table = QTableWidget()
         table.setColumnCount(len(headers))
@@ -707,18 +696,35 @@ class DataCenterWindow(QWidget):
         hh = table.horizontalHeader()
         for ci in range(len(headers)):
             hh.setSectionResizeMode(ci, QHeaderView.ResizeMode.Interactive)
-        table.setColumnWidth(0, 130)
-        table.setColumnWidth(1, 150)
-        table.setColumnWidth(2, 80)
+        table.setColumnWidth(0, 90)
+        table.setColumnWidth(1, 200)
+        table.setColumnWidth(2, 90)
         table.setColumnWidth(3, 60)
 
         table.verticalHeader().setDefaultSectionSize(42)
         table.verticalHeader().setVisible(False)
 
-        for ri, row in enumerate(rows_data):
-            for ci, val in enumerate(row):
+        # 分类颜色
+        cat_colors = {
+            '核心物品': QColor(theme.cyber_cyan),
+            '遗物': QColor(theme.cyber_yellow),
+            '任务掉落': QColor(theme.cyber_green),
+            'Mod掉落': QColor(0xBB, 0x86, 0xFC),
+            '蓝图掉落': QColor(0xFF, 0x7C, 0x43),
+            '特殊奖励': QColor(0xEF, 0x53, 0x50),
+            '翻译': QColor(0x26, 0xC6, 0xDA),
+            '市场': QColor(0xFF, 0xCA, 0x28),
+            '元数据': QColor(theme.text_dim),
+            '其他': QColor(theme.text_dim),
+        }
+
+        for ri, row_data in enumerate(rows_data):
+            values = [row_data["category"], row_data["table"], row_data["rows"], row_data["cols"]]
+            for ci, val in enumerate(values):
                 item = QTableWidgetItem(val)
                 item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                if ci == 0:
+                    item.setForeground(cat_colors.get(val, QColor(theme.text_dim)))
                 item.setFlags(Qt.ItemFlag.NoItemFlags)
                 table.setItem(ri, ci, item)
 
@@ -758,7 +764,7 @@ class DataCenterWindow(QWidget):
         # 表选择行
         sel_row = QHBoxLayout()
         sel_row.setSpacing(12)
-        sel_label = QLabel("选择表:")
+        sel_label = QLabel(S("data_center", "label_select_table"))
         sel_label.setStyleSheet(f"font-size: 13px; color: {theme.text_dim};")
         sel_row.addWidget(sel_label)
 
@@ -780,7 +786,7 @@ class DataCenterWindow(QWidget):
         """)
         sel_row.addWidget(self._struct_combo)
 
-        refresh_btn = QPushButton("刷新")
+        refresh_btn = QPushButton(S("data_center", "btn_refresh"))
         refresh_btn.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(0,255,255,0.1); color: {theme.cyber_cyan};
@@ -797,7 +803,8 @@ class DataCenterWindow(QWidget):
         self._struct_refs = []  # [(db_path, table_name), ...]
         for db in self._repo.all_databases():
             for table in self._repo.tables(db["path"]):
-                label = f"{db['label']}  ›  {table}"
+                cat = self._TABLE_CATEGORIES.get(table, '其他')
+                label = f"[{cat}]  {table}"
                 self._struct_combo.addItem(label)
                 self._struct_refs.append((db["path"], table))
         self._struct_combo.currentIndexChanged.connect(self._build_structure_table)
@@ -873,7 +880,7 @@ class DataCenterWindow(QWidget):
         # 表选择行
         sel_row = QHBoxLayout()
         sel_row.setSpacing(10)
-        ql = QLabel("选择表:")
+        ql = QLabel(S("data_center", "label_select_table"))
         ql.setStyleSheet(f"font-size: 13px; color: {theme.text_dim};")
         sel_row.addWidget(ql)
 
@@ -901,13 +908,14 @@ class DataCenterWindow(QWidget):
         self._query_refs = []
         for db in self._repo.all_databases():
             for table in self._repo.tables(db["path"]):
-                label = f"{db['label']}  ›  {table}"
+                cat = self._TABLE_CATEGORIES.get(table, '其他')
+                label = f"[{cat}]  {table}"
                 self._query_combo.addItem(label)
                 self._query_refs.append((db["path"], table))
         self._query_combo.currentIndexChanged.connect(self._on_query_combo_changed)
 
         # 筛选条件区域
-        filter_label = QLabel("筛选条件")
+        filter_label = QLabel(S("data_center", "label_filter"))
         filter_label.setStyleSheet(f"font-size: 13px; font-weight: 600; color: {theme.text_dim}; margin-top: 6px;")
         layout.addWidget(filter_label)
 
@@ -959,7 +967,7 @@ class DataCenterWindow(QWidget):
 
         btn_row.addStretch()
 
-        qbtn = QPushButton("执行查询")
+        qbtn = QPushButton(S("data_center", "btn_execute_query"))
         qbtn.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(0,255,255,0.12); color: {theme.cyber_cyan};
@@ -982,7 +990,7 @@ class DataCenterWindow(QWidget):
         layout.addWidget(self._query_table, 1)
 
         # 状态栏
-        self._query_status = QLabel("就绪 — 选择表后添加筛选条件，或直接点击「执行查询」查看全部数据")
+        self._query_status = QLabel(S("data_center", "hint_query_ready"))
         self._query_status.setStyleSheet(f"font-size: 11px; color: {theme.text_dim}; padding: 4px 0;")
         layout.addWidget(self._query_status)
 
@@ -1036,7 +1044,7 @@ class DataCenterWindow(QWidget):
 
         # 值输入
         value_edit = QLineEdit()
-        value_edit.setPlaceholderText("值")
+        value_edit.setPlaceholderText(S("data_center", "placeholder_value"))
         value_edit.setMinimumWidth(100)
         value_edit.setFixedHeight(28)
         value_edit.setStyleSheet(f"""
@@ -1090,7 +1098,7 @@ class DataCenterWindow(QWidget):
         """根据筛选条件构建 SQL 并执行"""
         idx = self._query_combo.currentIndex()
         if idx < 0 or idx >= len(self._query_refs):
-            self._query_status.setText("请先选择数据库表")
+            self._query_status.setText(S("data_center", "hint_select_table"))
             return
         db_path, table_name = self._query_refs[idx]
 
@@ -1217,14 +1225,19 @@ class DataCenterWindow(QWidget):
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(14, 4, 14, 4)
 
-        tables = len(self._repo.tables())
-        records = self._repo.total_count()
-        items_tables = len(self._repo.tables(self._repo._items_db_path)) if self._repo.items_available else 0
-        items_records = sum(self._repo.count(t, self._repo._items_db_path) for t in self._repo.tables(self._repo._items_db_path)) if self._repo.items_available else 0
-        info = QLabel(
-            f"遗物库: {tables} 表, {records:,} 条  |  "
-            f"物品库: {items_tables} 表, {items_records:,} 条"
-        )
+        # 统计数据库
+        def _db_stats(db_path, label):
+            if not db_path.exists():
+                return f"{label}: 未构建"
+            tables = len(self._repo.tables(db_path))
+            records = sum(self._repo.count(t, db_path) for t in self._repo.tables(db_path))
+            size_mb = db_path.stat().st_size / 1024 / 1024
+            return f"{label}: {tables} 表, {records:,} 条, {size_mb:.1f} MB"
+
+        parts = [
+            _db_stats(self._repo._db_path, "warframe.db"),
+        ]
+        info = QLabel("  |  ".join(parts))
         info.setStyleSheet(f"font-size: 11px; color: {theme.text_dim};")
         layout.addWidget(info)
         layout.addStretch()
@@ -1242,7 +1255,10 @@ class DataCenterWindow(QWidget):
         self._fill_side(idx)
 
     def _fill_side(self, idx: int):
-        self._side_list.clear()
+        try:
+            self._side_list.clear()
+        except RuntimeError:
+            return  # C++ 对象已被删除，跳过
         has_side = MAIN_TABS[idx][3]
         self._side_panel.setVisible(has_side)
 

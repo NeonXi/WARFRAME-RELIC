@@ -1,4 +1,6 @@
 """启动动画 — 纯 Qt 实现，先淡出内容，再淡出遮罩。"""
+from data.ui_strings import S
+from core.theme_proxy import CYBER_ORANGE, CYBER_CYAN, COLOR_GOLD
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QGraphicsOpacityEffect,
 )
@@ -32,7 +34,7 @@ class PulsingDot(QWidget):
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        colors = [QColor("#FF6B35"), QColor("#00D4FF"), QColor("#FFD700")]
+        colors = [QColor(str(CYBER_ORANGE)), QColor(str(CYBER_CYAN)), QColor(str(COLOR_GOLD))]
         for i in range(3):
             phi = (self._phase + i * 0.33) % 1.0
             scale = 0.4 + 0.6 * (1.0 - abs(phi * 2.0 - 1.0))
@@ -84,16 +86,16 @@ class SplashScreen(QWidget):
         self._title = QLabel("WARFRAME-RELIC")
         self._title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._title.setStyleSheet(
-            "color: #FFD700; font-size: 28px; font-weight: bold;"
+            f"color: {COLOR_GOLD}; font-size: 28px; font-weight: bold;"
             "background: transparent; border: none;"
         )
         layout.addWidget(self._title)
 
         # 副标题
-        self._subtitle = QLabel("正在启动...")
+        self._subtitle = QLabel(S("splash", "starting"))
         self._subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._subtitle.setStyleSheet(
-            "color: #00D4FF; font-size: 13px;"
+            f"color: {CYBER_CYAN}; font-size: 13px;"
             "background: transparent; border: none;"
         )
         layout.addWidget(self._subtitle)

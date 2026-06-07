@@ -1,518 +1,365 @@
 """
-WARFRAME-RELIC UI 字符串 — 普通版（标准模式）
-简洁直白的文字风格，适合日常使用。
+WARFRAME-RELIC UI 字符串预设 — 普通风格
+所有在 UI 中展示的字符串都写在这里，方便维护和未来国际化。
 """
 
 STRINGS = {
-
     # ── 窗口标题 ──
     "window_title": {
-        "management_panel": "WARFRAME-RELIC · 遗物管理控制台",
-        "data_center": "后台数据处理中心",
+        "management_panel": "WARFRAME RELICS · 管理面板",
     },
 
-    # ── 主标题 ──
+    # ── 标题 ──
     "title": {
-        "management_panel": "WARFRAME-RELIC · 遗物管理控制台",
+        "management_panel": "WARFRAME RELICS",
     },
 
-    # ── 按钮文字 ──
+    # ── 按钮 ──
     "button": {
         "exit": "退出程序",
-        "reload_ui": "重载UI",
-        "reset_state": "紧急重置 · 恢复默认状态",
-        "reload_hotkeys": "重新注册快捷键",
-        "fetch_github": "从 GitHub 拉取最新数据",
-        "browse_file": "选择本地数据文件...",
-        "update_db": "更新数据库",
-        "update_tutorial": "使用说明",
+        "reload_ui": "重新加载界面",
+        "data_center": "后台数据中心",
+        "browse_file": "浏览文件",
+        "update_tutorial": "更新教程",
         "open_data_dir": "打开数据目录",
-        "update_from_local": "从本地文件更新",
-        "update_from_network": "从网络拉取更新",
-        "toggle_detail_expand": "展开详情",
-        "toggle_detail_collapse": "收起详情",
-        "save_hotkeys": "保存快捷键设置",
+        "open_market_query": "打开市场查询",
+        "save_hotkeys": "保存热键",
         "reset_default": "恢复默认",
-        "custom_theme": "自定义主题配色",
-        "bilibili_home": "Bilibili 主页",
+        "reset_state": "重置状态",
+        "reload_hotkeys": "重新加载热键",
+        "custom_theme": "自定义主题",
+        "bilibili_home": "B站主页",
         "github_repo": "GitHub 仓库",
         "close_log_panel": "关闭日志面板",
-        "search_clear": "清空",
-        "apply_preset": "应用",
-        "save_theme": "保存",
+        "apply_preset": "应用预设",
+        "upload_bg": "上传背景",
+        "clear_bg": "清除背景",
+        "save_theme": "保存主题",
         "refresh_preview": "刷新预览",
-        "upload_bg": "上传背景图",
-        "clear_bg": "清除背景图",
-        "mode_check_status": "遗物出入库状态查询",
-        "mode_query_parts": "遗物内含物查询",
-        "mode_query_price": "市场价格查询",
-        "mode_translate": "英文翻译",
-        "fetch_prices": "拉取 warframe.market 价格数据",
-        "open_market_query": "实时挂单查询",
-        "data_center": "后台数据处理",
-    },
-
-    # ── 导航标签 ──
-    "nav": {
-        "nav_toggles":  "功能开关",
-        "nav_status":   "数据状态",
-        "nav_db_center":    "数据管理",
-        "nav_trans":    "翻译库",
-        "nav_items":    "物品查询",
-        "nav_prices":   "价格数据",
-        "nav_hotkeys":  "快捷键",
-        "nav_theme":    "主题换肤",
-        "nav_preset":   "语言预设",
-        "nav_about":    "关于",
-        "nav_reset":    "紧急重置",
-        "data_link": "数据链路",
-        "data_table": "数据表",
-        "task_monitor": "任务监控",
-        "op_log": "操作日志",
+        # overlay 模式按钮
+        "mode_check": "遗物鉴定",
+        "mode_query": "掉落查询",
+        "mode_price": "价格查询",
+        "mode_translate": "翻译模式",
     },
 
     # ── 分组标题 ──
     "group": {
-        "recovery": "紧急恢复（异常状态重置）",
-        "data_overview": "数据总览",
-        "db_center": "数据库管理中心",
-        "items_i18n": "全物品多语言索引库",
-        "wm_prices": "warframe.market 价格数据",
-        "hotkey_settings": "快捷键设置",
-        "feature_toggles": "截图后功能开关",
-        "theme": "主题换肤",
-        "lang_preset": "语言风格 · 文案预设",
+        "feature_toggles": "功能开关",
+        "data_overview": "数据概览",
+        "db_center": "数据库中心",
+        "item_index": "物品索引",
+        "wm_prices": "市场价格",
+        "hotkey_settings": "热键设置",
+        "recovery": "恢复",
+        "theme": "主题",
         "about_author": "关于作者",
-        "db_status": "数据库状态",
+        "lang_preset": "语言风格",
     },
 
-    # ── 数据中心相关 ──
-    "section_title": {
-        "data_link": "数据链路视图",
-        "table_list": "数据表列表",
-        "task_monitor": "任务监控",
-        "op_log": "操作日志",
-    },
-    "layer_title": {
-        "source_layer": "📥 数据源层",
-        "process_layer": "⚙️ 处理层",
-        "storage_layer": "🗄️ 存储层",
+    # ── 功能开关 ──
+    "feature_toggle": {
+        "hint": "勾选启用功能，取消勾选禁用。更改后自动保存。",
+        "save_failed": "功能开关保存失败",
+        # 动态键: desc_{key}, label_{key} — key 对应 DEFAULT_FEATURE_TOGGLES
+        "desc_check_status": "识别遗物名称后自动查询出入库状态",
+        "desc_query_parts": "识别遗物名称后自动查询内含物掉落表",
+        "desc_translate": "识别英文文字后自动翻译为中文",
+        "label_check_status": "出入库查询",
+        "label_query_parts": "遗物内容查询",
+        "label_translate": "自动翻译",
     },
 
     # ── 统计标签 ──
     "stat_label": {
-        "relics_summary": "数据库",
-        "relic_vault": "出入库状态",
-        "items_summary": "全物品索引",
+        "relics_summary": "遗物总数",
+        "relic_vault": "入库/出库",
+        "items_summary": "物品总数",
         "db_size": "数据库大小",
-        "last_update": "最近更新时间",
-        "items_weapon": "武器分类统计",
-        "price_total": "已定价物品数",
-        "price_has_sell": "有效卖价条目数",
-        "price_has_weighted": "检测到异常低价",
-        "relics_total": "遗物总数",
-        "parts_total": "部件总数",
-        "aliases_total": "别名总数",
-        "vaulted": "入库",
-        "available": "出库",
-        "voidtrader": "虚空商人",
+        "last_update": "上次更新",
     },
+
+    # ── 统计格式化（S.format("stat_fmt", key, **kwargs)）──
     "stat_fmt": {
-        "count_items": "{count} 个",
-        "db_size_kb": "{size:.1f} KiB",
-        "trans_count": "{count} 条",
-        "cat_detail": "{cat}: {count}",
-        "relics_summary": "{relics} 遗物 | {parts} 部件 | {aliases} 别名",
-        "relic_vault": "出库 {available} | 入库 {vaulted} | 虚空商人 {voidtrader}",
-        "items_summary": "{total} 物品（中文 {has_cn}） | {size:.1f} KiB",
+        "relics_summary": "{relics} 个遗物 / {parts} 条奖励",
+        "relic_vault": "出库 {available} / 入库 {vaulted}",
+        "items_summary": "{total:,} 个物品 / {has_cn:,} 条翻译 / {size:.0f} KB",
+        "db_size_kb": "{size:.0f} KB",
     },
 
-    # ── 状态概要 ──
-    "status": {
-        "items_db": "全物品索引: --",
-        "items_db_fmt": "全物品索引: {total} 个（有中文名 {has_cn}） | {size:.1f} KiB",
-        "items_db_none": "全物品索引: 尚未构建",
-        "items_db_error": "全物品索引: 数据异常（完整性校验失败）",
-        "db_not_exist": "数据库不存在",
-        "db_corrupted": "数据库异常: {error}",
-        "db_no_permission": "数据库访问权限不足: {error}",
-        "placeholder": "--",
-        "items_summary_none": "全物品索引: 尚未构建",
-        "items_summary_error": "全物品索引: 数据异常",
-        "done": "操作完成",
-    },
-
-    # ── 提示文字 ──
-    "hint": {
-        "recovery": "点击下方按钮将执行完整的异常恢复流程：\n"
-                    "  ① 终止所有后台识别线程\n"
-                    "  ② 清除截图缓存 + 标注 + 功能按钮\n"
-                    "  ③ 退出框选模式，恢复鼠标穿透\n"
-                    "  ④ 重新初始化摄像头\n"
-                    "  ⑤ 强制重新注册所有快捷键（硬编码默认值，不依赖配置文件）\n"
-                    "  ⑥ 重置 hotkeys.json 配置文件\n"
-                    "  ⑦ 同步刷新控制台面板快捷键显示\n"
-                    "  ⑧ 输出健康诊断报告\n\n"
-                    "此操作不会影响：主题配色、功能开关、语言预设、数据库。\n"
-                    "当快捷键失效、界面卡死或识别异常时，请立即点击此按钮。",
-        "bottom_tip": "提示: 按 Ctrl+Shift+G 打开此控制台 | Ctrl+G 框选截图",
-        "data_source_relic": "原始数据源: 来自 WFCD 项目的 all.json\n本地数据库: 从原始数据源派生的 SQLite 数据库文件\n点击「更新基础数据」自动下载并执行完整流水线，或手动选择本地文件后更新",
-        "data_source_db_center": "更新基础数据: all.json → relics.db → items_i18n.db → game_i18n.db (约 2-3 分钟)\n拉取市场价格: warframe.market API → wm_prices.db (约 10-15 分钟，耗时较长请耐心等待)",
-        "data_source_trans": "数据来源: WFCD warframe-items 项目（All.json 双文件关联算法）",
-        "data_source_items": "数据来源: WFCD warframe-items All.json\n随翻译库 / 遗物数据库自动同步更新",
-        "data_source_wm": "数据来源: warframe.market API v2\n仅采集卖价数据，内嵌反压价权重算法\n偏离中位数 >30% 的低价权重降为 0.1\n加权参考价 = Σ(价格×权重) / Σ权重\n建议每数小时拉取一次以保持数据时效性",
-        "hotkey_format": "输入格式: ctrl+g / alt+shift+f 等。修改后即时生效，无需重启。",
-        "hotkey_placeholder": "例如 ctrl+g",
-        "theme_tip": "点击色块可调色 → 实时预览 → 点击保存",
-        "items_search_placeholder": "输入中文/英文/拼音关键词搜索物品（单击结果复制英文名）",
-        "items_search_default": "输入中文/英文/拼音关键词开始搜索...",
-        "items_search_error": '<span style="color:#ff4444;">查询异常，请检查数据库完整性</span>',
-        "items_no_translation": "(暂无中文名)",
-        "about_author": "作者: NeonXi (B站: MichaelJackso2)",
-        "version": "WARFRAME-RELIC v1.0",
-    },
-
-    # ── 数据库管理中心 ──
-    "db_center": {
-        "source_title": "原始数据源",
-        "local_db_title": "本地数据库",
-        "source_all": "all.json",
-        "source_i18n": "dict.zh.json",
-        "source_status_ok": "✓",
-        "source_status_missing": "✗ 未找到",
-        "db_file_fmt": "{name}  {size}  {mtime}",
-    },
-
-    # ── 搜索结果 ──
+    # ── 搜索 ──
     "search": {
-        "no_match": '未找到与 "{query}" 匹配的物品',
-        "copied": "已复制到剪贴板: {name}",
-        "mode_result": "找到 {total} 个结果（精确:{exact} 前缀:{prefix} 模糊:{contain}）",
+        "no_match": "未找到匹配「{query}」的物品",
+        "mode_result": "找到 {count} 个匹配项",
+        "copied": "已复制: {name}",
     },
 
-    # ── 热键编辑 ──
+    # ── 状态 ──
+    "status": {
+        "placeholder": "—",
+        "db_not_exist": "未找到",
+        "db_corrupted": "数据库损坏: {error}",
+        "db_no_permission": "无权限访问: {error}",
+        "items_summary_none": "未加载",
+        "items_summary_error": "加载失败",
+    },
+
+    # ── 提示 ──
+    "hint": {
+        "data_source_db_center": "数据源: warframe.db (统一数据库)",
+        "data_source_items": "数据源: warframe.db items 表",
+        "data_source_wm": "数据源: warframe.market API",
+        "items_search_placeholder": "输入物品英文名搜索...",
+        "items_search_default": "输入关键词开始搜索",
+        "items_search_error": "搜索出错，请检查输入",
+        "items_no_translation": "无中文翻译",
+        "recovery": "如果程序出现异常，可以尝试以下恢复操作。",
+        "about_author": "WARFRAME 遗物助手 — 快速识别遗物、查询掉落与价格",
+        "theme_tip": "选择预设后点击「应用预设」，或手动调整各项颜色。",
+    },
+
+    # ── 覆盖层 ──
+    "overlay": {
+        "relic_vaulted": "已入库",
+        "relic_available": "可获取",
+        "query_legend": "\n━━━━━━━━━━━━━━━━━━\n[ 鉴定 ] 遗物名称 | [ 查询 ] 掉落来源",
+        "no_text_detected": "未检测到文字",
+        "translate_failed": "翻译失败",
+        "no_items_detected": "未检测到物品",
+        "please_select_first": "请先框选区域",
+        "screenshot_failed": "截图失败",
+        "fullscreen_failed": "全屏截图失败",
+        "price_query_scanning": "价格查询中...",
+        "screenshot_done": "截图完成",
+        "please_screenshot_first": "请先截图",
+        "ocr_recognizing": "OCR 识别中...",
+        "no_features_enabled": "请先在管理面板中启用功能",
+        "selection_status_idle": "按住鼠标左键拖拽框选",
+        "selection_status_released": "框选完成",
+        "selection_cancelled": "框选已取消",
+        "mode_selected": "已选择: {mode}",
+        "annotations_shown": "已标注 {count} 条",
+        "relic_no_parts_info": "{name} 无掉落数据",
+        "query_summary": "匹配 {matched}/{total} 个遗物",
+        "query_summary_fmt": "匹配 {matched}/{total} 个遗物 (未匹配: {unmatched})",
+        "translate_label_fmt": "{zh_name} ({en_name})",
+        "translate_summary": "翻译: {total} 个候选, 匹配 {matched} 个",
+        "price_query_summary": "价格查询: {total} 个物品, {with_price} 个有价格",
+    },
+
+    # ── 日志 ──
+    "log": {
+        "panel_title": "操作日志",
+        "waiting": "等待中...",
+    },
+
+    # ── 日志消息 ──
+    "log_msg": {
+        "reset_start": "正在重置状态...",
+        "reset_done": "状态已重置",
+        "hotkeys_reloaded": "热键已重新加载",
+        "startup": "WARFRAME 遗物助手已启动",
+        "startup_select": "按 {hk} 框选截图识别遗物/物品",
+        "startup_fullscreen": "按 {hk} 全屏截图识别",
+        "startup_query_price": "按 {hk} 查询市场价格",
+        "startup_right_click": "右键点击托盘图标可打开管理面板",
+        "startup_mode_hint": "可用模式:",
+        "startup_mode_check": "  [ 鉴定 ] 识别遗物名称，查询掉落表",
+        "startup_mode_query": "  [ 查询 ] 识别物品名称，查询掉落来源",
+        "startup_mode_price": "  [ 价格 ] 识别物品名称，查询市场价格",
+        "startup_mode_translate": "  [ 翻译 ] 识别文字，翻译为中文",
+        "startup_db_info": "数据库: {total} 个遗物 | 出库 {available} | 入库 {vaulted}",
+    },
+
+    # ── 热键 ──
     "hotkey": {
-        "not_empty": "不能为空",
-        "format_error": "格式不正确",
-        "format_error_title": "快捷键格式错误",
-        "format_error_msg": "请修正红色提示的快捷键设置。\n\n正确格式示例: ctrl+g / alt+shift+f / ctrl+shift+g",
-        "save_success": "保存成功",
-        "save_success_msg": "快捷键已保存，即时生效！",
-        "save_failed": "保存失败",
-        "save_failed_msg": "无法写入配置文件，请检查磁盘空间和权限。",
-        "reset_confirm_title": "确认恢复默认快捷键",
-        "reset_confirm_msg": "确定要恢复默认快捷键吗？\n\n框选截图: {select}\n全屏截图: {fullscreen}",
-        "reset_done_title": "已恢复",
-        "reset_done_msg": "快捷键已恢复为默认值。",
         "label_select": "框选截图",
         "label_fullscreen": "全屏截图",
-        "label_query_price": "价格查询（自动4等分截图）",
+        "label_query_price": "价格查询",
+        "reset_confirm_title": "确认重置",
+        "reset_confirm_msg": "确定要恢复默认热键设置吗？",
+        "reset_done_title": "重置完成",
+        "reset_done_msg": "热键已恢复为默认设置",
     },
 
     # ── 退出 ──
     "exit": {
         "confirm_title": "确认退出",
-        "confirm_msg": "确定要退出 WARFRAME-RELIC 吗？\n\n退出后所有截图和识别功能将停止工作。",
+        "confirm_msg": "确定要退出 WARFRAME 遗物助手吗？",
     },
 
-    # ── 日志面板 ──
-    "log": {
-        "panel_title": "运行日志",
-        "waiting": "等待操作指令...",
-    },
-
-    # ── 主题面板 ──
-    "theme": {
-        "panel_title": "⬡ 主题配色设置",
-        "preset_label": "预设方案：",
-        "no_changes": "未检测到颜色修改。请先调整色块。",
-        "no_changes_preview": "请先点击色块修改颜色，再刷新预览。",
-        "prompt_title": "提示",
-        "saved_to": "配色已保存至「{name}」，方案已自动切换。",
-        "saved": "配色已保存至「{name}」，界面已刷新！",
-        "save_failed": "保存失败：无法写入配置文件。",
-        "reset_confirm_title": "恢复默认配色",
-        "reset_confirm_msg": "确定要将「{name}」恢复为默认值吗？\n\n所有修改将丢失。",
-        "reset_done_title": "已恢复",
-        "reset_done_msg": "「{name}」已恢复为默认值。",
-        "preset_applied": "已应用预设配色：{name}",
-        "preset_failed": "预设方案应用失败",
-        "color_pick_title": "选择颜色 - {field}",
-        "opacity": "透明度",
-        "blur": "模糊度",
-        "panel_overlay": "面板遮罩",
-        "select_bg_title": "选择背景图片",
-        "bg_uploaded": "背景图上传成功",
-        "bg_upload_failed": "背景图上传失败",
-        "bg_cleared": "背景图已清除",
-        "expand_detail": "展开详细设置",
-        "collapse_detail": "收起详细设置",
-    },
-
-    # ── 覆盖层 / Overlay ──
-    "overlay": {
-        "mode_selected": "已选择功能: {mode}",
-        "relics_found": "检测到 {count} 个遗物 — 请选择后续操作：",
-        "screenshot_done": "截图完成 — 请选择后续操作：",
-        "selection_cancelled": "框选已取消",
-        "region_saved": "截图区域已锁定: [{l},{t}] → [{r},{b}]  ({w}×{h})",
-        "region_too_small": "截图区域过小 ({w}×{h})，请重新框选",
-        "please_select_first": "请先按 Ctrl+G 框选截图区域",
-        "screenshot_failed": "截图失败",
-        "fullscreen_failed": "全屏截图失败",
-        "no_relics_found": "未检测到遗物 — 如需识别Mod请选择：",
-        "no_results": "没有可用的识别结果，请重新截图",
-        "ocr_waiting": "OCR 正在扫描...请稍候",
-        "ocr_recognizing": "OCR 识别中...",
-        "no_mods_found": "未检测到 Mod，请重新截图",
-        "screenshot_expired": "截图数据已过期，请重新截图",
-        "mod_translate_failed": "Mod 翻译失败",
-        "selection_status_idle": "移动光标至目标区域，按住左键框选，右键/ESC 取消",
-        "selection_status_pressed": "框选起点 [{x},{y}]，拖动选择区域...",
-        "selection_status_dragging": "框选中... 当前区域 {w}×{h}",
-        "selection_status_released": "框选完成，正在锁定截图区域...",
-        "annotations_shown": "已显示 {count} 个标注（右键清除）",
-        "query_summary": "遗物内含物查询: {total}个 | 匹配成功 {matched}个",
-        "query_summary_fmt": "遗物内含物查询: {total}个 | 匹配成功 {matched}个 | 未匹配: {unmatched}",
-        "query_legend": "\n(●金=稀有  ◈银=罕见  ◦铜=常见  绿=出库  红=入库)",
-        "mod_result": "Mod 识别: {total}个 | 匹配 {matched}个 (右键清除)",
-        "fullscreen_info": "全屏截图 ({w}x{h})",
-        "item_recognizing": "正在识别物品...",
-        "no_items_found": "未检测到可交易物品",
-        "price_query_title": "市场价格查询: {total}个 | 匹配 {matched}个",
-        "price_na": "无价格数据",
-        "price_weighted_fmt": "{weighted}p",
-        "price_detail_fmt": "{name}\n  {zh}\n  加权参考价: {weighted}p | 最低: {min}p | 中位: {median}p",
-        "price_item_fmt": "{name}\n  {zh}\n  {price_info}",
-        "price_no_match": "未匹配（不在价格数据库中）",
-        "no_features_enabled": "所有功能均已禁用，请在控制台中启用",
-        "please_screenshot_first": "请先执行截图操作",
-        "no_relics_detected": "OCR 扫描后未检测到遗物",
-        "no_items_detected": "未检测到物品",
-        "no_text_detected": "未检测到可识别文本",
-        "translate_failed": "翻译失败",
-        "translate_summary": "翻译: {total}个 | 匹配成功 {matched}个 (右键清除)",
-        "price_query_scanning": "正在扫描物品区域并查询价格...",
-        "price_query_summary": "价格查询: {total}个 | 有价格数据 {with_price}个",
-        "relic_no_parts_info": "{name}\n  (未找到部件信息)",
-        "relic_vaulted": "出库",
-        "relic_available": "入库",
-        "item_price_detail_fmt": "{display_name}\n  加权参考价: {weighted}p\n  最低: {sell_min}p\n  中位: {sell_median}p",
-        "item_no_price_fmt": "{display_name}\n  无价格数据",
-        "item_no_match_fmt": "{ocr_text}\n  未匹配",
-        "translate_label_fmt": "{zh_name}\n  {en_name}",
-    },
-
-    # ── 日志消息 ──
-    "log_msg": {
-        "startup": "WARFRAME-RELIC 已启动",
-        "startup_select": "{hk:<16}→ 框选截图模式（松手自动触发识别）",
-        "startup_fullscreen": "{hk:<16}→ 全屏截图模式（跳过框选，直接全屏识别）",
-        "startup_query_price": "{hk:<16}→ 价格查询（自动4等分截图+识别+标注）",
-        "startup_right_click": "右键          → 取消框选 / 清除标注 / 关闭功能选择",
-        "startup_mode_hint": "截图后将弹出功能选择按钮（可在控制台中开关）：",
-        "startup_mode_check": "  [出入库查询]     — 标注遗物名称（绿=出库 红=入库）",
-        "startup_mode_query": "  [内含物查询]     — 匹配遗物对应的 Prime 部件",
-        "startup_mode_price": "  [市场价格查询]   — 识别物品并查询 warframe.market 价格",
-        "startup_mode_translate": "  [英文翻译]       — 识别英文文本并翻译为中文",
-        "startup_db_info": "[WFInfo 数据库] 共 {total} 个遗物 | 出库 {available} | 入库 {vaulted}",
-        "reset_done": "紧急重置完成 — 识别已终止 | 缓存已清除 | 摄像头已重初始化 | 快捷键已重注册 | 配置文件已重置 | 面板已同步",
-        "reset_start": "正在执行完整异常恢复流程...",
-        "hotkeys_reloaded": "快捷键已重新注册",
-    },
-
-    # ── 数据更新 ──
+    # ── 更新 ──
     "update": {
-        "confirm_update_title": "确认更新数据库",
-        "confirm_update_msg": "将从以下数据文件更新数据库:\n{source}\n\n目标数据库: {target}\n\n此操作将覆盖现有数据。确认继续？",
-        "file_not_found_title": "文件未找到",
-        "file_not_found_msg": "找不到数据文件:\n{path}",
-        "fetch_confirm_title": "从 GitHub 拉取数据",
-        "fetch_confirm_msg": "将从 GitHub 下载最新 all.json:\n\n{url}\n\n保存到: {save_path}\n下载完成后将自动更新数据库。\n\n确认开始下载？",
-        "browse_dialog_title": "选择 WFInfo 数据文件",
+        "browse_dialog_title": "选择数据文件",
         "browse_filter": "JSON 文件 (*.json);;所有文件 (*.*)",
-        "source_current": "当前数据源: {path}",
-        "source_not_found": "all.json 未找到: {path}",
-        "updating_db": "正在更新数据库...",
-        "update_complete": "数据库更新完成！",
-        "update_success": "数据库更新成功！\n  遗物: {relics} | 部件: {parts} | 别名: {aliases}\n  出库: {dropping} | 入库: {vaulted}",
-        "update_failed": "数据库更新失败",
-        "update_error": "数据库更新异常: {msg}",
-        "download_success": "下载成功！",
-        "download_failed": "下载失败（网络连接中断）",
-        "download_complete": "下载完成，正在自动更新数据库...",
-        "download_starting": "正在启动下载（连接 GitHub）...",
-        "waiting_start": "等待操作启动...",
-        "preparing": "准备中...",
-        "reading_data": "正在读取数据并写入数据库，请耐心等待...",
-        "items_rebuilding": "  ◷ 正在自动更新全物品索引库...",
-        "items_rebuilt": "  ✔ 全物品索引已更新: {total} 个",
-        "log_start_update": "========== 开始更新数据库 ==========",
-        "log_data_source": "  数据源: {path}",
-        "log_target_db": "  目标数据库: {path}",
-        "log_update_done_line": "━━━━━━━━━━━━━━━━━━━━━━━━（校验通过）",
-        "log_update_done": "  ✔ 数据库更新完成",
-        "log_relics_total": "遗物总数: {count} 个",
-        "log_parts_total": "部件总数: {count} 个",
-        "log_aliases_total": "别名总数: {count} 个",
-        "log_dropping": "出库（可获取）: {count} 个",
-        "log_vaulted": "入库（不可获取）: {count} 个",
-        "log_update_finished": "========== 数据库更新完成 ==========",
-        "log_fetch_failed_line": "========== 下载失败 ==========",
-        "log_manual_guide_title": "  ━━━━━━ 手动下载指引 ━━━━━━",
-        "log_manual_step1": "  ① 浏览器打开: {url}",
-        "log_manual_step2": "  ② 右键另存为 all.json，放入 data 目录",
-        "log_manual_step3": "  ③ 点击「选择本地数据文件」选中该文件，再点「更新数据库」",
-        "downloading_pct": "下载中... 已完成 {pct}%",
-        "downloading_pct_wait": "下载中... 已完成 {pct}%，请耐心等待",
-        "updating_db_detail": "数据库更新: {msg}",
-        "fetch_step_1": "正在解析 GitHub 地址，检测网络连接...",
-        "fetch_step_2": "正在解析 DNS，查找 raw.githubusercontent.com...",
-        "fetch_step_3": "正在建立 HTTPS 安全连接（TCP + TLS 握手）...",
-        "fetch_step_4": "正在获取文件元信息（大小、类型）...",
-        "fetch_step_5": "正在下载 all.json 数据文件...",
-        "fetch_step_6": "正在验证 JSON 数据格式完整性...",
-        "fetch_step_7": "正在保存文件到本地 data 目录...",
+        "source_current": "数据源: {path}",
+        "source_not_found": "数据源未找到: {path}",
     },
 
-    # ── 教程文本 ──
+    # ── 教程 ──
     "tutorial": {
-        "relic_title": "数据更新教程",
+        "relic_title": "遗物数据更新教程",
         "relic_content": (
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⏚ WARFRAME-RELIC 数据更新教程\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "本程序使用多个数据源提供游戏数据支持：\n\n"
-            "┌─ 遗物与掉落数据 ─────────────────────────\n"
-            "│ 来源: WFCD/warframe-drop-data\n"
-            "│ https://github.com/WFCD/warframe-drop-data\n"
-            "│ 文件: all.json (遗物与掉落)\n"
-            "│\n"
-            "├─ 市场价格数据 ───────────────────────────\n"
-            "│ 来源: warframe.market API v2\n"
-            "│ https://api.warframe.market/v2/\n"
-            "│ 数据库: data/wm_items.db / data/wm_prices.db\n"
-            "│\n"
-            "└─ 中英对照翻译数据 ───────────────────────\n"
-            "  来源1: warframe-public-export-plus (官方导出)\n"
-            "  来源2: calamity-inc/warframe-public-export-plus dict.zh.json\n"
-            "  来源3: AdminRoc zh_en_dict.json\n"
-            "  数据库: data/game_i18n.db\n\n"
-            "点击「更新基础数据」可自动下载遗物数据并更新所有数据库。\n"
-            "点击「拉取市场价格」单独更新 warframe.market 价格（耗时较长）。\n"
-            "GitHub 国内访问较慢时，可使用以下方法：\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "方法一：使用 Watt Toolkit (原名 Steam++) 加速\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "Watt Toolkit 是一款免费、开源、跨平台的网络加速工具，\n"
-            "可以稳定加速 GitHub 访问，完全免费无广告。\n\n"
-            "① 下载安装\n"
-            "   官网：https://steampp.net/\n"
-            "   也可在微软应用商店搜索「Watt Toolkit」安装。\n\n"
-            "② 启用 GitHub 加速\n"
-            "   - 打开 Watt Toolkit\n"
-            "   - 点击左侧「网络加速」\n"
-            "   - 在「平台加速」选项卡中勾选「GitHub」\n"
-            "   - 点击右上角「一键加速」按钮\n\n"
-            "③ 启动加速后，再点击本程序的「从 GitHub 拉取」按钮\n"
-            "   即可流畅获取数据文件。\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "方法二：手动获取（无需任何工具）\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            "① 在浏览器中打开以下链接并保存文件：\n"
-            "   all.json:\n"
-            "   https://raw.githubusercontent.com/WFCD/warframe-drop-data/main/data/all.json\n"
-            "   dict.zh.json:\n"
-            "   https://raw.githubusercontent.com/calamity-inc/warframe-public-export-plus/senpai/dict.zh.json\n\n"
-            "② 将下载好的 all.json 放入：\n"
-            "   {data_dir}\n\n"
-            "③ 回到本程序，点击「浏览文件」选中该文件，再点「更新基础数据」即可。\n\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚐ 提示：如果浏览器也无法打开链接，建议先使用方法一\n"
-            "   安装 Watt Toolkit 加速网络后再获取。\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            "遗物数据更新流程\n\n"
+            "1. 点击「更新基础数据」按钮\n"
+            "   程序会自动从 WFCD 仓库拉取最新数据\n"
+            "   然后构建统一数据库 warframe.db\n\n"
+            "2. 如果网络不通，可以手动下载 JSON 文件\n"
+            "   放置到 data 目录下，然后点击「浏览」选择文件\n\n"
+            "3. 数据目录: {data_dir}\n\n"
+            "4. 点击「拉取市场价格」可单独更新价格数据\n"
+            "   价格来自 warframe.market API"
         ),
     },
 
-    # ── 功能开关 ──
-    "feature_toggle": {
-        "label_check_status": "遗物出入库状态查询",
-        "desc_check_status": "识别遗物名称后，查询该遗物是否已入库/出库",
-        "label_query_parts": "遗物内含物查询",
-        "desc_query_parts": "解析遗物中包含的所有奖励部件及稀有度",
-        "label_query_price": "市场价格查询",
-        "desc_query_price": "查询部件在 warframe.market 上的实时市场价格",
-        "label_translate": "英文翻译",
-        "desc_translate": "将截图中的英文文本翻译为中文显示",
-        "hint": "关闭后，截图时将不再显示对应功能按钮。\n修改即时生效。",
-        "saved": "功能开关已保存",
-        "save_failed": "功能开关保存失败",
+    # ── 主题 ──
+    "theme": {
+        "panel_title": "主题设置",
+        "preset_label": "选择预设:",
+        "opacity": "背景透明度",
+        "blur": "背景模糊",
+        "panel_overlay": "覆盖层透明度",
+        "custom_bg": "自定义背景",
+        "prompt_title": "提示",
+        "no_changes_preview": "没有需要预览的更改",
+        "no_changes": "没有需要保存的更改",
+        "select_bg_title": "选择背景图片",
+        "bg_uploaded": "背景图片已设置",
+        "bg_upload_failed": "背景图片设置失败",
+        "bg_cleared": "背景已清除",
+        "preset_failed": "预设应用失败",
+        "reset_confirm_title": "确认重置",
+        "reset_done_title": "重置完成",
+        "save_failed": "主题保存失败",
     },
 
-    # ── warframe.market 价格 ──
-    "price": {
-        "no_items_title": "全物品数据库不存在",
-        "no_items_msg": "请先构建全物品中英文对照数据库，\n再拉取市场价格。",
-        "fetch_confirm_title": "确认拉取市场价格",
-        "fetch_confirm_msg": "将从 warframe.market API 拉取最新卖价数据，\n并自动更新中英对照翻译数据库。\n\n仅拉取卖价，含反压价权重机制\n偏离中位数 >30% 的低价权重降为 0.1\n\n速率限制: 每秒 3 个请求\n预计耗时: 约 10-15 分钟\n\n确认开始拉取？",
-        "fetch_done": "市场价格拉取完成！",
-        "fetch_done_title": "拉取完成",
-        "fetch_done_msg": "市场价格拉取完成！\n\n总计: {total} 个物品\n有加权卖价: {with_sell}\n检测到异常低价: {with_weighted}\n异常低价次数: {total_abnormal}\n耗时: {elapsed:.0f}s",
-        "fetch_failed_title": "拉取失败",
-        "fetch_failed_msg": "市场价格拉取失败:\n{error}\n\n请检查网络连接后重试。",
-    },
-
-    # ── 主题字段标签（theme_fields.py 中 THEME_FIELDS 使用）──
+    # ── 主题字段 ──
     "theme_field": {
-        "cyber_yellow": "标题/高亮文字",
-        "cyber_cyan": "数据/数值文字",
-        "cyber_magenta": "装饰品红色",
-        "cyber_orange": "警告提示色",
-        "cyber_red": "错误/入库标注",
-        "cyber_green": "成功/出库标注",
-        "panel_bg": "页面底色",
-        "card_bg": "输入框/卡片底色",
-        "border": "所有边框线",
-        "text": "正文/日志文字",
-        "text_dim": "提示/次要文字",
-        "label_default": "统计标签文字",
-        "panel_overlay_rgb": "面板遮罩色",
-        "color_unknown": "遗物未知标注",
-        "color_gold": "金部件·稀有",
-        "color_silver": "银部件·罕见",
-        "color_copper": "铜部件·常见",
-        "btn_default_bg": "普通按钮 背景",
-        "btn_default_text": "普通按钮 文字",
-        "btn_default_border": "普通按钮 边框",
-        "btn_hover_bg": "普通按钮 悬停背景",
-        "btn_hover_text": "普通按钮 悬停文字",
-        "btn_hover_border": "普通按钮 悬停边框",
-        "btn_pressed_bg": "普通按钮 按下背景",
-        "btn_disabled_bg": "禁用按钮 背景",
-        "btn_disabled_text": "禁用按钮 文字",
-        "btn_disabled_border": "禁用按钮 边框",
-        "brand_bilibili": "B站链接 默认色",
-        "brand_bilibili_hover": "B站链接 悬停色",
-        "brand_github": "GitHub链接 默认色",
-        "brand_github_hover": "GitHub链接 悬停色",
-        "progress_gradient_start": "进度条 左端色",
-        "progress_gradient_mid": "进度条 中间色",
-        "progress_gradient_end": "进度条 右端色",
-        "fetch_manual_hint": "下载提示色",
-        "fetch_error_color": "下载失败色",
-        "price_sell": "卖价文字色",
-        "price_buy": "买价文字色",
-        "price_median": "中位价文字色",
-    },
-    "theme_cat": {
-        "main_color": "界面主色",
+        "cyber_yellow": "赛博黄",
+        "cyber_cyan": "赛博青",
+        "cyber_magenta": "赛博品红",
+        "cyber_orange": "赛博橙",
+        "cyber_red": "赛博红",
+        "cyber_green": "赛博绿",
         "panel_bg": "面板背景",
+        "card_bg": "卡片背景",
+        "border": "边框",
+        "text": "文字",
+        "text_dim": "暗淡文字",
+        "label_default": "默认标签",
+        "panel_overlay_rgb": "覆盖层",
+        "color_unknown": "未知状态",
+        "color_gold": "金色 (稀有)",
+        "color_silver": "银色 (罕见)",
+        "color_copper": "铜色 (常见)",
+        "btn_default_bg": "按钮背景",
+        "btn_default_text": "按钮文字",
+        "btn_default_border": "按钮边框",
+        "btn_hover_bg": "悬停背景",
+        "btn_hover_text": "悬停文字",
+        "btn_hover_border": "悬停边框",
+        "btn_pressed_bg": "按下背景",
+        "btn_disabled_bg": "禁用背景",
+        "btn_disabled_text": "禁用文字",
+        "btn_disabled_border": "禁用边框",
+        "brand_bilibili": "B站品牌色",
+        "brand_bilibili_hover": "B站悬停色",
+        "brand_github": "GitHub 品牌色",
+        "brand_github_hover": "GitHub 悬停色",
+        "progress_gradient_start": "进度条起始",
+        "progress_gradient_mid": "进度条中间",
+        "progress_gradient_end": "进度条结束",
+        "fetch_manual_hint": "手动提示色",
+        "fetch_error_color": "错误色",
+    },
+
+    # ── 主题分类 ──
+    "theme_cat": {
+        "main_color": "主色调",
+        "panel_bg": "面板",
         "relic_status": "遗物状态",
         "part_rarity": "部件稀有度",
-        "log_color": "日志颜色",
         "btn_style": "按钮样式",
-        "brand": "外链品牌",
-        "overlay": "游戏覆盖层",
+        "brand": "品牌色",
+        "overlay": "覆盖层",
     },
 
+    # ── 数据中心 ──
+    "data_center": {
+        "nav_data_link": "数据链路",
+        "nav_db_info": "数据库信息",
+        "nav_json_viewer": "JSON 查看器",
+        "db_status_ok": "数据库正常",
+        "db_status_missing": "数据库未找到",
+        "table_list_title": "表列表",
+        "schema_title": "表结构",
+        "query_title": "数据查询",
+        "col_table": "表名",
+        "col_category": "分类",
+        "col_rows": "行数",
+        "col_columns": "列数",
+        "col_field": "字段",
+        "col_type": "类型",
+        "col_notnull": "非空",
+        "col_default": "默认值",
+        "col_pk": "主键",
+        "btn_refresh": "刷新",
+        "btn_execute_query": "执行查询",
+        "hint_select_table": "请先选择数据库表",
+        "hint_query_ready": "就绪 — 选择表后添加筛选条件，或直接点击「执行查询」查看全部数据",
+        "label_select_table": "选择表:",
+        "label_filter": "筛选条件",
+        "placeholder_value": "值",
+        "status_ready": "就绪",
+        "summary_status": "状态",
+        "summary_tables": "表数",
+        "summary_total_rows": "总行数",
+        "summary_file_size": "文件大小",
+    },
+
+    # ── JSON 查看器 ──
+    "json_viewer": {
+        "search_placeholder": "搜索 key 或 value（Enter 搜索，Esc 关闭）...",
+        "search_btn": "搜索",
+        "info_hint": "点击 JSON 树中的节点查看详情",
+    },
+
+    # ── 代理镜像 ──
+    "proxy_mirror": {
+        "reset_default": "恢复默认",
+        "test_connectivity": "测试连通性",
+    },
+
+    # ── 热键录制 ──
+    "hotkey_capture": {
+        "press_combo": "按下组合键...",
+        "click_to_set": "点击设置",
+    },
+
+    # ── 启动画面 ──
+    "splash": {
+        "starting": "正在启动...",
+    },
+
+    # ── 管理面板 ──
+    "management": {
+        "price_no_region": "当前无可用区域，请先设置",
+        "price_set_hint": "设置",
+        "price_clear_hint": "清除",
+        "price_not_set": "未设置",
+        "download_source": "下载源:",
+        "update_base_data": "更新基础数据",
+        "fetch_market_prices": "拉取市场价格",
+        "proxy_mirrors": "代理镜像",
+        "hotkey_tip": "点击按钮后按下组合键即可录制，按 Esc 取消",
+        "current_style": "当前风格：",
+        "init_progress": "初始化...",
+        "fetch_complete": "拉取完成",
+        "update_complete": "更新完成",
+        "update_failed": "更新失败",
+        "hint": "提示",
+        "close": "关闭",
+        "update_base_confirm": "将按顺序执行以下步骤：\n\n1. Git 稀疏检出 WFCD 数据 (all.json + i18n.json + All.json)\n2. 构建统一数据库 warframe.db (25 张表)\n\n预计耗时: 2-3 分钟\n确认开始？",
+        "fetch_prices_confirm": "将从 warframe.market API 拉取最新卖价数据。\n\n仅拉取卖价，含反压价权重机制\n偏离中位数 >30% 的低价权重降为 0.1\n\n速率限制: 每秒 3 个请求\n预计耗时: 10-15 分钟\n\n确认开始？",
+    },
 }

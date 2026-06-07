@@ -2,7 +2,7 @@
 Mod 名称识别器
 
 从截图中识别英文 Mod 名称（可能跨行、窄字体），
-通过 items_i18n.db 模糊匹配 → 翻译为中文。
+通过 warframe.db 模糊匹配 → 翻译为中文。
 
 重构后继承 BaseOCR，消除重复的 OCR 样板代码。
 """
@@ -65,7 +65,7 @@ class ModNameRecognizer(BaseOCR):
         print(f"[Mod OCR] 原始行={len(lines)}, 合并后={len(merged)}, 耗时={elapsed:.0f}ms", flush=True)
         if merged:
             for text, _ in merged[:5]:
-                print(f"  → \"{text}\"", flush=True)
+                print(f"  -> \"{text}\"", flush=True)
             if len(merged) > 5:
                 print(f"  ... 还有 {len(merged) - 5} 个", flush=True)
         return merged
@@ -93,20 +93,20 @@ def translate_mods(recognized: list[tuple[str, list]]) -> list[dict]:
     if not recognized:
         return []
 
-    from data.items_i18n import suggest_items
+    from data.item_index import suggest_items
 
     results = []
     for en_name, box in recognized:
         search_name = _split_camel_case(en_name)
         if search_name != en_name:
-            print(f"  [驼峰拆分] '{en_name}' → '{search_name}'", flush=True)
+            print(f"  [驼峰拆分] '{en_name}' -> '{search_name}'", flush=True)
 
         suggestions = suggest_items(search_name, limit=3)
         best = None
 
-        sug_strs = [f"{s.get('en_name','?')}→{s.get('zh_name','?')}[{s.get('match_quality','?')}]"
+        sug_strs = [f"{s.get('en_name','?')}->{s.get('zh_name','?')}[{s.get('match_quality','?')}]"
                     for s in suggestions[:3]]
-        print(f"  [翻译] \"{en_name}\" → 建议: {sug_strs if sug_strs else '无'}", flush=True)
+        print(f"  [翻译] \"{en_name}\" -> 建议: {sug_strs if sug_strs else '无'}", flush=True)
 
         # 优先精确匹配 Mod 分类
         for s in suggestions:

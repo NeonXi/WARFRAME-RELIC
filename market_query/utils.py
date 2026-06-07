@@ -5,6 +5,9 @@ Utility functions for WM Item Search module
 import os
 import sqlite3
 from collections import OrderedDict
+from core.theme_proxy import (
+    STATUS_ONLINE, STATUS_INGAME, STATUS_OFFLINE, STATUS_AWAY, CYBER_TEXT,
+)
 
 
 # ─── Slug cache (LRU, max 500 entries) ────────────────────
@@ -40,65 +43,68 @@ def get_data_path(filename):
 # ─── Slug resolution ──────────────────────────────────────
 
 
+def _name_to_slug(en_name: str) -> str:
+    """将英文物品名转换为 warframe.market slug。
+
+    规则：
+      - 全小写
+      - 空格替换为下划线
+      - 移除特殊字符
+    """
+    slug = en_name.lower()
+    slug = slug.replace('\n', ' ').replace('\r', '')
+    slug = slug.replace("'", "")
+    slug = slug.replace('"', '')
+    slug = slug.replace(" & ", "_")
+    slug = slug.replace("&", "")
+    slug = slug.replace(" ", "_")
+    slug = slug.replace("-", "_")
+    while "__" in slug:
+        slug = slug.replace("__", "_")
+    return slug.strip("_")
+
+
 def format_slug(name):
     """Convert item name to warframe.market slug format using local DB lookup"""
     cached = _cache_get(name)
     if cached:
         return cached
-    
+
     slug = _find_slug_in_db(name)
     if not slug:
-        slug = _generate_slug(name)
-    
+        slug = _name_to_slug(name)
+
     _cache_set(name, slug)
     return slug
 
 
 def _find_slug_in_db(name):
-    """Find slug from local wm_prices.db database"""
-    db_path = get_data_path('wm_prices.db')
+    """Find slug from warframe.db market_items table"""
+    db_path = get_data_path('warframe.db')
     if not os.path.exists(db_path):
         return None
-    
+
     try:
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, check_same_thread=False)
         cursor = conn.cursor()
-        
+
         # Exact match first
-        cursor.execute("SELECT slug FROM item_prices WHERE en_name = ?", (name,))
+        cursor.execute("SELECT slug FROM market_items WHERE en_name = ?", (name,))
         row = cursor.fetchone()
         if row:
             conn.close()
             return row[0]
-        
-        # Fallback: LIKE match
-        cursor.execute("SELECT slug FROM item_prices WHERE en_name LIKE ?", (f"%{name}%",))
+
+        # Fallback: LIKE match with shortest name first (best match)
+        cursor.execute(
+            "SELECT slug FROM market_items WHERE en_name LIKE ? ORDER BY LENGTH(en_name) ASC LIMIT 1",
+            (f"%{name}%",)
+        )
         row = cursor.fetchone()
         conn.close()
         return row[0] if row else None
     except Exception:
         return None
-
-
-def _generate_slug(name):
-    """Generate slug from name (fallback when not in DB)"""
-    clean = name.lower().strip().replace('_', ' ').replace('-', ' ')
-    clean = ' '.join(clean.split())
-    parts = clean.split()
-    
-    variants = [clean.replace(' ', '-')]
-    
-    if 'prime' in parts:
-        others = [p for p in parts if p != 'prime']
-        if others:
-            variants.append(f"{others[0]}-prime-{'-'.join(others[1:])}")
-            variants.append('-'.join(others) + '-prime')
-    
-    if 'blueprint' in parts:
-        others = [p for p in parts if p != 'blueprint']
-        variants.append('-'.join(others))
-    
-    return variants[0]
 
 
 # ─── Status helpers ────────────────────────────────────────
@@ -117,8 +123,8 @@ def get_status_text(status):
 def get_status_color(status):
     """Get color code for status"""
     return {
-        'online': '#00ff88',
-        'ingame': '#00d9ff',
-        'offline': '#666666',
-        'away': '#ffaa00'
-    }.get(status, '#ffffff')
+        'online': STATUS_ONLINE,
+        'ingame': STATUS_INGAME,
+        'offline': STATUS_OFFLINE,
+        'away': STATUS_AWAY
+    }.get(status, CYBER_TEXT)

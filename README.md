@@ -1,4 +1,4 @@
-# WARFRAME-RELIC v3.4
+# WARFRAME-RELIC v4.2
 
 <p align="center">
   <b>Warframe 遗物实时 OCR 辅助工具 · 赛博朋克2077风格</b>
@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey" alt="Platform">
   <img src="https://img.shields.io/badge/license-GPLv3-blue" alt="License">
-  <img src="https://img.shields.io/badge/version-3.4-yellow" alt="Version">
+  <img src="https://img.shields.io/badge/version-4.2-yellow" alt="Version">
 </p>
 
 ---
@@ -34,7 +34,8 @@
 - **📋 遗物悬浮窗** — 遗物内容查询后弹出可拖动详情窗口，金银铜色区分稀有度
 - **⚡ 数据库性能优化** — 批量插入提升5-10倍速度，自动拼音完整性检查与修复
 - **🛡️ Schema版本管理** — 自动检测并升级数据库结构，防止迁移失败
-- **🧩 模块化架构** — v3.4 重构，热键/功能处理/入口逻辑独立模块，main.py 精简43%
+- **🧩 模块化架构** — v4.2 重构，热键/功能处理/入口逻辑独立模块，main.py 精简43%
+- **🗄️ 统一数据库** — 25 张表整合到 warframe.db，market_items 表本地生成，数据流水线一键更新
 
 ---
 
@@ -113,64 +114,81 @@ WARFRAME-RELIC/
 ├── main.py                     # 程序核心：AppCore + TriggerBridge + OCRWorker
 ├── core/
 │   ├── bootstrap.py            # ★ 启动引导：单例检测、管理员检测、异常钩子、main()
-│   ├── hotkey_manager.py       # ★ 热键管理器：注册/健康检查/自动恢复/防重入
-│   ├── mode_handlers.py        # ★ 功能处理器：出入库/遗物查询/翻译/价格标注（纯函数）
+│   ├── hotkey_manager.py       # ★ 热键管理器（Windows API RegisterHotKey + QAbstractNativeEventFilter）
+│   ├── trigger_manager.py      # ★ 辅助触发器（Windows API 低级鼠标/键盘钩子）
+│   ├── mode_handlers.py        # ★ 功能处理器：出入库/遗物查询/翻译/价格标注
 │   ├── constants.py            # 共享常量
 │   ├── overlay.py              # 全屏覆盖层（框选、标注、流式动画、DPI 适配）
-│   ├── region_selector.py      # ★ 独立区域框选器（鼠标拖拽交互封装）
-│   ├── management_panel.py     # 管理面板（物品检索/数据库/热键/主题/文案）
+│   ├── region_selector.py      # ★ 独立区域框选器
+│   ├── management_panel.py     # 管理面板（Mixin 组合）
+│   ├── panel_builder.py        # UI 构建 Mixin
 │   ├── price_service.py        # WM 价格服务（缓存→本地DB→实时API 三级查询）
 │   ├── drop_tooltip.py         # ★ 物品掉落来源查询 + Tooltip
+│   ├── data_center.py          # 后台数据处理中心
+│   ├── update_panel.py         # 数据库更新面板
 │   ├── hotkey_config.py        # 热键配置读写
 │   ├── hotkey_capture_button.py # 热键捕获按钮组件
 │   ├── stylesheet.py           # 动态 QSS 样式表生成
-│   ├── theme_config.py         # 主题配置引擎（65 配色字段，预设切换）
+│   ├── theme_config.py         # 主题配置引擎
 │   ├── theme_panel.py          # 主题可视化编辑面板
 │   ├── theme_fields.py         # 主题字段定义
 │   ├── theme_proxy.py          # 主题属性代理
-│   ├── fetch_worker.py         # 后台线程：从 GitHub 下载最新数据
-│   ├── update_worker.py        # 后台线程：执行数据库更新
-│   ├── update_panel.py         # 数据库更新面板
 │   └── word_wrap_button.py     # 自动换行按钮组件
 ├── recognizers/
 │   ├── relic_name.py           # 遗物名称 OCR 识别器
 │   ├── item_name.py            # 物品名称 OCR 识别器
+│   ├── mod_name.py             # Mod 名称识别器
 │   ├── matcher.py              # 物品名匹配引擎（4轮降级匹配 + 精炼过滤）
 │   └── base_ocr.py             # OCR 管线基类
 ├── data/
-│   ├── preset_cyberpunk2077.py # ★ 赛博朋克2077 风格文案预设（默认）
-│   ├── preset_santi.py         # 三体·威慑纪元 风格文案预设
-│   ├── preset_normal.py        # 普通标准 风格文案预设
-│   ├── ui_strings.py           # UI 字符串路由器（预设加载/切换）
-│   ├── items_i18n.py           # ★ 全物品中英对照数据库（含拼音搜索）
-│   ├── wm_prices.py            # WM 价格数据库管理（拉取/写入/查询）
-│   ├── wfinfo_relics.py        # 遗物数据库查询
-│   ├── translation_db.py       # 翻译数据库管理（旧版）
-│   ├── db_utils.py             # 数据库工具函数
-│   ├── icons.py                # 图标资源管理
-│   ├── icon_loader.py          # 图标加载器
+│   ├── build_warframe_db.py    # ★ 统一数据库构建脚本
+│   ├── build_market_items.py   # ★ market_items 表构建脚本（从 items 表本地生成）
+│   ├── data_pipeline.py        # ★ 数据流水线（编排构建 + WM 更新）
+│   ├── db_connections.py       # ★ 数据库连接注册表
+│   ├── warframe.db             # ★ 统一数据库（SQLite，25 张表）
+│   ├── wm_prices.py            # ★ 价格接口（wm_prices.db 管理）
+│   ├── wfinfo_relics.py        # ★ 遗物接口（查询 warframe.db）
+│   ├── item_index.py           # ★ 物品索引 + 拼音搜索（查询 warframe.db）
+│   ├── translator.py           # ★ 翻译接口（查询 warframe.db）
+│   ├── market_items.py         # ★ 市场物品接口（查询 warframe.db）
+│   ├── ui_strings.py           # ★ UI 字符串路由器
+│   ├── preset_normal.py        # ★ UI 字符串预设 — 普通风格
 │   ├── version.py              # 版本信息
-│   ├── items_i18n.db           # 物品中英文对照数据库（含拼音字段）
-│   ├── wm_prices.db            # WM 价格本地缓存 SQLite
-│   ├── relics.db               # 遗物掉落数据库
-│   ├── translation.db          # 翻译缓存（旧版）
-│   ├── language_preset.json    # 语言预设配置
+│   ├── game_terms.py           # 游戏术语
+│   ├── icon_loader.py          # 图标加载器
+│   ├── hotkeys.json            # 热键配置文件
 │   ├── feature_toggles.json    # 功能开关配置
-│   └── item_region.json        # 物品区域配置
+│   ├── proxy_mirrors.json      # 代理镜像配置
+│   ├── item_region.json        # 物品区域配置
+│   ├── language_preset.json    # 语言预设
+│   ├── window_geometry.json    # 窗口位置记忆
+│   ├── backgrounds/            # 背景图片
+│   └── presets/                # 主题预设
+├── market_query/               # 市场查询独立模块
+│   ├── main_window.py          # 市场查询主窗口
+│   ├── search_widget.py        # 搜索框组件
+│   ├── price_fetcher.py        # 价格获取线程
+│   ├── db_updater.py           # 数据库更新工具
+│   ├── wm_search.py            # WM 搜索入口
+│   ├── utils.py                # 工具函数
+│   ├── progress_bar.py         # 进度条组件
+│   └── code_rain.py            # 代码雨动画
+├── scripts/                    # 工具脚本
+│   └── pull_warframe_items.py  # ★ 仓库拉取脚本
+├── utils/                      # 通用工具
+│   └── file_io.py              # 文件 I/O 工具
 ├── assets/                     # SVG 图标资源
-├── DATABASE.md                 # ★ 数据库结构详细文档
-├── DEVELOPMENT.md              # ★ 开发文档
-├── build_exe.py                # PyInstaller 打包脚本（文件夹模式）
-├── build_onefile.py            # PyInstaller 打包脚本（单文件模式）
-├── dev_runner.py               # 开发热重载脚本
-├── SETUP.bat                   # 零基础启动（自动安装 Python + 依赖）
-├── WARFRAME-RELIC.bat          # 快捷启动批处理
-├── DEV_RUN.bat                 # 开发模式启动
-├── 打包.bat                    # 一键打包+压缩批处理
-├── 打包单文件.bat               # 单文件打包批处理
-├── git-push.bat                # Git 一键推送
-├── qt.conf                     # Qt DPI 感知配置
-└── requirements.txt            # Python 依赖
+├── icon/                       # 第三方图标库
+├── tests/                      # 测试
+├── docs/                       # 文档
+│   ├── database.md             # 数据库文档
+│   ├── development.md          # 开发规范
+│   ├── json_source_analysis.md # JSON 源文件解析
+│   └── price_algorithm.md      # 价格算法设计
+└── external/                   # 外部数据源（gitignore，脚本拉取）
+    ├── warframe-items_sparse/
+    ├── warframe-drop-data_sparse/
+    └── warframe-i18n_sparse/
 ```
 
 ### 技术栈
@@ -179,7 +197,7 @@ WARFRAME-RELIC/
 |:------|:---|
 | **PyQt6** | GUI 框架（覆盖层窗口、管理面板） |
 | **dxcam** | 高性能屏幕截图（Windows DXGI，带重试） |
-| **keyboard** | 全局热键注册 |
+| **Windows API** | 全局热键注册（RegisterHotKey）+ 低级钩子（WH_KEYBOARD_LL / WH_MOUSE_LL） |
 | **rapidocr-onnxruntime** | OCR 引擎（离线识别，无需联网） |
 | **Pillow** | 图像处理与调试截图保存 |
 | **numpy** | 数组运算（截图切片） |
@@ -193,7 +211,7 @@ WARFRAME-RELIC/
 
 ```mermaid
 flowchart LR
-    A["⌨️<br/>热键触发<br/>keyboard"] --> B["📷<br/>屏幕截图<br/>dxcam"]
+    A["⌨️<br/>热键触发<br/>Windows API"] --> B["📷<br/>屏幕截图<br/>dxcam"]
     B --> C["🎯<br/>显示功能按钮<br/>用户点击"]
     C --> D["🔍<br/>OCR 异步识别<br/>RapidOCR / QThread"]
     D --> E{"功能类型"}
@@ -213,7 +231,7 @@ flowchart LR
 | 模块 | 职责 |
 |:------|:---|
 | `AppCore` (main.py) | 中央控制器，协调截图→OCR→查询→标注全流程 |
-| `HotkeyManager` (hotkey_manager.py) | ★ 热键管理：注册/更新/健康检查/自动恢复/防重入 |
+| `HotkeyManager` (hotkey_manager.py) | ★ 热键管理：Windows API RegisterHotKey + QAbstractNativeEventFilter |
 | `Mode Handlers` (mode_handlers.py) | ★ 四大功能纯函数：出入库/遗物查询/翻译/价格标注 |
 | `Bootstrap` (bootstrap.py) | ★ 入口逻辑：单例检测/管理员检测/异常钩子/main() |
 | `Overlay` (overlay.py) | 全屏透明覆盖层，三种状态：空闲(穿透)/框选(拦截)/标注(穿透+按钮不穿透) |
@@ -233,6 +251,19 @@ flowchart LR
 - **退出清理**：`aboutToQuit` 信号触发 `_shutdown()` 统一释放资源
 - **热键心跳**：30 秒定时器 → `HotkeyManager.auto_recover()` 自动检测+恢复失效热键
 
+### 统一数据库架构
+
+所有业务数据整合到 `warframe.db`（25 张表），通过 `data_pipeline.py` 统一编排更新：
+
+```
+数据流水线:
+  1. Git 稀疏检出源数据（3 个上游仓库 → external/）
+  2. 构建统一数据库 warframe.db（build_warframe_db.py + build_market_items.py）
+  3. 拉取 WM 价格（可选，wm_prices.py → wm_prices.db）
+```
+
+旧数据库（已废弃）：~~relics.db~~ / ~~item_index.db~~ / ~~translator.db~~ / ~~market_items.db~~ → 全部合并到 warframe.db
+
 ### 文案预设系统
 
 ```
@@ -248,7 +279,7 @@ language_preset.json ──→ ui_strings.py (路由器)
 
 ### 数据库结构
 
-详见 [DATABASE.md](DATABASE.md) — 包含完整的表结构、索引、查询 SQL、数据来源和调用链。
+详见 [docs/database.md](docs/database.md) — 包含完整的表结构、索引、查询 SQL、数据来源和调用链。
 
 ---
 
@@ -271,8 +302,14 @@ language_preset.json ──→ ui_strings.py (路由器)
 ### 自动更新（推荐）
 
 1. 打开管理面板（启动即显示）
-2. 点击 **「自动更新」**
-3. 程序自动从 [WFCD/warframe-drop-data](https://github.com/WFCD/warframe-drop-data) 拉取最新数据
+2. 点击 **「更新基础数据」**
+3. 程序自动从 3 个上游仓库拉取最新数据并构建 warframe.db
+
+### 拉取市场价格
+
+1. 打开管理面板
+2. 点击 **「拉取市场价格」**
+3. 程序自动从 warframe.market API 拉取全量价格数据
 
 ### 手动更新
 
@@ -282,7 +319,14 @@ language_preset.json ──→ ui_strings.py (路由器)
 ### 命令行更新
 
 ```bash
-python data/update_db.py
+# 构建统一数据库
+python data/build_warframe_db.py
+
+# 构建 market_items 表
+python data/build_market_items.py
+
+# 拉取市场价格
+python data/wm_prices.py --fetch
 ```
 
 ---
@@ -333,10 +377,10 @@ python data/update_db.py
 A: RapidOCR 首次加载 ONNX 模型需要下载（自动缓存在本地），后续启动会很快。
 
 **Q: 需要管理员权限吗？**
-A: 键盘钩子（keyboard 库）在部分系统上需要管理员权限才能正常捕获全局热键。如果热键无响应，请尝试以管理员身份运行。
+A: 全局热键使用 Windows API RegisterHotKey 注册，通常不需要管理员权限。如果热键无响应，请尝试以管理员身份运行。
 
 **Q: 数据库如何更新？**
-A: 管理面板中点击「自动更新」，程序从 GitHub 拉取最新 WFInfo 数据。也可以手动选择本地 `all_items.json` 导入。
+A: 管理面板中点击「更新基础数据」，程序自动从 3 个上游仓库拉取最新数据并构建 warframe.db（含 market_items 表）。
 
 **Q: 价格数据从哪里来？**
 A: 从 Warframe.Market API 实时获取。首次查询慢（需联网），之后缓存在 `wm_prices.db` 中。运行 `python data/wm_prices.py --fetch` 可预先拉取全量价格。
@@ -363,12 +407,39 @@ A: 需要先在管理面板 → 价格数据 → 设置物品区域（框选遗�
 | 文档 | 说明 |
 |------|------|
 | [README.md](README.md) | 用户使用文档（本文） |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | 开发文档（架构、数据流、模块详解） |
-| [DATABASE.md](DATABASE.md) | 数据库结构文档（DDL、索引、查询SQL） |
+| [docs/development.md](docs/development.md) | 开发文档（架构、数据流、模块详解） |
+| [docs/database.md](docs/database.md) | 数据库结构文档（DDL、索引、查询SQL） |
+| [docs/price_algorithm.md](docs/price_algorithm.md) | 价格算法设计文档 |
+| [docs/json_source_analysis.md](docs/json_source_analysis.md) | JSON 源文件深度解析 |
 
 ---
 
 ## 🔄 更新日志
+
+### v4.2 (2026-06-08)
+
+**统一数据库架构：**
+- ✅ **warframe.db 统一数据库** — 25 张表整合所有业务数据，废弃旧数据库（relics.db / item_index.db / translator.db / market_items.db）
+- ✅ **market_items 表** — 从 items 表本地构建可交易物品映射，不依赖 WM API
+- ✅ **数据流水线** — data_pipeline.py 统一编排源数据拉取 + 数据库构建 + 价格拉取
+- ✅ **build_market_items.py** — 独立脚本，支持流水线调用和独立运行
+
+**热键系统重构：**
+- ✅ **移除 keyboard 库依赖** — 使用 Windows API RegisterHotKey + QAbstractNativeEventFilter
+- ✅ **辅助触发器** — Windows API WH_MOUSE_LL / WH_KEYBOARD_LL 低级钩子，替代第三方库
+- ✅ **修复启动窗口闪烁** — 消除 keyboard 库创建隐藏控制台窗口的问题
+- ✅ **64 位类型安全** — 显式声明 Windows API 函数参数和返回类型，修复 OverflowError
+
+**市场查询模块：**
+- ✅ **市场查询窗口** — 独立窗口，支持搜索、排序、实时价格查询
+- ✅ **slug 生成修正** — 使用下划线替代连字符，与 warframe.market API 一致
+- ✅ **market_items 表查询** — 搜索和 slug 查找直接查 warframe.db
+
+**稳定性修复：**
+- ✅ **OCR 线程深拷贝** — 修复 dxcam 共享内存跨线程访问导致的 C 层崩溃
+- ✅ **待处理模式机制** — OCR 运行中用户请求不丢弃，完成后自动执行
+- ✅ **Windows 单例检测** — Mutex 替代文件锁，解决退出后残留问题
+- ✅ **GBK 编码兼容** — UI 和日志中特殊符号替换为 GBK 兼容字符
 
 ### v3.4 (2026-06-02)
 
@@ -404,7 +475,7 @@ A: 需要先在管理面板 → 价格数据 → 设置物品区域（框选遗�
 
 ## 🙏 致谢
 
-- 游戏数据来源：[WFCD/warframe-drop-data](https://github.com/WFCD/warframe-drop-data)
+- 游戏数据来源：[WFCD/warframe-items](https://github.com/WFCD/warframe-items) + [WFCD/warframe-drop-data](https://github.com/WFCD/warframe-drop-data) + [WFCD/warframe-i18n](https://github.com/nickvdp/warframe-i18n)
 - OCR 引擎：[RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR)
 - 截图库：[ra1nty/DXcam](https://github.com/ra1nty/DXcam)
 

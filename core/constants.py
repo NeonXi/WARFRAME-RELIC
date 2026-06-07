@@ -67,19 +67,28 @@ LABEL_AUTO_HIDE_MS = 3000
 # OCR
 OCR_TEXT_SCORE = 0.38       # 文本置信度阈值（平衡识别率和误报）
 OCR_BOX_THRESH = 0.22       # 检测框阈值
-OCR_UPSCALE_MIN_WIDTH = 900 # 图片宽度 > 此值时放大
-OCR_UPSCALE_SCALE = 1.4     # 上采样倍率（1.4x 平衡性能和精度）
+OCR_UPSCALE_MIN_WIDTH = 50  # 图片宽度 > 此值时放大（降低到50，让小格子也放大）
+OCR_UPSCALE_SCALE = 3.0     # 上采样倍率（3.0x，让小文字更清楚）
 
-# 自适应上采样配置（针对全屏/大图优化）
-OCR_ADAPTIVE_UPSCALE_ENABLED = True      # 启用自适应上采样
-OCR_ADAPTIVE_BASE_WIDTH = 1200           # 基准宽度阈值
-OCR_ADAPTIVE_MAX_SCALE = 2.5             # 最大上采样倍数（防止过度放大）
-OCR_ADAPTIVE_MIN_SCALE = 1.2             # 最小上采样倍数（大图至少放大1.2倍）
+# 自适应上采样配置（已由 BaseOCR._calculate_adaptive_scale 统一管理）
+OCR_ADAPTIVE_UPSCALE_ENABLED = True      # 保留开关兼容性
+OCR_ADAPTIVE_BASE_WIDTH = 1200           # 保留兼容性
+OCR_ADAPTIVE_MAX_SCALE = 6.0             # 最大上采样倍数
+OCR_ADAPTIVE_MIN_SCALE = 1.0             # 最小上采样倍数
 
 # 图像增强配置
 OCR_ENHANCE_CONTRAST = True              # 启用对比度增强
-OCR_CLAHE_CLIP_LIMIT = 2.0               # CLAHE对比度限制
-OCR_CLAHE_GRID_SIZE = 8                  # CLAHE网格大小
+OCR_CLAHE_CLIP_LIMIT = 3.0               # CLAHE对比度限制（提高以增强文字对比度）
+OCR_CLAHE_GRID_SIZE = 8                  # CLAHE网格大小（减小以更精细）
+
+# 颜色过滤（仅保留目标颜色文字，过滤其他颜色噪声）
+OCR_COLOR_FILTER_ENABLED = False         # 默认关闭，子类按需开启
+OCR_COLOR_FILTER_LOWER = (15, 40, 120)   # HSV 下限 (H, S, V)
+OCR_COLOR_FILTER_UPPER = (45, 255, 255)  # HSV 上限 — 默认金色/黄色范围
+
+# 调试：保存 OCR 中间结果图到本地（用于调参）
+OCR_DEBUG_SAVE_ENABLED = False           # 设为 True 后，每步处理图都会保存到 %APPDATA%\WARFRAME-RELIC\ocr_debug\
+OCR_DEBUG_SAVE_DIR = "ocr_debug"         # 相对 APPDATA 的子目录
 
 # 动态OCR参数配置（针对不同尺寸图像）
 OCR_DYNAMIC_PARAMS_ENABLED = True        # 启用动态参数调整
@@ -88,10 +97,10 @@ OCR_LARGE_IMAGE_BOX_THRESH = 0.20        # 大图检测框阈值（降低以检�
 OCR_LARGE_IMAGE_THRESHOLD = 1500         # 判定为大图的宽度阈值
 
 # RapidOCR引擎配置
-RAPIDOCR_TEXT_SCORE = 0.35               # 文本置信度阈值
-RAPIDOCR_BOX_THRESH = 0.20               # 检测框阈值
-RAPIDOCR_DET_LIMIT_SIDE_LEN = 960        # 检测器最小边限制（关键！防止大图被过度缩小）
-RAPIDOCR_DET_LIMIT_TYPE = "min"          # 按最小边缩放（保持宽高比）
+RAPIDOCR_TEXT_SCORE = 0.15               # 文本置信度阈值（降低到0.15，提高召回率）
+RAPIDOCR_BOX_THRESH = 0.10               # 检测框阈值（降低到0.10，提高召回率）
+RAPIDOCR_DET_LIMIT_SIDE_LEN = 1600       # 检测器最小边限制（降低到1600，加速大图OCR）
+RAPIDOCR_DET_LIMIT_TYPE = "max"          # 按最大边缩放（限制大图尺寸，加速推理）
 
 # 按钮布局
 BTN_WIDTH = 200

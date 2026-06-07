@@ -168,6 +168,22 @@ class ThemeConfig:
             "progress_gradient_mid": "#FF0055",
             "progress_gradient_end": "#00FFFF",
             "fetch_manual_hint": "#FFAA33", "fetch_error_color": "#FF4455",
+            # ---- 辅助色 (8) ----
+            "subtle_border": "#1a1a3a",       # 微弱分割线
+            "muted_text": "#8E9CB2",          # 次要文字(掉落标签)
+            "light_text": "#C8D0E0",          # 亮色文字(地点名)
+            "color_black": "#000000",         # 纯黑(亮色按钮文字)
+            "color_dark_gray": "#666666",     # 深灰(禁用文字)
+            "color_enemy": "#FF6B6B",         # 敌人掉落
+            "color_purple": "#E066FF",        # 瞬时奖励/特殊
+            "link_color": "#5dade2",          # 超链接
+            # ---- 在线状态 (4) ----
+            "status_online": "#00ff88",
+            "status_ingame": "#00d9ff",
+            "status_offline": "#666666",
+            "status_away": "#ffaa00",
+            # ---- JSON 查看器 (1) ----
+            "json_boolean": "#c586c0",
         }
 
     def _migrate_legacy(self):

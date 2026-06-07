@@ -11,12 +11,12 @@ class ItemDatabaseUpdater:
     
     def __init__(self, db_path=None):
         if db_path is None:
-            db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'wm_items.db')
+            db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'warframe.db')
         self.db_path = db_path
         
     def connect(self):
         """连接数据库"""
-        return sqlite3.connect(self.db_path)
+        return sqlite3.connect(self.db_path, check_same_thread=False)
     
     def analyze_tradable_status(self):
         """分析当前数据库中可能有误的可交易状态"""

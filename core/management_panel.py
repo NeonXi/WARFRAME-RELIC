@@ -6,7 +6,6 @@ WARFRAME-RELIC 管理面板
 - 内部委托给 theme_panel.py / update_panel.py 处理子功能
 """
 import os
-import json
 from pathlib import Path
 
 from PyQt6.QtWidgets import (
@@ -46,13 +45,13 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
     theme_changed = pyqtSignal()
     reset_requested = pyqtSignal()
     feature_toggles_changed = pyqtSignal(dict)
-    item_region_select_requested = pyqtSignal()
+    item_region_select_requested = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
         self._data_dir = Path(__file__).resolve().parent.parent / 'data'
-        self._db_path = str(self._data_dir / 'relics.db')
-        self._alljson_path = str(self._data_dir / 'all.json')
+        self._db_path = str(self._data_dir / 'warframe.db')
+        self._alljson_path = str(self._data_dir / 'warframe.db')
         self._hotkeys = load_hotkeys()
         self._feature_toggles = load_feature_toggles()
         self._first_show = True
@@ -75,7 +74,6 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
 
     def closeEvent(self, event):
         """关闭面板 = 退出程序，清理所有运行缓存。"""
-        self._save_window_geometry()
         theme.save_background_config_now()
         QApplication.instance().quit()
         event.accept()
@@ -85,41 +83,6 @@ class ManagementPanel(BgLayerMixin, PanelStylesMixin, PanelBuilderMixin, QWidget
         if self._first_show:
             self._first_show = False
             QTimer.singleShot(50, self._fix_initial_size)
-
-    # ============================================================
-    # 窗口位置记忆
-    # ============================================================
-
-    def _geometry_config_path(self) -> Path:
-        return self._data_dir / "window_geometry.json"
-
-    def _save_window_geometry(self):
-        """保存窗口位置和大小。"""
-        try:
-            geo = self.normalGeometry()
-            data = {
-                "x": geo.x(),
-                "y": geo.y(),
-                "width": geo.width(),
-                "height": geo.height(),
-            }
-            with open(self._geometry_config_path(), "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-        except Exception:
-            pass
-
-    def _restore_window_geometry(self):
-        """恢复上次保存的窗口位置和大小。"""
-        path = self._geometry_config_path()
-        if not path.exists():
-            return
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if all(k in data for k in ("x", "y", "width", "height")):
-                self.setGeometry(data["x"], data["y"], data["width"], data["height"])
-        except Exception:
-            pass
 
     def _fix_initial_size(self):
         self.updateGeometry()
