@@ -106,7 +106,6 @@ class UpdatePanel(QObject):
         self._source_label = None
         self._db_files_label = None
         self._btn_update_base = None
-        self._btn_fetch_prices = None
         self._btn_browse = None
         self._btn_browse_db = None
         self._btn_tutorial = None
@@ -126,10 +125,9 @@ class UpdatePanel(QObject):
         self._source_label = label
         self._db_files_label = db_files_label
 
-    def set_buttons(self, btn_update_base=None, btn_fetch_prices=None,
+    def set_buttons(self, btn_update_base=None,
                     btn_browse=None, btn_browse_db=None, btn_tutorial=None):
         self._btn_update_base = btn_update_base
-        self._btn_fetch_prices = btn_fetch_prices
         self._btn_browse = btn_browse
         self._btn_browse_db = btn_browse_db
         self._btn_tutorial = btn_tutorial

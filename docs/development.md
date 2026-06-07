@@ -42,7 +42,7 @@ WARFRAME-RELIC/
 │   ├── hotkey_capture_button.py# 热键捕获按钮组件
 │   ├── trigger_manager.py      # ★ 辅助触发器（Windows API WH_MOUSE_LL + WH_KEYBOARD_LL 低级钩子）
 │   ├── mode_handlers.py        # 功能处理器（出入库/查询/翻译/价格）
-│   ├── price_service.py        # 价格服务（三级查询 + 限速器）
+│   ├── price_service.py        # 价格服务（内存缓存 + 实时 WM API 查询 + 反压价算法）
 │   ├── drop_tooltip.py         # 物品掉落来源查询
 │   ├── item_info_panel.py      # 物品信息面板
 │   ├── annotation.py           # 覆盖层标注绘制
@@ -78,7 +78,6 @@ WARFRAME-RELIC/
 │   ├── item_index.py           # ★ 物品索引 + 拼音搜索（已迁移至 warframe.db）
 │   ├── translator.py           # ★ 翻译接口（已迁移至 warframe.db，查询接口保留占位）
 │   ├── market_items.py         # ★ 市场物品接口（已迁移至 warframe.db）
-│   ├── wm_prices.py            # ★ 价格接口（已迁移至 warframe.db）
 │   ├── update_db.py            # ~~已删除~~（功能由 build_warframe_db.py 替代）
 │   ├── hotkeys.json            # 热键配置文件
 │   ├── feature_toggles.json   # 功能开关配置
@@ -192,9 +191,7 @@ planets → mission_nodes → mission_rewards
 - ~~`translator.db`~~ → 合并到 game_translations 表
 - ~~`market_items.db`~~ → 合并到 market_items 表
 
-**禁止引用旧数据库：** 任何代码不得再引用上述已废弃的 `.db` 文件。所有业务数据统一从 `warframe.db` 查询。
-
-**例外：** `wm_prices.db` 是价格缓存数据库，由 `wm_prices.py` 管理，因数据量大且独立更新频率高，允许独立存在。
+**禁止引用旧数据库：** 任何代码不得再引用上述已废弃的 `.db` 文件。所有业务数据统一从 `warframe.db` 查询。市场价格不再缓存到本地数据库，改为通过 `core/price_service.py` 实时查询 warframe.market API。
 
 ### items 表字段映射
 
@@ -215,7 +212,7 @@ conn.execute("SELECT rowid AS id, name AS en_name, zh_name, category, tradable A
 | `wfinfo_relics.py` | ✅ 已迁移 | 已改为查询 warframe.db relics 表 |
 | `item_index.py` | ✅ 已迁移 | 已改为查询 warframe.db items + item_translations，支持拼音搜索、遗物过滤 |
 | `translator.py` | ✅ 已迁移 | 已改为查询 warframe.db game_translations 表 |
-| `wm_prices.py` | ✅ 已迁移 | 已改为查询 warframe.db items 表匹配 |
+| `wm_prices.py` | ✅ 已删除 | 价格缓存机制已弃用，改为 `core/price_service.py` 实时查询 WM API |
 | `market_items.py` | ✅ 已迁移 | 已改为查询 warframe.db market_items 表 |
 | `build_market_items.py` | ✅ 新增 | 从 items 表本地构建 market_items 表（不依赖 WM API） |
 | `matcher.py` | ✅ 已迁移 | 已改为查询/写入 warframe.db items 表 |

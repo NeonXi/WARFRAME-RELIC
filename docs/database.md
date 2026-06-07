@@ -17,7 +17,6 @@
 | `i18n.json` | warframe-items | 物品多语言翻译（14 种语言，232,568 条） |
 | `all.json` | warframe-drop-data | DE 官方掉落数据 |
 | `dict.en.json` / `dict.zh.json` | warframe-i18n | 游戏术语翻译（35,381 条） |
-| Warframe Market API | api.warframe.market | 市场价格数据（wm_prices.db） |
 
 ### 统计
 
@@ -671,14 +670,12 @@ python data/build_warframe_db.py
 
 ### 数据流水线
 
-通过 `data_pipeline.py` 统一编排，支持两种模式：
+通过 `data_pipeline.py` 统一编排，流程如下：
 
-**基础数据模式**（更新基础数据）：
 1. Git 稀疏检出源数据（3 个上游仓库 → external/）
 2. 构建统一数据库 warframe.db（含 market_items 表）
 
-**价格模式**（仅拉取市场价格）：
-1. 拉取 warframe.market 价格 → wm_prices.db
+> 市场价格通过 `core/price_service.py` 实时查询 warframe.market API，不再缓存到本地数据库。
 
 ### 数据库参数
 

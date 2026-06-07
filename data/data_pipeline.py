@@ -60,21 +60,16 @@ if _HAS_PYQT:
         finished = pyqtSignal(dict)
         error = pyqtSignal(str)
 
-        def __init__(self, skip_download: bool = False, skip_prices: bool = False,
-                      prices_only: bool = False,
+        def __init__(self, skip_download: bool = False,
                       close_connections_fn=None):
             """
             Args:
                 skip_download: 如果源数据已存在且最新，跳过下载步骤
-                skip_prices: 跳过市场价格拉取（用于快速更新基础数据）
-                prices_only: 仅拉取市场价格（用于单独更新价格数据）
                 close_connections_fn: 构建完成前调用，关闭应用缓存的数据库连接
             """
             super().__init__()
             self._cancelled = False
             self._skip_download = skip_download
-            self._skip_prices = skip_prices
-            self._prices_only = prices_only
             self._close_connections_fn = close_connections_fn
 
         def cancel(self):
@@ -107,16 +102,9 @@ if _HAS_PYQT:
 
             try:
                 # ============================================================
-                # 仅价格模式: 只拉取市场价格
+                # 基础数据模式: 源数据 → warframe.db
                 # ============================================================
-                if self._prices_only:
-                    self._run_prices_only(results, start_time)
-                    return
-
-                # ============================================================
-                # 基础数据模式: 源数据 → warframe.db (可选跳过价格)
-                # ============================================================
-                total_steps = 2 if self._skip_prices else 3
+                total_steps = 2
                 step_num = 0
 
                 # ============================================================
@@ -156,21 +144,6 @@ if _HAS_PYQT:
 
                 build_stats = self._run_step_build_db(step2_pct_start, step2_pct_end)
                 results["build"] = build_stats
-
-                # ============================================================
-                # 步骤 3: 拉取 WM 价格 (可选)
-                # ============================================================
-                if not self._skip_prices:
-                    step_num += 1
-                    self._emit_log("info", "")
-                    self._emit_log("info", f"[{step_num}/{total_steps}] 拉取 warframe.market 价格")
-                    self._emit_step(step_num, "拉取市场价格")
-
-                    step3_pct_start = int((step_num - 1) / total_steps * 100)
-                    step3_pct_end = int(step_num / total_steps * 100)
-
-                    price_result = self._run_step_prices(step3_pct_start, step3_pct_end)
-                    results["prices"] = price_result
 
                 # ============================================================
                 # 完成
@@ -357,45 +330,6 @@ if _HAS_PYQT:
 
             self._emit_log("ok", f"  耗时: {stats.get('elapsed_sec', 0):.1f}s")
             return stats
-
-        def _run_step_prices(self, pct_start: int, pct_end: int) -> dict:
-            """步骤3: 拉取 warframe.market 价格。"""
-            from data.wm_prices import fetch_all_prices
-
-            def _price_log(level, msg):
-                level_map = {"info": "info", "ok": "ok", "warn": "warn", "error": "error"}
-                self._emit_log(level_map.get(level, "info"), msg)
-
-            def _price_progress(pct):
-                if not self._cancelled:
-                    global_pct = pct_start + int(pct / 100 * (pct_end - pct_start))
-                    self._emit_progress(min(global_pct, pct_end))
-
-            price_result = fetch_all_prices(log_cb=_price_log, progress_cb=_price_progress)
-            self._emit_log("ok", f"  总计: {price_result.get('total', 0):,} 个物品")
-            self._emit_log("ok", f"  有卖价: {price_result.get('with_sell', 0):,} 个")
-            self._emit_log("ok", f"  耗时: {price_result.get('elapsed', 0):.0f}s")
-            return price_result
-
-        def _run_prices_only(self, results: dict, start_time: float):
-            """仅价格模式。"""
-            self._emit_log("info", "=" * 50)
-            self._emit_log("info", "拉取 warframe.market 价格")
-            self._emit_step(1, "拉取市场价格")
-            self._emit_progress(0)
-
-            price_result = self._run_step_prices(0, 100)
-            results["prices"] = price_result
-
-            elapsed = time.time() - start_time
-            self._emit_progress(100)
-            self._emit_log("ok", "")
-            self._emit_log("ok", "=" * 50)
-            self._emit_log("ok", f"价格拉取完成! 总耗时: {elapsed:.0f}s")
-            self._emit_log("ok", "=" * 50)
-            results["elapsed"] = elapsed
-            results["success"] = True
-            self.finished.emit(results)
 
 
 # ============================================================

@@ -521,19 +521,10 @@ class PanelBuilderMixin:
             f"QPushButton:disabled {{ background-color: {theme.text_dim}; color: {COLOR_DARK_GRAY}; }}"
         )
         self._btn_update_base.clicked.connect(self._on_update_base_data)
-        self._btn_fetch_prices = WordWrapButton(S("management", "fetch_market_prices"))
-        self._btn_fetch_prices.setStyleSheet(
-            f"QPushButton {{ background-color: {theme.cyber_cyan}; color: {COLOR_BLACK}; "
-            f"font-weight: bold; padding: 8px 16px; border-radius: 4px; }}"
-            f"QPushButton:hover {{ background-color: {theme.cyber_yellow}; }}"
-            f"QPushButton:disabled {{ background-color: {theme.text_dim}; color: {COLOR_DARK_GRAY}; }}"
-        )
-        self._btn_fetch_prices.clicked.connect(self._on_fetch_prices)
         self._btn_browse = WordWrapButton(S("button", "browse_file"))
         self._reg_text(self._btn_browse, "button", "browse_file")
         self._btn_browse.clicked.connect(self._update_panel.on_browse)
         row_fetch.addWidget(self._btn_update_base)
-        row_fetch.addWidget(self._btn_fetch_prices)
         row_fetch.addWidget(self._btn_browse)
         layout.addLayout(row_fetch)
 
@@ -594,7 +585,6 @@ class PanelBuilderMixin:
         self._update_panel.set_source_label(source_label, db_files_label=db_files_label)
         self._update_panel.set_buttons(
             btn_update_base=self._btn_update_base,
-            btn_fetch_prices=self._btn_fetch_prices,
             btn_browse=self._btn_browse,
             btn_browse_db=self._btn_browse_db, btn_tutorial=self._btn_tutorial)
 
@@ -2056,34 +2046,12 @@ class PanelBuilderMixin:
 
         self._pipeline_mode = "base"
         self._btn_update_base.setEnabled(False)
-        self._btn_fetch_prices.setEnabled(False)
         self._add_log('info', '========== 更新基础数据 ==========')
         self._add_log('info', '流水线: WFCD → warframe.db (统一数据库)')
 
-        self._launch_pipeline(skip_prices=True)
+        self._launch_pipeline()
 
-    def _on_fetch_prices(self):
-        """拉取 warframe.market 市场价格（耗时较长）。
-
-        仅拉取市场价格，不更新其他数据库。
-        """
-        reply = QMessageBox.question(
-            self, S("management", "fetch_market_prices"),
-            S.format("management", "fetch_prices_confirm"),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes)
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-
-        self._pipeline_mode = "prices"
-        self._btn_update_base.setEnabled(False)
-        self._btn_fetch_prices.setEnabled(False)
-        self._add_log('info', '========== 拉取市场价格 ==========')
-        self._add_log('info', '数据源: warframe.market API v2')
-
-        self._launch_pipeline(prices_only=True)
-
-    def _launch_pipeline(self, skip_prices=False, prices_only=False):
+    def _launch_pipeline(self):
         """启动数据流水线后台线程。"""
         from data.data_pipeline import DataPipelineWorker
         import threading
@@ -2092,7 +2060,6 @@ class PanelBuilderMixin:
         from data.db_connections import close_all_db_connections
 
         self._pipeline_worker = DataPipelineWorker(
-            skip_prices=skip_prices, prices_only=prices_only,
             close_connections_fn=close_all_db_connections)
         self._pipeline_worker.step_changed.connect(self._on_pipeline_step)
         self._pipeline_worker.log.connect(self._on_pipeline_log)
@@ -2193,26 +2160,13 @@ class PanelBuilderMixin:
 
     def _on_pipeline_finished(self, result):
         self._btn_update_base.setEnabled(True)
-        self._btn_fetch_prices.setEnabled(True)
         self._update_panel._dl_progress.hide()
         self._sub_progress_container.hide()
         self._update_panel.refresh_stats()
         self.refresh_price_stats()
 
         if result.get("success"):
-            mode = getattr(self, '_pipeline_mode', 'base')
-            if mode == "prices":
-                self._add_log('ok', f'市场价格拉取完成! 总耗时: {result.get("elapsed", 0):.0f}s')
-                QMessageBox.information(self, S("management", "fetch_complete"),
-                    f"市场价格拉取完成！\n\n"
-                    f"总耗时: {result.get('elapsed', 0):.0f}s\n\n"
-                    "价格数据已刷新。")
-            else:
-                self._add_log('ok', f'基础数据更新完成! 总耗时: {result.get("elapsed", 0):.0f}s')
-                QMessageBox.information(self, S("management", "update_complete"),
-                    f"基础数据更新完成！\n\n"
-                    f"总耗时: {result.get('elapsed', 0):.0f}s\n\n"
-                    "各数据库状态已刷新，可查看数据总览。")
+            self._add_log('ok', f'基础数据更新完成! 总耗时: {result.get("elapsed", 0):.0f}s')
         else:
             self._add_log('error', f'流水线执行失败: {result.get("error", "未知错误")}')
             QMessageBox.warning(self, S("management", "update_failed"),
@@ -2221,7 +2175,6 @@ class PanelBuilderMixin:
 
     def _on_pipeline_error(self, err_msg):
         self._btn_update_base.setEnabled(True)
-        self._btn_fetch_prices.setEnabled(True)
         self._update_panel._dl_progress.hide()
         self._sub_progress_container.hide()
         self._add_log('error', f'流水线错误: {err_msg}')
