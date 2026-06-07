@@ -116,7 +116,7 @@ def init_sparse_checkout(
         capture=True
     )
     if code != 0:
-        _log('error', f"✗ git clone 失败: {err}")
+        _log('error', f"[X] git clone 失败: {err}")
         _log('error', f"  输出: {out}")
         # 回退: 尝试不带 --filter 的克隆
         _log('info', "回退: 尝试不带 --filter 的克隆...")
@@ -128,7 +128,7 @@ def init_sparse_checkout(
             capture=True
         )
         if code != 0:
-            _log('error', f"✗ git clone (回退) 也失败: {err}")
+            _log('error', f"[X] git clone (回退) 也失败: {err}")
             return False
 
     # 步骤 2: 配置要检出的文件
@@ -143,7 +143,7 @@ def init_sparse_checkout(
         cwd=REPO_DIR
     )
     if code != 0:
-        _log('error', f"✗ sparse-checkout 配置失败: {err}")
+        _log('error', f"[X] sparse-checkout 配置失败: {err}")
         return False
 
     # 步骤 3: 检出文件
@@ -152,7 +152,7 @@ def init_sparse_checkout(
     _log('info', "\n检出文件...")
     code, out, err = run_cmd(["git", "checkout"], cwd=REPO_DIR, capture=True)
     if code != 0:
-        _log('error', f"✗ git checkout 失败: {err}")
+        _log('error', f"[X] git checkout 失败: {err}")
         _log('error', f"  输出: {out}")
         return False
 
@@ -171,7 +171,7 @@ def init_sparse_checkout(
             # 源和目标相同时跳过（git sparse checkout 已将文件放到了正确位置）
             try:
                 if src_file.samefile(dest_file):
-                    _log('info', f"  ✓ {Path(src_path).name} (已在目标位置)")
+                    _log('info', f"  [OK] {Path(src_path).name} (已在目标位置)")
                     success_count += 1
                     continue
             except OSError:
@@ -186,12 +186,12 @@ def init_sparse_checkout(
                 except PermissionError:
                     import time as _time
                     if attempt < 4:
-                        _log('warn', f"  ⚠ {Path(src_path).name} 被占用，等待 1 秒后重试 ({attempt + 1}/5)...")
+                        _log('warn', f"  [!] {Path(src_path).name} 被占用，等待 1 秒后重试 ({attempt + 1}/5)...")
                         _time.sleep(1)
                     else:
-                        _log('error', f"  ✗ {Path(src_path).name} 复制失败: 文件被锁定，请关闭正在使用该文件的程序后重试")
+                        _log('error', f"  [X] {Path(src_path).name} 复制失败: 文件被锁定，请关闭正在使用该文件的程序后重试")
             if copied:
-                _log('info', f"  ✓ {Path(src_path).name}")
+                _log('info', f"  [OK] {Path(src_path).name}")
                 success_count += 1
 
     # 步骤 5: 完成
@@ -200,9 +200,9 @@ def init_sparse_checkout(
 
     _log('info', "\n" + "=" * 80)
     if success_count == len(FILES_TO_PULL):
-        _log('ok', f"✓ 全部成功！")
+        _log('ok', f"[OK] 全部成功！")
     else:
-        _log('warn', f"⚠ 完成，部分文件缺失: {success_count}/{len(FILES_TO_PULL)}")
+        _log('warn', f"[!] 完成，部分文件缺失: {success_count}/{len(FILES_TO_PULL)}")
     _log('info', f"  保存位置: {OUTPUT_DIR.absolute()}")
     _log('info', "=" * 80)
     return success_count > 0
@@ -300,7 +300,7 @@ def init_drop_data_sparse_checkout(
         capture=True
     )
     if code != 0:
-        _log('error', f"✗ git clone 失败: {err}")
+        _log('error', f"[X] git clone 失败: {err}")
         _log('error', f"  输出: {out}")
         _log('info', "回退: 尝试不带 --filter 的克隆...")
         if DROP_REPO_DIR.exists():
@@ -311,7 +311,7 @@ def init_drop_data_sparse_checkout(
             capture=True
         )
         if code != 0:
-            _log('error', f"✗ git clone (回退) 也失败: {err}")
+            _log('error', f"[X] git clone (回退) 也失败: {err}")
             return False
 
     # 步骤 2: 配置要检出的文件
@@ -326,7 +326,7 @@ def init_drop_data_sparse_checkout(
         cwd=DROP_REPO_DIR
     )
     if code != 0:
-        _log('error', f"✗ sparse-checkout 配置失败: {err}")
+        _log('error', f"[X] sparse-checkout 配置失败: {err}")
         return False
 
     # 步骤 3: 检出文件
@@ -335,7 +335,7 @@ def init_drop_data_sparse_checkout(
     _log('info', "\n检出文件...")
     code, out, err = run_cmd(["git", "checkout"], cwd=DROP_REPO_DIR, capture=True)
     if code != 0:
-        _log('error', f"✗ git checkout 失败: {err}")
+        _log('error', f"[X] git checkout 失败: {err}")
         _log('error', f"  输出: {out}")
         return False
 
@@ -353,13 +353,13 @@ def init_drop_data_sparse_checkout(
             dest_file = DROP_OUTPUT_DIR / Path(src_path).name
             try:
                 if src_file.samefile(dest_file):
-                    _log('info', f"  ✓ {Path(src_path).name} (已在目标位置)")
+                    _log('info', f"  [OK] {Path(src_path).name} (已在目标位置)")
                     success_count += 1
                     continue
             except OSError:
                 pass
             shutil.copy2(src_file, dest_file)
-            _log('info', f"  ✓ {Path(src_path).name}")
+            _log('info', f"  [OK] {Path(src_path).name}")
             success_count += 1
 
     # 步骤 5: 完成
@@ -368,9 +368,9 @@ def init_drop_data_sparse_checkout(
 
     _log('info', "\n" + "=" * 80)
     if success_count == len(DROP_FILES_TO_PULL):
-        _log('ok', f"✓ 掉落数据全部成功！")
+        _log('ok', f"[OK] 掉落数据全部成功！")
     else:
-        _log('warn', f"⚠ 完成，部分文件缺失: {success_count}/{len(DROP_FILES_TO_PULL)}")
+        _log('warn', f"[!] 完成，部分文件缺失: {success_count}/{len(DROP_FILES_TO_PULL)}")
     _log('info', f"  保存位置: {DROP_OUTPUT_DIR.absolute()}")
     _log('info', "=" * 80)
     return success_count > 0
@@ -453,7 +453,7 @@ def init_i18n_sparse_checkout(
         capture=True
     )
     if code != 0:
-        _log('error', f"✗ git clone 失败: {err}")
+        _log('error', f"[X] git clone 失败: {err}")
         _log('error', f"  输出: {out}")
         _log('info', "回退: 尝试不带 --filter 的克隆...")
         if I18N_REPO_DIR.exists():
@@ -465,7 +465,7 @@ def init_i18n_sparse_checkout(
             capture=True
         )
         if code != 0:
-            _log('error', f"✗ git clone (回退) 也失败: {err}")
+            _log('error', f"[X] git clone (回退) 也失败: {err}")
             return False
 
     # 步骤 2: 配置要检出的文件
@@ -480,7 +480,7 @@ def init_i18n_sparse_checkout(
         cwd=I18N_REPO_DIR
     )
     if code != 0:
-        _log('error', f"✗ sparse-checkout 配置失败: {err}")
+        _log('error', f"[X] sparse-checkout 配置失败: {err}")
         return False
 
     # 步骤 3: 检出文件
@@ -489,7 +489,7 @@ def init_i18n_sparse_checkout(
     _log('info', "\n检出文件...")
     code, out, err = run_cmd(["git", "checkout"], cwd=I18N_REPO_DIR, capture=True)
     if code != 0:
-        _log('error', f"✗ git checkout 失败: {err}")
+        _log('error', f"[X] git checkout 失败: {err}")
         _log('error', f"  输出: {out}")
         return False
 
@@ -508,13 +508,13 @@ def init_i18n_sparse_checkout(
             dest_file = I18N_OUTPUT_DIR / Path(src_path).name
             try:
                 if src_file.samefile(dest_file):
-                    _log('info', f"  ✓ {Path(src_path).name} (已在目标位置)")
+                    _log('info', f"  [OK] {Path(src_path).name} (已在目标位置)")
                     success_count += 1
                     continue
             except OSError:
                 pass
             shutil.copy2(src_file, dest_file)
-            _log('info', f"  ✓ {Path(src_path).name}")
+            _log('info', f"  [OK] {Path(src_path).name}")
             success_count += 1
 
     # 步骤 5: 完成
@@ -523,9 +523,9 @@ def init_i18n_sparse_checkout(
 
     _log('info', "\n" + "=" * 80)
     if success_count == len(I18N_FILES_TO_PULL):
-        _log('ok', f"✓ 翻译数据全部成功！")
+        _log('ok', f"[OK] 翻译数据全部成功！")
     else:
-        _log('warn', f"⚠ 完成，部分文件缺失: {success_count}/{len(I18N_FILES_TO_PULL)}")
+        _log('warn', f"[!] 完成，部分文件缺失: {success_count}/{len(I18N_FILES_TO_PULL)}")
     _log('info', f"  保存位置: {I18N_OUTPUT_DIR.absolute()}")
     _log('info', "=" * 80)
     return success_count > 0

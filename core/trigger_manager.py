@@ -707,7 +707,7 @@ class TriggerManager:
                 executor = _ACTION_EXECUTORS.get(atype)
                 if executor:
                     executor(action)
-                    _dbg(f"    ✓ 动作#{i+1} 执行成功")
+                    _dbg(f"    [OK] 动作#{i+1} 执行成功")
                 else:
                     self._log("warn",
                               f"触发器「{name}」的第 {i+1} 个动作类型未知: '{atype}'",
@@ -717,7 +717,7 @@ class TriggerManager:
                           f"触发器「{name}」动作执行失败 (#{i+1}): {e}",
                           "TriggerManager")
                 import traceback
-                _dbg(f"    ✗ 动作#{i+1} 异常详情:\n{traceback.format_exc()}")
+                _dbg(f"    [X] 动作#{i+1} 异常详情:\n{traceback.format_exc()}")
 
 
 # ============================================================

@@ -430,7 +430,7 @@ class UpdatePanel(QObject):
     def _format_log_line(self, log_type: str, msg: str, source: str = "") -> str:
         now = datetime.now().strftime("%H:%M:%S")
         color = theme.log_color_map.get(log_type, theme.text)
-        prefix_map = {"ok": "✓", "warn": "⚠", "error": "✗", "info": "  "}
+        prefix_map = {"ok": "[OK]", "warn": "[!]", "error": "[X]", "info": "  "}
         p = prefix_map.get(log_type, " ")
         src = f' <span style="color:{theme.text_dim};">[{source}]</span>' if source else ""
         return (

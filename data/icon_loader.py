@@ -66,7 +66,7 @@ FALLBACK_ICONS = {
         "hotkeys":     "⌨",
         "theme":       "🎨",
         "about":       "ℹ",
-        "reset":       "⚠",
+        "reset":       "[!]",
     },
     "action": {
         "check_status": "⊞",

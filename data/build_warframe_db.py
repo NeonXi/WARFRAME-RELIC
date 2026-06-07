@@ -775,7 +775,7 @@ def build(
         _log(f"  items={len(item_rows)}, attrs={len(attr_rows)}, abilities={len(ability_rows)}, attacks={len(attack_rows)}")
         _log(f"  components={len(component_rows)}, drops={len(drop_rows)}, patchlogs={len(patchlog_rows)}")
     else:
-        _log(f"  ⚠ All.json 不存在: {ALL_JSON}")
+        _log(f"  [!] All.json 不存在: {ALL_JSON}")
 
     # ================================================================
     # Step 2: 解析 i18n.json → item_translations + 回填 zh_name
@@ -833,7 +833,7 @@ def build(
         stats['pinyin_generated'] = len(py_updates)
         _log(f"  pinyin={len(py_updates)}")
     else:
-        _log(f"  ⚠ i18n.json 不存在: {I18N_JSON}")
+        _log(f"  [!] i18n.json 不存在: {I18N_JSON}")
 
     # ================================================================
     # Step 3: 解析 all.json（掉落数据）
@@ -1186,7 +1186,7 @@ def build(
 
         conn.commit()
     else:
-        _log(f"  ⚠ all.json 不存在: {DROP_DATA_JSON}")
+        _log(f"  [!] all.json 不存在: {DROP_DATA_JSON}")
 
     # ================================================================
     # Step 4: 解析 dict.en/zh.json → game_translations
@@ -1200,14 +1200,14 @@ def build(
             en_data = json.load(f)
         _log(f"  dict.en.json: {len(en_data)} 条")
     else:
-        _log(f"  ⚠ dict.en.json 不存在: {DICT_EN_JSON}")
+        _log(f"  [!] dict.en.json 不存在: {DICT_EN_JSON}")
 
     if DICT_ZH_JSON.exists():
         with open(DICT_ZH_JSON, 'r', encoding='utf-8') as f:
             zh_data = json.load(f)
         _log(f"  dict.zh.json: {len(zh_data)} 条")
     else:
-        _log(f"  ⚠ dict.zh.json 不存在: {DICT_ZH_JSON}")
+        _log(f"  [!] dict.zh.json 不存在: {DICT_ZH_JSON}")
 
     if en_data or zh_data:
         all_keys = set(en_data.keys()) | set(zh_data.keys())
@@ -1266,7 +1266,7 @@ def build(
             stats['market_items'] = len(wm_rows)
             _log(f"  market_items={stats['market_items']}")
         except Exception as e:
-            _log(f"  ⚠ WM API 拉取失败: {e}")
+            _log(f"  [!] WM API 拉取失败: {e}")
             stats['market_items'] = 0
     else:
         _log("  已跳过 WM API 拉取")

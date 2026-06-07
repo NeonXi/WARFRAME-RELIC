@@ -60,10 +60,10 @@ class _ProxyTestWorker(QObject):
 
                 if success:
                     results[repo_name]["working"].append(idx)
-                    self.log.emit("ok", f"    ✓ 镜像 [{idx}] 连通")
+                    self.log.emit("ok", f"    [OK] 镜像 [{idx}] 连通")
                 else:
                     results[repo_name]["failed"].append(idx)
-                    self.log.emit("warn", f"    ✗ 镜像 [{idx}] 不可用")
+                    self.log.emit("warn", f"    [X] 镜像 [{idx}] 不可用")
 
         self.progress.emit(100, "测试完成")
         self.finished.emit(results)
@@ -321,12 +321,12 @@ class ProxyMirrorDialog(QDialog):
             if working:
                 summary_lines.append(
                     f'<span style="color:{theme.cyber_green};">'
-                    f'✓ {repo_name}: {len(working)} 个可用</span>'
+                    f'[OK] {repo_name}: {len(working)} 个可用</span>'
                 )
             else:
                 summary_lines.append(
                     f'<span style="color:{theme.cyber_red};">'
-                    f'✗ {repo_name}: 0 个可用</span>'
+                    f'[X] {repo_name}: 0 个可用</span>'
                 )
         self._test_log.append("")
         self._test_log.append(
@@ -341,5 +341,5 @@ class ProxyMirrorDialog(QDialog):
         self._btn_test.setEnabled(True)
         self._btn_reset.setEnabled(True)
         self._test_log.append(
-            f'<span style="color:{theme.cyber_red};">✗ 测试错误: {err}</span>'
+            f'<span style="color:{theme.cyber_red};">[X] 测试错误: {err}</span>'
         )

@@ -2145,13 +2145,13 @@ class PanelBuilderMixin:
             _, bar, status_lbl = self._sub_progress_bars[repo_name]
             bar.setValue(pct)
             status_lbl.setText(status_text)
-            if "✓" in status_text:
+            if "[OK]" in status_text:
                 status_lbl.setStyleSheet(
                     f"color: {theme.cyber_green}; font-size: 9px; background: transparent;")
-            elif "✗" in status_text:
+            elif "[X]" in status_text:
                 status_lbl.setStyleSheet(
                     f"color: {theme.cyber_red}; font-size: 9px; background: transparent;")
-            elif "⚠" in status_text:
+            elif "[!]" in status_text:
                 status_lbl.setStyleSheet(
                     f"color: {theme.cyber_orange}; font-size: 9px; background: transparent;")
             else:

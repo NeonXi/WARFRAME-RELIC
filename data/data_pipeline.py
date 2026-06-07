@@ -259,16 +259,16 @@ if _HAS_PYQT:
                         if ok:
                             from core.proxy_config import update_test_result
                             update_test_result(repo_key, mirror_idx_orig, True)
-                            self._emit_log("ok", f"  ✓ 代理 [{mirror_idx_orig}] 成功")
-                            self.repo_progress.emit(repo_name, 100, f"✓ 代理 [{mirror_idx_orig}] 成功")
+                            self._emit_log("ok", f"  [OK] 代理 [{mirror_idx_orig}] 成功")
+                            self.repo_progress.emit(repo_name, 100, f"[OK] 代理 [{mirror_idx_orig}] 成功")
                             break
                         else:
                             from core.proxy_config import update_test_result
                             update_test_result(repo_key, mirror_idx_orig, False)
-                            self._emit_log("warn", f"  ✗ 代理 [{mirror_idx_orig}] 失败，尝试下一个...")
+                            self._emit_log("warn", f"  [X] 代理 [{mirror_idx_orig}] 失败，尝试下一个...")
 
                     if not ok:
-                        self.repo_progress.emit(repo_name, 100, "✗ 所有代理均失败")
+                        self.repo_progress.emit(repo_name, 100, "[X] 所有代理均失败")
 
                     if ok:
                         for f in files:
@@ -280,7 +280,7 @@ if _HAS_PYQT:
                         existing = [f for f in files if (output_dir / f).exists()]
                         if len(existing) == len(files):
                             self._emit_log("warn", f"拉取失败，使用本地缓存")
-                            self.repo_progress.emit(repo_name, 100, "⚠ 使用本地缓存")
+                            self.repo_progress.emit(repo_name, 100, "[!] 使用本地缓存")
                         else:
                             missing = [f for f in files if f not in existing]
                             self._emit_log("error", f"拉取失败且缺少: {missing}")
