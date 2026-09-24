@@ -1,6 +1,9 @@
 """
-WARFRAME-RELIC UI 字符串集中管理（路由器）
-所有在 UI 中展示的字符串都写在这里，方便维护和未来国际化。
+[L-Service] ui_strings — UI 字符串集中管理（路由器）
+
+依赖: Python 标准库 + core.paths
+禁止: PySide6 / QtWidgets / QtGui / QtCore
+职责: 所有在 UI 中展示的字符串都写在这里，方便维护和未来国际化。
 
 使用方式：
     from data.ui_strings import S
@@ -12,27 +15,31 @@ WARFRAME-RELIC UI 字符串集中管理（路由器）
     set_language_preset("normal")         # 切换到普通版
 
 预设文件位于 data/ 目录下:
-  - preset_normal.py         (普通直白风格)
+  - preset_normal.json         (普通直白风格)
 """
 
 import json
 import os
 from pathlib import Path
 
+from core.paths import resource_dir, user_data_dir
+
 
 # ============================================================
 # 预设配置
 # ============================================================
 
-def _data_dir() -> str:
-    return str(Path(__file__).resolve().parent)
+def _data_dir() -> Path:
+    """预设文件目录(只读资源)。"""
+    return resource_dir()
 
-def _config_path() -> str:
-    return os.path.join(_data_dir(), "language_preset.json")
+def _config_path() -> Path:
+    """语言预设配置文件(用户可写)。"""
+    return user_data_dir() / "language_preset.json"
 
 def _load_config() -> dict:
     path = _config_path()
-    if os.path.exists(path):
+    if path.exists():
         try:
             with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -42,20 +49,21 @@ def _load_config() -> dict:
 
 def _save_config(config: dict):
     path = _config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
 def _load_preset(preset_id: str) -> dict:
     """加载指定预设的 STRINGS 字典。"""
-    preset_file = os.path.join(_data_dir(), f"preset_{preset_id}.py")
-    if not os.path.exists(preset_file):
+    preset_file = _data_dir() / f"preset_{preset_id}.json"
+    if not preset_file.exists():
         return {}
 
-    namespace = {}
-    with open(preset_file, "r", encoding="utf-8") as f:
-        exec(f.read(), namespace)
-
-    return namespace.get("STRINGS", {})
+    try:
+        with open(preset_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
 
 
 # ============================================================
@@ -143,8 +151,8 @@ def reload_strings():
     """从配置文件重新加载当前预设（用于外部修改预设文件后刷新）。"""
     global STRINGS, _active_preset_id
     config = _load_config()
-    _active_preset_id = config.get("active", "cyberpunk2077")
+    _active_preset_id = config.get("active", "normal")
     STRINGS = _load_preset(_active_preset_id)
     if not STRINGS:
-        STRINGS = _load_preset("cyberpunk2077")
-        _active_preset_id = "cyberpunk2077"
+        STRINGS = _load_preset("normal")
+        _active_preset_id = "normal"
