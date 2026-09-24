@@ -165,7 +165,8 @@ def push_direct() -> bool:
     err = (r.stderr or "").strip().splitlines()
     _fail(f"推送失败: {err[-1] if err else '未知错误'}")
     if err and "Failed to connect" in err[-1]:
-        _log("排查建议: 直连不通时请开启系统代理的 TUN/全局模式后重试")
+        _log("排查建议: 本机 hosts 有 Watt Toolkit/加速器 的 github 劫持条目(#S302),")
+        _log("          请打开加速器后再试;或检查系统代理 TUN/全局模式是否开启")
     return False
 
 
