@@ -84,6 +84,7 @@ upx.exe
 # Runtime logs & cache (generated locally, never ship)
 data/logs/
 data/wm_items_cache.json
+data/worldstate_cache.json
 
 nul
 
