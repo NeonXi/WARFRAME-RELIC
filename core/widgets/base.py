@@ -773,33 +773,54 @@ class CyberWidgetMixin:
         main_path.lineTo(QPointF(main_rect.left(), main_rect.bottom()))
         main_path.closeSubpath()
 
-        # 背景透明度：selected+hover > selected > hover > 普通
-        if selected and hover:
-            bg_color.setAlphaF(0.92)
-            h, s, l = bg_color.getHslF()[0], bg_color.getHslF()[1], bg_color.getHslF()[2]
-            bg_color.setHslF(h, s, min(l + 0.12, 1.0))
-        elif selected:
-            bg_color.setAlphaF(0.85)
-        elif hover:
-            bg_color.setAlphaF(0.82)
-            h, s, l = bg_color.getHslF()[0], bg_color.getHslF()[1], bg_color.getHslF()[2]
-            bg_color.setHslF(h, s, min(l + 0.08, 1.0))
-        else:
-            bg_color.setAlphaF(0.75)
-        # 沉浸模式：按强度折减主内容区底色（装饰竖条/文字/边框不折减）
-        bg_color.setAlphaF(self._cyber_immersive_alpha(bg_color.alphaF()))
-        painter.fillPath(main_path, QBrush(bg_color))
-
-        # ── 3. 边框描边（选中+hover 增强发光）──
-        if selected and hover:
-            glow_pen = QPen(QColor(border_color), 2.5)
-            glow_pen.setJoinStyle(Qt.PenJoinStyle.MiterJoin)
-            painter.setPen(glow_pen)
-        else:
-            border_pen = QPen(border_color, 1.5)
+        # 玻璃拟态：使用半透明填充 + 细边框
+        is_glass = self._is_glass_mode()
+        if is_glass:
+            # 玻璃模式下使用半透明背景，透出下层
+            glass_bg = QColor(bg_color)
+            if selected and hover:
+                glass_bg.setAlphaF(0.65)
+            elif selected:
+                glass_bg.setAlphaF(0.55)
+            elif hover:
+                glass_bg.setAlphaF(0.50)
+            else:
+                glass_bg.setAlphaF(0.40)
+            # 应用沉浸强度折减
+            glass_bg.setAlphaF(self._cyber_immersive_alpha(glass_bg.alphaF()))
+            painter.fillPath(main_path, QBrush(glass_bg))
+            # 细边框（玻璃模式）
+            border_pen = QPen(border_color, 1.0)
             painter.setPen(border_pen)
-        painter.drawPath(main_path)
-        painter.drawPath(bar_path)
+            painter.drawPath(main_path)
+        else:
+            # 赛博朋克风格：纯色填充 + 发光边框
+            if selected and hover:
+                bg_color.setAlphaF(0.92)
+                h, s, l = bg_color.getHslF()[0], bg_color.getHslF()[1], bg_color.getHslF()[2]
+                bg_color.setHslF(h, s, min(l + 0.12, 1.0))
+            elif selected:
+                bg_color.setAlphaF(0.85)
+            elif hover:
+                bg_color.setAlphaF(0.82)
+                h, s, l = bg_color.getHslF()[0], bg_color.getHslF()[1], bg_color.getHslF()[2]
+                bg_color.setHslF(h, s, min(l + 0.08, 1.0))
+            else:
+                bg_color.setAlphaF(0.75)
+            # 沉浸模式：按强度折减主内容区底色（装饰竖条/文字/边框不折减）
+            bg_color.setAlphaF(self._cyber_immersive_alpha(bg_color.alphaF()))
+            painter.fillPath(main_path, QBrush(bg_color))
+
+            # ── 3. 边框描边（选中+hover 增强发光）──
+            if selected and hover:
+                glow_pen = QPen(QColor(border_color), 2.5)
+                glow_pen.setJoinStyle(Qt.PenJoinStyle.MiterJoin)
+                painter.setPen(glow_pen)
+            else:
+                border_pen = QPen(border_color, 1.5)
+                painter.setPen(border_pen)
+            painter.drawPath(main_path)
+            painter.drawPath(bar_path)
 
         # ── 4. 文字（不受外部 scale 影响，始终原始大小）──
         if text:

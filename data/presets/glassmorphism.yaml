@@ -465,7 +465,7 @@ space:
     inner_pad:          16
     font_size:          11
     border:             "@accent.secondary"
-    bg:                 "rgba(30, 41, 59, 0.50)"   # 玻璃质感
+    bg:                 "rgba(227, 242, 253, 0.40)"   # 玻璃质感：40% 极浅冰蓝
     bar:                "@accent.secondary"
     bar_selected:       "@accent.secondary"
     text:               "@text.primary"
