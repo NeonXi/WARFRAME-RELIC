@@ -127,9 +127,10 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
 
         # ── 说明文字 ──
         hint = QLabel(
-            "当自动拉取 GitHub 数据失败时，可以手动下载数据源文件，"
-            "放到指定目录后点击「手动构建数据库」按钮完成更新。\n"
-            "下方链接和路径均可鼠标选中后 Ctrl+C 复制。"
+            "自动更新流程: 先直连 GitHub 官方 → 失败后自动切换镜像 → 全部失败才需手动操作。\n"
+            "若已进入手动教程，说明所有网络途径均不可用。请下载下方文件并放到对应目录，"
+            "然后点击「手动构建数据库」完成更新。\n"
+            "链接和路径均可鼠标选中后 Ctrl+C 复制。"
         )
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {_text_ter.name()}; background: transparent; border: none;")
