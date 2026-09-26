@@ -715,16 +715,9 @@ class AppShell(QMainWindow):
 
         触发所有控件重绘，使新 token 值生效。
         """
-        # 刷新导航栏容器样式（玻璃模式/赛博朋克模式切换）
+        # 重放沉浸样式(导航容器 + 窗口底色 + 纯黑覆写色重算 + 控件刷新)
         if hasattr(self, '_immersive_ctrl'):
-            # 获取当前沉浸状态
-            from core.widgets.base import CyberWidgetMixin
-            immersive = CyberWidgetMixin._cyber_immersive
-            strength = CyberWidgetMixin._cyber_immersive_strength
-            # 从背景服务读取当前颜色模式（避免直接访问 mixin 私有属性）
-            from core.services.background_service import BackgroundService
-            color_mode = BackgroundService.instance().immersive_color
-            self._immersive_ctrl.apply_nav_container_style(immersive, strength, color_mode)
+            self._immersive_ctrl.on_theme_changed()
 
         # 刷新导航栏
         for tab in self._nav_tabs:

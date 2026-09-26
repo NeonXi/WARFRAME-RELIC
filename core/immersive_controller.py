@@ -208,6 +208,28 @@ class ImmersiveStyleController:
         self.apply_window_bg_style(bg_svc.immersive, mode)
         self.refresh_for_all()
 
+    def on_theme_changed(self) -> None:
+        """主题预设切换后重放沉浸样式(底色 token / 纯黑覆写色均随主题变化)。
+
+        必须做的三件事:
+          1. 重算控件层覆写色:black 模式的 surface.overlay token 已随主题
+             变化,而 _cyber_immersive_color_override 是设置时缓存的 QColor
+             (旧主题值),不重算则控件沿用旧主题颜色;
+          2. 重置窗口底色缓存:cache key 只有 (immersive, color_mode),
+             不含预设名,不重置会命中缓存跳过 setStyleSheet;
+          3. 导航容器 + 窗口底色全部重放(refresh_theme 原本只刷了导航)。
+        """
+        from core.services.background_service import BackgroundService
+        bg_svc = BackgroundService.instance()
+        mode = bg_svc.immersive_color
+        CyberWidgetMixin.set_immersive_color_mode(mode)
+        self._window_bg_cache = None
+        self.apply_nav_container_style(
+            bg_svc.immersive, bg_svc.immersive_strength, mode
+        )
+        self.apply_window_bg_style(bg_svc.immersive, mode)
+        self.refresh_for_all()
+
     # ══════════════════════════════════
     #  刷新
     # ══════════════════════════════════
