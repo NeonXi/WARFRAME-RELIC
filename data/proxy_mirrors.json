@@ -11,32 +11,33 @@
     "warframe-items": {
       "tested_mirrors": {
         "4": true,
-        "5": false,
+        "5": true,
         "1": true,
         "0": false,
         "2": false,
         "3": false
       },
-      "last_successful_index": 1
+      "last_successful_index": 5
     },
     "warframe-drop-data": {
       "tested_mirrors": {
         "1": true,
         "0": false,
         "4": true,
-        "5": false,
+        "5": true,
         "2": false
       },
-      "last_successful_index": 4
+      "last_successful_index": 5
     },
     "warframe-public-export-plus": {
       "tested_mirrors": {
         "0": false,
-        "5": false,
+        "5": true,
         "4": false,
         "2": false,
         "1": false
-      }
+      },
+      "last_successful_index": 5
     }
   }
 }

@@ -13,5 +13,6 @@
     "immersive": true,
     "immersive_strength": 25,
     "immersive_color": "black"
-  }
+  },
+  "theme_preset": "cyberpunk"
 }

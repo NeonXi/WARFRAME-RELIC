@@ -62,7 +62,7 @@ class TestPageRegistration:
     def test_known_pages_exist(self, app_shell):
         """关键页面必须存在。"""
         pages = app_shell._pages
-        expected_keys = {"toggles", "triggers", "theme", "preset", "about"}
+        expected_keys = {"toggles", "triggers", "theme", "about"}
         for key in expected_keys:
             assert key in pages, f"缺失页面: {key}"
 

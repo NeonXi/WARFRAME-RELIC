@@ -67,7 +67,6 @@ NAV_ITEMS = [
     ("eye_mask",    "护眼遮罩"),
     ("prices",      "价格数据"),
     ("theme",       "主题换肤"),
-    ("preset",      "语言预设"),
     ("about",       "关于作者"),
 ]
 
@@ -82,7 +81,6 @@ _PAGE_CLASS_MAP = {
     "prices":      "core.pages.prices_page:PricesPage",
     "worldstate":  "core.pages.worldstate_page:WorldstatePage",
     "theme":       "core.pages.theme_page:ThemePage",
-    "preset":      "core.pages.preset_page:PresetPage",
     "about":       "core.pages.about_page:AboutPage",
 }
 
@@ -219,6 +217,18 @@ class AppShell(QMainWindow):
         try:
             from core.services.ui_prefs import load_window_opacity
             self.setWindowOpacity(load_window_opacity() / 100.0)
+        except Exception:
+            pass
+
+        # ── 恢复上次主题预设(从 ui_prefs.json 读) ──
+        # 失败回 cyberpunk(默认),不阻塞启动
+        try:
+            from core.services.ui_prefs import load_theme_preset
+            preset = load_theme_preset()
+            if preset != "cyberpunk":
+                from core.tokens.manager import TokenManager
+                TokenManager.instance().load_preset(preset)
+                print(f"[AppShell] 已恢复主题预设: {preset}", flush=True)
         except Exception:
             pass
 
@@ -691,6 +701,32 @@ class AppShell(QMainWindow):
     def trigger_manager(self):
         """获取辅助触发器引擎实例。"""
         return self._trigger_manager
+
+    # ══════════════════════════════════
+    #  主题刷新
+    # ══════════════════════════════════
+
+    def refresh_theme(self) -> None:
+        """刷新整个应用的主题（切换 token 预设后调用）。
+
+        触发所有控件重绘，使新 token 值生效。
+        """
+        # 刷新导航栏
+        for tab in self._nav_tabs:
+            tab.update()
+
+        # 刷新所有页面
+        for page in self._pages.values():
+            page.update()
+
+        # 刷新背景层
+        if self._bg_layer is not None:
+            self._bg_layer.update()
+
+        # 刷新窗口本身
+        self.update()
+
+        print("[AppShell] 主题已刷新", flush=True)
 
     # ══════════════════════════════════
     #  关闭清理

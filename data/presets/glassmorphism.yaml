@@ -1,0 +1,810 @@
+# ============================================================
+# WARFRAME-RELIC 主题预设 — 玻璃拟态 (Glassmorphism)
+# ============================================================
+# 版本: 1.0
+# 格式: Design Token 四层架构 (Raw → Alias → Semantic → Component)
+#
+# 设计特点:
+#   - 半透明玻璃质感(背景带 10-30% 透明度)
+#   - 柔和冷色调(蓝灰系,低饱和)
+#   - 细边框 + 微妙阴影(取代发光)
+#   - 无扫描线纹理
+#
+# 引用语法:
+#   @path.to.token    — 引用另一个 token 的值
+#   lighten(c, p%)    — 提亮颜色 c，百分比 p ∈ [0,100]
+#   darken(c, p%)     — 加深颜色 c，百分比 p ∈ [0,100]
+#   opacity(c, a)     — 设置透明度 a ∈ [0,1]
+#   mix(a, b, w)      — 混合两色，权重 w ∈ [0,1]
+# ============================================================
+
+_meta:
+  name: "glassmorphism"
+  display_name: "玻璃拟态"
+  description: "半透明玻璃质感，柔和冷色调，现代简约"
+  version: 1.0
+
+# ═══════════════════════════════════════════════════
+#  Layer 1: 原始色值（Raw Values）
+#  最底层的物理颜色，所有上层 token 的最终来源。
+# ═══════════════════════════════════════════════════
+raw:
+  # ---- 品牌主色（柔和冷调，低饱和）----
+  brand:
+    yellow:  "#A8C7FA"    # 主强调色（柔和的蓝白）
+    cyan:    "#7DD3FC"    # 信息色（天蓝）
+    magenta: "#C4B5FD"    # 特殊标记（淡紫）
+    orange:  "#FDBA74"    # 警告（柔和的橙）
+    red:     "#FDA4AF"    # 错误（柔和的粉红）
+    green:   "#86EFAC"    # 成功（柔和的绿）
+
+  # ---- 中性色阶梯（用于文字、边框、背景）----
+  neutral:
+    white:   "#F1F5F9"    # 主文字（冷白）
+    light:   "#CBD5E1"    # 次要文字（浅灰蓝）
+    medium:  "#94A3B8"    # 辅助文字 / 占位符
+    dark:    "#64748B"    # 禁用文字 / 弱边框
+    black:   "#0F172A"    # 最深背景（深蓝黑）
+
+  # ---- 表面色（Surface Colors）----
+  surface:
+    base:    "#0F172A"    # 最底层背景（深蓝黑）
+    raised:  "#1E293B"    # 浮起面（卡片/弹窗）
+    overlay: "#000000"    # 遮罩层（半透明使用）
+
+  # ---- 业务语义色（游戏相关）----
+  game:
+    gold:    "#FDE68A"    # 遗物黄金稀有度（柔和金）
+    silver:  "#E2E8F0"    # 遗物白银稀有度（浅银）
+    copper:  "#FDBA74"    # 遗物青铜稀有度（柔和铜）
+    unknown: "#94A3B8"    # 未知状态
+
+  # ---- 外部品牌色 ----
+  external:
+    bilibili:      "#FB7299"
+    bilibili_hover: "#FF8DB0"
+    github:        "#58A6FF"
+    github_hover:  "#79C0FF"
+
+# ═══════════════════════════════════════════════════
+#  Layer 2: 别名 / 调色板（Alias / Palette）
+#  对 Raw 的语义化分组，方便 Semantic 层引用。
+# ═══════════════════════════════════════════════════
+alias:
+  # 强调色系（柔和蓝白）
+  accent:
+    primary:   "@brand.yellow"      # #A8C7FA 柔和的蓝白
+    secondary: "@brand.cyan"        # #7DD3FC 天蓝
+    tertiary:  "@brand.magenta"     # #C4B5FD 淡紫
+
+  # 语义色
+  semantic:
+    success: "@brand.green"         # #86EFAC
+    danger:  "@brand.red"           # #FDA4AF
+    warning: "@brand.orange"        # #FDBA74
+    info:    "@brand.cyan"          # #7DD3FC
+
+  # 中性色梯度（文字与边框）
+  text:
+    primary:  "@neutral.white"      # #F1F5F9
+    secondary: "@neutral.light"     # #CBD5E1
+    tertiary: "@neutral.medium"     # #94A3B8
+    disabled: "@neutral.dark"       # #64748B
+    inverse:  "@neutral.black"      # #0F172A
+
+  border:
+    subtle:   "rgba(255, 255, 255, 0.06)"   # 极细边框
+    default:  "rgba(255, 255, 255, 0.10)"   # 细边框
+    emphasis: "@alias.accent.primary"
+    focus:    "@alias.accent.secondary"
+
+  # 背景色
+  bg:
+    base:     "@surface.base"       # #0F172A
+    raised:   "@surface.raised"     # #1E293B
+    overlay:  "@surface.overlay"    # #000000
+
+  # 渐变色（柔和过渡）
+  gradient:
+    progress: ["@brand.cyan", "@brand.magenta", "@brand.yellow"]
+
+  # 日志级别色
+  log:
+    ok:    "@brand.green"
+    warn:  "@brand.orange"
+    error: "@brand.red"
+    info:  "@neutral.light"
+
+  # 稀有度色
+  rarity:
+    gold:   "@raw.game.gold"
+    silver: "@raw.game.silver"
+    copper: "@raw.game.copper"
+
+  # 来源类型色
+  source_type:
+    mission:   "@brand.cyan"
+    bounty:    "@brand.orange"
+    sortie:    "@brand.red"
+    key:       "@brand.green"
+    transient: "@brand.magenta"
+    syndicate: "@brand.yellow"
+
+# ═══════════════════════════════════════════════════
+#  Layer 3: 语义令牌（Semantic Tokens）
+#  面向全应用的全局语义角色，任何组件都可以引用。
+# ═══════════════════════════════════════════════════
+semantic:
+  # ---- 全局交互状态 ----
+  state:
+    normal:
+      bg:      "rgba(30, 41, 59, 0.50)"        # 玻璃质感：50% 透明
+      text:    "@text.primary"
+      border:  "@border.default"
+    hover:
+      bg:      "rgba(30, 41, 59, 0.65)"        # hover 时稍深
+      text:    "@accent.secondary"
+      border:  "@accent.primary"
+    pressed:
+      bg:      "rgba(30, 41, 59, 0.75)"        # pressed 更深
+      text:    "@accent.primary"
+      border:  "@accent.secondary"
+    focused:
+      border:  "@border.focus"
+      glow:    "@accent.secondary"
+    disabled:
+      bg:      "rgba(30, 41, 59, 0.30)"        # 禁用更淡
+      text:    "@text.disabled"
+      border:  "rgba(255, 255, 255, 0.04)"
+    selected:
+      bg:      "@accent.primary"
+      text:    "@bg.base"
+      border:  "@accent.primary"
+
+  # ---- 重要性等级 ----
+  priority:
+    high:   "@semantic.danger"
+    medium: "@semantic.warning"
+    low:    "@semantic.info"
+    muted:  "@text.tertiary"
+
+# ═══════════════════════════════════════════════════
+#  Layer 4: 组件令牌（Component Tokens）
+#  每个组件类型独享的颜色槽位，仅限该组件内部使用。
+# ═══════════════════════════════════════════════════
+components:
+  # ---- 按钮 (CyberButton) ----
+  button:
+    solid:
+      fill:         "rgba(168, 199, 250, 0.15)"   # 玻璃质感：15% 蓝白
+      text:         "@text.primary"
+      border:       "rgba(168, 199, 250, 0.30)"   # 细边框
+      corner_size:  8
+      glow_size:    0                              # 无发光
+      glow_opacity: 0
+    outlined:
+      fill:         "transparent"
+      text:         "@accent.secondary"
+      border:       "rgba(125, 211, 252, 0.30)"   # 细边框
+      corner_size:  8
+      glow_size:    0
+      glow_opacity: 0
+    ghost:
+      fill:         "transparent"
+      text:         "@text.secondary"
+      border:       "@border.subtle"
+      corner_size:  8
+      glow_size:    0
+    ghost_hover:
+      fill:         "rgba(168, 199, 250, 0.08)"
+      text:         "@text.primary"
+      border:       "@border.subtle"
+    solid_hover:
+      fill:         "rgba(168, 199, 250, 0.25)"   # hover 稍深
+      text:         "@text.primary"
+      border:       "rgba(168, 199, 250, 0.40)"
+    solid_pressed:
+      fill:         "rgba(168, 199, 250, 0.35)"   # pressed 更深
+      text:         "@text.primary"
+      border:       "rgba(168, 199, 250, 0.50)"
+    outlined_pressed:
+      fill:         "rgba(125, 211, 252, 0.15)"
+      text:         "@accent.secondary"
+      border:       "rgba(125, 211, 252, 0.40)"
+    outlined_hover:
+      fill:         "rgba(125, 211, 252, 0.10)"
+      text:         "@accent.secondary"
+      border:       "rgba(125, 211, 252, 0.35)"
+    ghost_pressed:
+      fill:         "rgba(168, 199, 250, 0.12)"
+      text:         "@text.primary"
+      border:       "@border.default"
+
+  # ---- 面板容器 (CyberPanel) ----
+  panel:
+    bg:            "rgba(30, 41, 59, 0.50)"       # 玻璃质感：50% 透明
+    bg_opacity:    0.50
+    border:        "@border.default"
+    border_width:  1
+    corner_size:   12
+    glow_color:    "@accent.secondary"
+    glow_opacity:  0                              # 无发光
+    title_bar:
+      bg:          "transparent"
+      text:        "@accent.primary"
+      underline:   "@accent.primary"
+      icon_color:  "@accent.primary"
+    corner_decor:
+      color:       "@accent.primary"
+      length:      12
+      thickness:   2
+
+  # ---- 对话框 (CyberDialog) ----
+  dialog:
+    bg:             "rgba(30, 41, 59, 0.75)"      # 稍深，确保可读性
+    bg_opacity:     0.75
+    border:         "rgba(125, 211, 252, 0.30)"   # 细边框
+    border_width:   1
+    corner_size:    14
+    shadow_blur:    40                            # 柔和阴影
+    shadow_opacity: 0.25
+    title_text:     "@text.primary"
+    body_text:      "@text.secondary"
+
+  # ---- 卡片 (CyberCard) ----
+  card:
+    bg:            "rgba(30, 41, 59, 0.40)"       # 玻璃质感：40% 透明
+    border:        "@border.default"
+    border_width:  1
+    corner_size:   8
+    padding_h:     16
+    padding_v:     12
+
+  # ---- 输入框 (CyberLineEdit) ----
+  input:
+    bg:            "rgba(15, 23, 42, 0.50)"       # 稍深，突出输入区
+    text:          "@text.primary"
+    placeholder:   "@text.tertiary"
+    border:        "@border.default"
+    border_focus:  "@accent.primary"
+    corner_size:   6
+
+  # ---- 进度条 (CyberProgressBar) ----
+  progress:
+    track_bg:      "rgba(15, 23, 42, 0.50)"
+    track_border:  "@border.subtle"
+    fill_gradient: "@gradient.progress"
+    corner_size:   4
+    text:          "@text.primary"
+
+  # ---- 列表项 (CyberListItem) ----
+  list_item:
+    bg_normal:     "transparent"
+    bg_hover:      "rgba(125, 211, 252, 0.10)"
+    bg_selected:   "@accent.primary"
+    text_normal:   "@text.primary"
+    text_selected: "@bg.base"
+    border:        "@border.subtle"
+    corner_size:   6
+
+  # ---- 标签 / 徽章 (CyberLabel / Badge) ----
+  label:
+    text:        "@text.secondary"
+    badge_bg:    "@accent.secondary"
+    badge_text:  "@bg.base"
+    badge_corner: 4
+
+  # ---- 覆盖层 (Overlay) ----
+  overlay:
+    bg_rgba:       [15, 23, 42, 200]              # 深蓝黑半透明
+    selection:     [30, 41, 59, 150]
+    panel_overlay: [15, 23, 42]
+
+  # ---- 导航栏 (Navigation) ----
+  nav:
+    item_bg:         "rgba(30, 41, 59, 0.50)"     # 玻璃质感
+    item_text:       "@text.tertiary"
+    item_hover_bg:   "@item_bg"
+    item_hover_text: "@text.primary"
+    item_selected_bg: "@accent.primary"
+    item_selected_text: "@bg.base"
+    divider:         "@border.subtle"
+
+# ═══════════════════════════════════════════════════
+#  空间与尺寸令牌（Design Space Tokens）
+#  基于 4px 基准网格，所有尺寸必须是 4 的倍数。
+# ═══════════════════════════════════════════════════
+space:
+  # ---- 间距阶梯（Spacing Scale）----
+  spacing:
+    none:  0
+    xs:    4
+    sm:    8
+    md:    12
+    lg:    16
+    xl:    20
+    xxl:   24
+    xxxl:  32
+
+  # ---- 控件高度（Control Heights）----
+  height:
+    input_sm:   28
+    input_md:   36
+    input_lg:   44
+    btn_sm:     28
+    btn_md:     36
+    btn_lg:     44
+    btn_icon:   32
+    nav_item:   36
+    list_item:  44
+    card_min:   60
+    toggle_sw:  24
+    progress:   10
+    scrollbar:  10
+    badge:      20
+    tooltip_arrow: 8
+
+  # ---- 圆角 / 切角尺寸（Corner Sizes）----
+  corner:
+    xs:   4
+    sm:   6
+    md:   8
+    lg:   12
+    xl:   14
+
+  # ---- 边框宽度（Border Widths）----
+  border:
+    none:  0
+    thin:  1
+    medium: 1.5
+    thick: 2
+
+  # ---- 字体族（Font Families）----
+  font_family:
+    display:   ["Orbitron", "Rajdhani", "Exo 2", "Microsoft YaHei UI", sans-serif]
+    body:      ["Rajdhani", "Exo 2", "Segoe UI", "Microsoft YaHei UI", sans-serif]
+    mono:      ["Share Tech Mono", "Consolas", "Courier New", monospace]
+    decorative: ["Chakra Petch", "Orbitron", "Microsoft YaHei UI", sans-serif]
+
+  # ---- 字体大小（Font Sizes）----
+  font:
+    xxs:    9
+    micro:  10
+    xs:     11
+    sm:     12
+    sm_md:  13
+    md:     14
+    md_lg:  15
+    lg:     16
+    lg_xl:  18
+    xl:     20
+    xxl:    24
+    display: 32
+
+  # ---- 按钮字号（Button Font Sizes）----
+  font_size:
+    sm:   10
+
+  # ---- 图标尺寸（Icon Sizes）----
+  icon:
+    sm:  16
+    md:  20
+    lg:  24
+    xl:  32
+
+  # ---- 发光效果（Glow Effects）----
+  glow:
+    none:  0
+    subtle: 2
+    sm:    4
+    md:    6
+    lg:    10
+
+  # ---- 动画时长（Animation Durations, ms）----
+  duration:
+    fast:    150
+    normal:  250
+    slow:    400
+    page:    350
+
+  # ---- 导航标签（赛博朋克风格 Nav Tab）----
+  nav:
+    bar_width:         10
+    bar_width_selected: 10
+    bar_gap:            4
+    corner_br:          16
+    inner_pad:          16
+    font_size:          11
+    border:             "@accent.secondary"
+    bg:                 "rgba(30, 41, 59, 0.50)"   # 玻璃质感
+    bar:                "@accent.secondary"
+    bar_selected:       "@accent.secondary"
+    text:               "@text.primary"
+    glow:
+      enabled: false          # 玻璃风无发光
+      spread:   0
+      alpha:    0
+
+  # ---- 扫描线纹理（全局横纹叠加）----
+  scanline:
+    enabled: false          # 玻璃风无扫描线
+    spacing: 2
+    alpha:   0
+    color:   "#000000"
+
+# ═══════════════════════════════════════════════════
+#  文案令牌（Copy Tokens）
+#  所有 UI 文案集中管理，方便修改和多语言支持。
+# ═══════════════════════════════════════════════════
+copy:
+  # ---- 通用 ----
+  common:
+    search: "搜索"
+    reset: "重置"
+    save: "保存"
+    cancel: "取消"
+    apply: "应用"
+    preview: "预览"
+    export: "导出"
+    refresh: "刷新"
+    detecting: "检测中..."
+    danger: "危险操作"
+    more_items: "还有 {n} 个"
+    more_entries: "还有 {n} 条"
+    label_rotation: " 轮次{rot}"
+    status: "状态"
+    yes: "是"
+    no: "否"
+
+  # ---- 顶部导航栏 ----
+  nav:
+    status: "数据总览"
+    items: "物品查询"
+    relics: "遗物查询"
+    prices: "价格数据"
+    theme: "主题换肤"
+    hotkeys: "快捷键"
+    triggers: "辅助触发器"
+    cd_assist: "CD辅助显示"
+    toggles: "功能开关"
+    preset: "语言预设"
+    reset: "紧急重置"
+    about: "关于作者"
+
+  # ---- 数据总览页 ----
+  status:
+    title: "数据库概览"
+    card_mgmt: "数据管理"
+    card_log: "操作日志"
+    btn_update: "更新基础数据"
+    btn_mirror: "镜像设置"
+    btn_dir: "打开数据目录"
+    btn_refresh_stat: "刷新统计"
+    tip_update: "从 WFCD 拉取最新遗物/物品/掉落/翻译数据"
+    tip_mirror: "配置 GitHub 代理镜像列表，解决国内访问问题"
+    tip_dir: "在文件管理器中打开 data/ 文件夹"
+    db_ok: "数据库连接正常"
+    db_missing: "数据库文件不存在"
+    updating: "更新中..."
+    update_fail: "更新失败"
+    update_error: "出错"
+    update_confirm_title: "更新基础数据"
+    update_confirm_body: "将从 WFCD 拉取最新遗物/物品/掉落/翻译数据。\n\n是否继续？"
+    update_complete: "基础数据更新完成! 总耗时: {elapsed:.0f}s"
+    pipeline_fail: "流水线失败: {err}"
+    pipeline_error: "流水线错误: {err_msg}"
+    module_missing: "缺少 data_pipeline 模块，无法执行更新。"
+    module_missing_status: "模块缺失"
+    stat_relics: "遗物总数"
+    stat_items: "物品总数"
+    stat_translations: "翻译条目"
+    stat_rewards: "奖励部件"
+    stat_vaulted: "入库"
+    stat_available: "出库"
+    unit_relics: "种遗物"
+    unit_items: "条物品记录"
+    unit_translations: "条翻译"
+    unit_rewards: "个奖励部件"
+    unit_vaulted: "入库"
+    unit_available: "出库"
+    log_refresh_start: "开始刷新统计数据..."
+    log_refresh_done: "统计刷新完成 — {items} 物品 / {relics} 遗物"
+    log_db_error: "数据库错误: {err}"
+    log_read_error: "读取失败: {err}"
+    log_db_not_found: "数据库不存在: {path}"
+    log_dir_opened: "已打开目录: {path}"
+    log_dir_missing: "目录不存在: {path}"
+    log_update_busy: "正在更新中，请勿重复点击..."
+    log_pipeline_start: "========== 更新基础数据 =========="
+    log_pipeline_flow: "流水线: WFCD → warframe.db"
+    log_pipeline_step: "[步骤 {step}] {desc}"
+    log_update_progress: "更新中... {pct}%"
+    update_fail_title: "更新失败"
+    update_fail_body: "部分数据库更新失败:\n{err}\n\n已完成的步骤不受影响。"
+    update_exception: "更新异常: {err}"
+
+  # ---- 物品查询页 ----
+  items:
+    title: "物品检索"
+    desc: "全物品查询"
+    card_search: "搜索条件"
+    card_result: "搜索结果"
+    label_keyword: "关键词:"
+    label_type: "类型:"
+    label_rarity: "稀有度:"
+    btn_search: "搜索"
+    no_results: "未找到匹配的遗物"
+    result_count: "共 {count} 条结果"
+    card_detail: "遗物详情"
+    detail_hint: "单击复制英文名,双击复制中文名"
+    label_keyword: "关键词:"
+    placeholder_search: "输入任意物品名称"
+    copy_toast: "✓ 已复制: {name}"
+    status_vaulted: "已入库 (Vaulted)"
+    status_available: "可获取 (Available)"
+    label_contents: "内含物品"
+    label_drops: "掉落途径"
+    label_rarity: "稀有度"
+    label_chance: "概率"
+    label_tier: "时代"
+    label_state: "精炼度"
+    tier_lith: "古纪"
+    tier_meso: "前纪"
+    tier_neo: "中纪"
+    tier_axi: "后纪"
+    tier_requiem: "安魂"
+    tier_vanguard: "先锋"
+    state_intact: "完好"
+    state_exceptional: "优异"
+    state_flawless: "无瑕"
+    state_radiant: "光辉"
+    detail_guaranteed: "必掉"
+    detail_vaulted: "入库 (Vaulted)"
+    detail_available: "出库 (Available)"
+    detail_drop_locations: "掉落途径 ({n})"
+    detail_rotation_label: "轮次{rot}"
+    detail_no_drop_data: "暂无掉落途径数据"
+    detail_contents: "内含物品 ({n})"
+    detail_tier_gold: "金"
+    detail_tier_silver: "银"
+    detail_tier_copper: "铜"
+    rarity_gold: "黄金"
+    rarity_silver: "白银"
+    rarity_copper: "青铜"
+    rarity_legendary: "传奇"
+    rarity_prime: "Prime"
+    rarity_unknown: "未知"
+    source_relics: "遗物奖励"
+    source_missions: "任务奖励"
+    source_bounties: "赏金奖励"
+    source_sorties: "突击奖励"
+    source_syndicates: "集团兑换"
+    source_mods: "Mod 掉落"
+    source_blueprints: "蓝图掉落"
+    drop_guaranteed: "必定"
+    detail_no_source_data: "暂无掉落来源数据"
+
+  # ---- 遗物查询页 ----
+  relics:
+    label_tier: "时代"
+    label_state: "精炼度"
+    status_vaulted: "入库"
+    status_available: "出库"
+    err_db_connect: "数据库连接失败: {error}"
+
+  # ---- 价格数据页 ----
+  prices:
+    title: "市场价格监控"
+    desc: "Prime 物品在交易平台的实时价格参考"
+    card_price: "热门物品价格"
+    btn_refresh: "刷新数据"
+    btn_export: "导出"
+    ph_search: "输入物品名称搜索 (中文/英文/拼音)..."
+    col_seller: "卖家"
+    col_status: "状态"
+    col_price: "价格"
+    col_quantity: "数量"
+    col_rank: "等级"
+    col_reputation: "声望"
+    status_ingame: "游戏中"
+    status_online: "在线"
+    status_offline: "离线"
+    status_away: "离开"
+    status_querying: "正在查询..."
+    status_no_seller: "未找到卖家"
+    status_found: "共找到 {count} 个卖家"
+    status_copied: "已复制悄悄话: {text}"
+    summary_format: "共 {count} 个卖家  |  最低 {min_p}p  |  中位 {median_p}p  |  均价 {avg_p:.1f}p  |  最高 {max_p}p"
+    err_http_404: "该物品不存在于市场"
+    err_network: "网络错误: {error}"
+    err_timeout: "网络超时"
+    err_parse: "数据解析错误"
+    err_query: "查询失败: {error}"
+    tip_copy_username: "点击复制用户名"
+    status_loading_items: "正在加载物品列表... {percent}%"
+    status_items_ready: "就绪 · {count} 个物品"
+    status_items_ready_disk: "就绪 · {count} 个物品 · 本地缓存 {age}"
+    status_items_degraded: "网络问题 · 仅中文搜索"
+    status_items_failed: "加载失败 · 点击重试"
+    status_searching: "搜索中..."
+    status_search_empty: "未匹配到 '{keyword}'"
+    status_querying_slug: "正在查询 {name}..."
+    status_query_ready: "{name} · 均价 {avg_p}p · {count} 个卖单"
+    status_query_failed: "查询失败: {error}"
+    btn_retry: "重试"
+    btn_cancel: "取消"
+    cooldown_hint: "失败冷却中 · 还剩 {seconds}s"
+
+  # ---- 主题换肤页 ----
+  theme:
+    title: "外观与主题"
+    card_preset: "预设主题"
+    card_custom: "自定义颜色"
+    card_startup: "启动设置"
+    card_pixel_font: "像素字体编辑器"
+    btn_apply: "应用主题"
+    btn_pick: "选择"
+    btn_preview: "预览"
+    tip_preview: "预览开启动画效果"
+    label_duration: "动画时长:"
+    duration_value: "2.5 秒"
+    label_splash: "显示开启动画 (像素 RELIC)"
+    label_theme_cyberpunk: "Cyberpunk (默认)"
+    label_theme_dark: "暗夜模式"
+    label_theme_neon: "赛博霓虹"
+    label_theme_light: "极简白"
+    label_bg: "背景"
+    label_primary: "主色"
+    label_secondary: "辅色"
+    err_load_failed: "加载失败: {error}"
+    card_window_opacity: "界面透明度"
+    tip_window_opacity: "30% = 几乎透明   100% = 完全不透明   (仅主窗口,不影响悬浮窗)"
+    immersive_color: "沉浸底色"
+    immersive_color_theme: "主题色"
+    immersive_color_black: "纯黑"
+
+  # ---- 快捷键页 ----
+  hotkeys:
+    title: "快捷键设置"
+    desc: "自定义全局快捷键，点击输入框后按下新组合键"
+    card_binding: "快捷键绑定"
+    tip: "提示：修改快捷键后请确认不与其他软件冲突。部分系统级快捷键可能无法覆盖。"
+    label_select:      "区域选择"
+    label_fullscreen:  "全屏捕获"
+    label_eye_mask:    "护眼遮罩"
+    label_bring_to_front: "窗口置顶"
+    hk_toggle_window: "显示/隐藏主窗口"
+    hk_quick_search: "快速搜索物品"
+    hk_refresh_data: "刷新数据源"
+    hk_copy_selected: "复制当前选中项"
+    hk_open_settings: "打开设置面板"
+    hk_toggle_theme: "切换深色/浅色主题"
+    hk_export_view: "导出当前视图"
+    hk_show_help: "显示帮助文档"
+
+  # ---- 触发器页 ----
+  triggers:
+    title: "触发器配置"
+    desc: "设置自动触发的操作和快捷指令"
+    card_add: "+ 新建触发器"
+    btn_create: "创建触发器"
+    label_name: "触发器名称:"
+    label_desc: "描述说明:"
+    label_trigger: "触发方式:"
+    label_delay: "延迟（毫秒）:"
+    label_actions: "执行动作:"
+    col_name: "名称"
+    col_trigger: "触发条件"
+    col_state: "状态"
+    col_actions: "动作"
+    state_on: "ON"
+    state_off: "OFF"
+    state_unnamed: "未命名"
+    default_name: "新触发器"
+    tip_create: "创建一个新的触发器规则"
+    status_engine_stopped: "触发器引擎未运行"
+    confirm_delete: "确认删除"
+    confirm_delete_body: "确定要删除触发器 \"{name}\" 吗？"
+
+  # ---- 功能开关页 ----
+  toggles:
+    title: "功能控制面板"
+    desc: "开启或关闭各项功能模块，部分修改需要重启生效"
+    group_core: "核心功能"
+    group_ui: "界面行为"
+    group_data: "数据管理"
+    toggle_check_status: "遗物出入库状态检查"
+    toggle_query_parts: "遗物内含部件查询"
+    toggle_translate: "自动翻译（中英互译）"
+    toggle_tooltip: "悬浮窗详细信息显示"
+    toggle_highlight: "掉落概率高亮"
+    toggle_anim: "界面动画效果"
+    toggle_dark: "深色模式"
+    label_on: "开启"
+    label_off: "关闭"
+    btn_save: "保存设置"
+    btn_reset: "恢复默认"
+    tip_saved: "设置已保存"
+    tip_restart: "部分修改需要重启应用后生效"
+    group_triggers: "辅助触发器"
+    triggers_desc: "管理辅助触发器的启用/禁用状态，详细配置请前往「辅助触发器」页面"
+    trigger_empty: "暂无触发器"
+    trigger_goto_config: "前往配置"
+
+  # ---- CD 辅助显示页 ----
+  cd_assist:
+    card_duration: "技能秒数设置"
+    duration_tip: "为每个技能设置持续秒数（0-300，步长 0.5）。0 = 不参与倒计时，按下时只显示圆点 ·。"
+    card_screen: "启用屏幕"
+    card_toggle: "全局开关"
+    toggle_label: "启用 CD 辅助显示"
+    toggle_tip: "关闭后，按键 1/2/3/4 不再触发屏幕中心倒计时。"
+    card_status: "当前倒计时"
+    status_tip: "按下 1/2/3/4 键后，这里会显示各技能的剩余秒数（屏幕中心也会同步显示）。"
+    skill_label: "技能 {n}"
+    seconds_suffix: " 秒"
+    tip_no_active: ""
+    toggles_goto: "前往详细配置"
+
+  # ---- 语言预设页 ----
+  preset:
+    title: "语言与区域"
+    desc: "设置界面显示语言和数据格式偏好"
+    card_language: "界面语言"
+    card_region: "区域格式"
+    label_current: "当前语言:"
+    label_preview: "预览效果:"
+    label_format: "{name}:"
+    btn_apply: "应用语言"
+    placeholder: "语言预设功能开发中..."
+
+  # ---- 关于页 ----
+  about:
+    app_name: "WARFRAME RELIC"
+    subtitle: "遗物数据查询工具"
+    card_version: "版本信息"
+    card_project: "项目说明"
+    project_desc: "WARFRAME RELIC 是一款面向 Warframe 玩家的遗物数据查询工具。\n\n主要功能：\n• 遗物内含物品与掉落概率查询\n• Prime 部件市场价格参考\n• 掉落来源追踪（任务、赏金、突击等）\n• 个人遗物收集进度管理"
+    card_tech: "技术栈"
+    btn_feedback: "反馈问题"
+    btn_check_update: "检查更新"
+    label_version: "版本号"
+    value_version: "v3.2.1 (Build 20250609)"
+    label_ui_framework: "UI 框架"
+    value_ui_framework: "Cyberpunk UI v1.0"
+    label_runtime: "运行环境"
+    value_runtime: "Python 3.12 / PySide6"
+    label_data_source: "数据来源"
+    value_data_source: "Warframe 官方 API + 社区贡献"
+    tech_pyside6: "PySide6"
+    tech_pyside6_desc: "Qt6 Python 绑定，UI 渲染引擎"
+    tech_token: "Token 设计系统"
+    tech_token_desc: "YAML 驱动的主题配置"
+    tech_widgets: "自定义组件库"
+    tech_widgets_desc: "CyberPanel / CyberButton / CyberCard 等"
+    tech_fonts: "内嵌字体"
+    tech_fonts_desc: "Iceberg / Monoton / Alibaba PuHuiTi"
+
+  # ---- 代理对话框 ----
+  proxy:
+    window_title: "配置 GitHub 代理镜像"
+    title: "GitHub 代理镜像列表"
+    desc: "每行一个代理镜像 URL 模板。\n支持占位符: {{owner}}（仓库所有者）、{{repo}}（仓库名）\n拉取失败时按顺序尝试，连通性测试通过的和上次成功的优先使用。"
+    hint_config: "配置文件: {path}\n你也可以直接编辑此文件，修改后无需重启程序即可生效。"
+    btn_reset_default: "恢复默认"
+    tip_reset_default: "恢复为程序内置的默认代理镜像列表"
+    btn_test: "测试连通性"
+    tip_test: "测试所有代理镜像对每个仓库的连通性（每项超时 10 秒）"
+    test_complete: "测试完成"
+    available_count: "个可用"
+    result_saved: "测试结果已保存到 {path}"
+    test_error: "测试错误: {err}"
+    testing: "测试 {repo} [{idx}/{total}]"
+    test_ok: "[OK] 镜像 [{idx}] 连通"
+    test_fail: "[X] 镜像 [{idx}] 不可用"
+
+  # ---- 日志查看器 ----
+  log_viewer:
+    title: "操作日志"
+    count: "{count} 条"
+    clear: "清空"

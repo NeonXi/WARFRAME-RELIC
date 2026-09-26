@@ -64,7 +64,6 @@ FALLBACK_ICONS = {
         "prices":      "💰",
         "hotkeys":     "⌨",
         "theme":       "🎨",
-        "preset":      "🗒",  # 暂无 nav_preset.svg,走 emoji
         "triggers":    "⚡",  # 暂无 nav_triggers.svg,走 emoji
         "eye_mask":    "🛡",  # 暂无 nav_eye_mask.svg,走 emoji
         "about":       "ℹ",

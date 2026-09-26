@@ -94,7 +94,52 @@ class ThemePage(PageBase):
         layout.addWidget(title)
 
         # ══════════════════════════════════
-        #  界面透明度卡片(放第一个 — 最常用的视觉调整)
+        #  预设主题卡片(第一个 — 全局风格切换)
+        # ══════════════════════════════════
+        preset_card = CyberCard(title=self._copy("theme.card_preset", "预设主题"))
+        preset_layout = preset_card.content_layout()
+        preset_layout.setContentsMargins(
+            self._spacing("lg", 16),
+            self._spacing("lg", 16),
+            self._spacing("lg", 16),
+            self._spacing("lg", 16),
+        )
+        preset_layout.setSpacing(self._spacing("sm", 8))
+
+        preset_row = QHBoxLayout()
+        preset_row.setSpacing(self._spacing("sm_md", 12))
+
+        # 当前预设(从 ui_prefs 读取)
+        from core.services.ui_prefs import load_theme_preset
+        self._current_preset = load_theme_preset()
+
+        self._preset_cyber_btn = CyberButton(
+            text="赛博朋克",
+            variant="solid" if self._current_preset == "cyberpunk" else "outlined",
+        )
+        self._preset_glass_btn = CyberButton(
+            text="玻璃拟态",
+            variant="solid" if self._current_preset == "glassmorphism" else "outlined",
+        )
+        self._preset_cyber_btn.clicked.connect(lambda: self._on_preset_clicked("cyberpunk"))
+        self._preset_glass_btn.clicked.connect(lambda: self._on_preset_clicked("glassmorphism"))
+
+        preset_row.addWidget(self._preset_cyber_btn)
+        preset_row.addWidget(self._preset_glass_btn)
+        preset_row.addStretch()
+        preset_layout.addLayout(preset_row)
+
+        preset_tip = QLabel(self._copy(
+            "theme.tip_preset",
+            "切换后全局生效,部分控件可能需要切换页面后完全刷新"
+        ))
+        self._style(preset_tip, color="text.tertiary", font_size="micro")
+        preset_layout.addWidget(preset_tip)
+
+        layout.addWidget(preset_card)
+
+        # ══════════════════════════════════
+        #  界面透明度卡片(第二个 — 最常用的视觉调整)
         # ══════════════════════════════════
         opacity_card = CyberCard(title=self._copy("theme.card_window_opacity", "界面透明度"))
         opacity_layout = opacity_card.content_layout()
@@ -577,6 +622,38 @@ class ThemePage(PageBase):
             self._imm_color_black_btn.variant = (
                 "solid" if mode == "black" else "outlined"
             )
+
+    def _on_preset_clicked(self, preset_name: str) -> None:
+        """预设主题按钮被点击：切换 token 预设 + 保存 + 刷新 UI。
+
+        Args:
+            preset_name: "cyberpunk" / "glassmorphism"
+        """
+        from core.tokens.manager import TokenManager
+        from core.services.ui_prefs import save_theme_preset
+
+        # 切换 token 预设
+        TokenManager.instance().load_preset(preset_name)
+        self._current_preset = preset_name
+
+        # 保存到 ui_prefs.json
+        save_theme_preset(preset_name)
+
+        # 更新按钮选中状态
+        if self._preset_cyber_btn is not None:
+            self._preset_cyber_btn.variant = (
+                "solid" if preset_name == "cyberpunk" else "outlined"
+            )
+        if self._preset_glass_btn is not None:
+            self._preset_glass_btn.variant = (
+                "solid" if preset_name == "glassmorphism" else "outlined"
+            )
+
+        # 刷新整个 AppShell（触发所有控件重绘）
+        if self._app_shell is not None:
+            self._app_shell.refresh_theme()
+
+        print(f"[ThemePage] 已切换到预设主题: {preset_name}", flush=True)
 
     def on_enter(self):
         """进入主题页:从 ui_prefs.json 读最新透明度,同步滑块位置。

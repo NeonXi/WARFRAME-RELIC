@@ -29,6 +29,7 @@ _MAX_OPACITY: int = 100
 # JSON key(所有 UI 偏好都进 ui_prefs.json 这一个文件)
 _KEY_OPACITY: str = "window_opacity"
 _KEY_BACKGROUND: str = "background"
+_KEY_THEME_PRESET: str = "theme_preset"
 
 # 背景图配置默认值
 # source: data/backgrounds/ 下保存的原图文件名(空串=未设置)
@@ -42,6 +43,9 @@ _DEFAULT_BACKGROUND: dict = {
     "immersive": False, "immersive_strength": 70,
     "immersive_color": "theme",
 }
+
+# 主题预设默认值(cyberpunk=默认赛博朋克风)
+_DEFAULT_THEME_PRESET: str = "cyberpunk"
 
 
 # ── 路径 ──
@@ -166,6 +170,29 @@ def save_background_prefs(
         "immersive_strength": _clamp_0_100(int(immersive_strength)),
         "immersive_color": immersive_color if immersive_color in ("theme", "black") else "theme",
     }
+    return _write_all(data)
+
+
+# ── 主题预设 ──
+
+def load_theme_preset() -> str:
+    """读取主题预设名(返回 "cyberpunk" / "glassmorphism" 等)。
+
+    失败兜底(文件不存在/JSON 损坏/字段缺失):返回 _DEFAULT_THEME_PRESET = "cyberpunk"。
+    """
+    raw = _read_all().get(_KEY_THEME_PRESET, _DEFAULT_THEME_PRESET)
+    return str(raw) if isinstance(raw, str) else _DEFAULT_THEME_PRESET
+
+
+def save_theme_preset(name: str) -> bool:
+    """保存主题预设名。
+
+    行为:
+      - 读旧 JSON,合并字段(保留其它 key)
+      - 失败返回 False(不抛异常,UI 不感知)
+    """
+    data = _read_all()
+    data[_KEY_THEME_PRESET] = str(name)
     return _write_all(data)
 
 

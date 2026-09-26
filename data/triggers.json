@@ -1,11 +1,10 @@
 [
   {
     "name": "GAUSS枪架",
-    "enabled": true,
+    "enabled": false,
     "trigger_input": {
       "type": "mouse",
-      "button": "left_press",
-      "key": ""
+      "button": "left_press"
     },
     "delay_ms": 10,
     "actions": [
@@ -20,8 +19,7 @@
     "enabled": false,
     "trigger_input": {
       "type": "mouse",
-      "button": "right_press",
-      "key": ""
+      "button": "right_press"
     },
     "delay_ms": 10,
     "actions": [
@@ -33,11 +31,10 @@
   },
   {
     "name": "女枪开镜自动4.2",
-    "enabled": true,
+    "enabled": false,
     "trigger_input": {
       "type": "mouse",
-      "button": "right_release",
-      "key": ""
+      "button": "right_release"
     },
     "delay_ms": 10,
     "actions": [
@@ -52,8 +49,7 @@
     "enabled": false,
     "trigger_input": {
       "type": "mouse",
-      "button": "right_press",
-      "key": ""
+      "button": "right_press"
     },
     "delay_ms": 10,
     "actions": [
@@ -68,7 +64,6 @@
     "enabled": false,
     "trigger_input": {
       "type": "keyboard",
-      "button": "right_press",
       "key": "e"
     },
     "delay_ms": 10,

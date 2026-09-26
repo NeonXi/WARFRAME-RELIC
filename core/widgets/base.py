@@ -585,9 +585,9 @@ class CyberWidgetMixin:
         bar_selected_color_str = tm.get("nav.bar_selected") or str(CYBER_CYAN)
         text_color_str = tm.get("nav.text") or str(LIGHT_TEXT)
         # 选中态反色虚影参数
-        glow_enabled = bool(tm.get("nav.glow.enabled", True))
+        glow_enabled = bool(tm.get("space.nav.glow.enabled", True))
         glow_spread = int(tm.space("nav.glow.spread", 6))
-        glow_alpha = float(tm.get("nav.glow.alpha", 0.25))
+        glow_alpha = float(tm.get("space.nav.glow.alpha", 0.25))
 
         border_color = QColor(border_color_str)
         bg_color = self._cyber_resolve_nav_bg_color(bg_color_str)
