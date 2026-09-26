@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QCheckBox, QSlider, QFileDialog, QDialog,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEvent, QObject
 from PySide6.QtGui import QFont
 
 from pathlib import Path
@@ -34,6 +34,15 @@ from core.pages.base_page import PageBase
 from core.widgets.button import CyberButton
 from core.widgets.card import CyberCard
 from core.widgets.image_crop_dialog import CyberImageCropDialog
+
+
+class _NoWheelFilter(QObject):
+    """吞掉 QSlider 滚轮事件的事件过滤器(防止误触改值)。"""
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.Wheel:
+            return True  # 拦截,不传给滑块
+        return False
 
 
 class ThemePage(PageBase):
@@ -67,6 +76,7 @@ class ThemePage(PageBase):
         self._imm_color_theme_btn: CyberButton | None = None
         self._imm_color_black_btn: CyberButton | None = None
 
+        self._wheel_filter = _NoWheelFilter()  # 无 parent,在 super().__init__ 之前创建
         super().__init__()
         self.page_title = self._copy("nav.theme", "主题换肤")
 
@@ -105,6 +115,7 @@ class ThemePage(PageBase):
         self._opacity_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self._opacity_slider.setTickInterval(10)
         self._opacity_slider.valueChanged.connect(self._on_opacity_changed)
+        self._opacity_slider.installEventFilter(self._wheel_filter)
 
         accent = self._color("accent.primary")
         track_h = self._spacing("xs", 4) + 2  # 6
@@ -409,6 +420,7 @@ class ThemePage(PageBase):
         slider.setValue(int(initial))
         slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         slider.setTickInterval(10)
+        slider.installEventFilter(self._wheel_filter)
 
         accent = self._color("accent.primary")
         disabled = self._color("text.tertiary")

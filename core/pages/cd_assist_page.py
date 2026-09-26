@@ -124,6 +124,18 @@ class _NoWheelSlider(QSlider):
         event.accept()
 
 
+class _NoWheelSpinBox(QDoubleSpinBox):
+    """QDoubleSpinBox 子类,禁用滚轮调节。
+
+    与 _NoWheelSlider 同理:滚轮容易误触(尤其嵌在页面滚动区域时),
+    直接吞掉事件,禁止滚轮改数值。
+    """
+
+    def wheelEvent(self, event) -> None:  # type: ignore[override]
+        """吞掉滚轮事件:接受但不处理(从而让 QDoubleSpinBox 不响应)。"""
+        event.accept()
+
+
 class CdAssistPage(PageBase):
     """CD 辅助显示 设置页面。
 
@@ -853,7 +865,7 @@ class CdAssistPage(PageBase):
             )
             row.addWidget(label)
 
-            spin = QDoubleSpinBox()
+            spin = _NoWheelSpinBox()
             spin.setRange(SKILL_DURATION_MIN, SKILL_DURATION_MAX)
             spin.setSingleStep(SKILL_STEP)
             spin.setDecimals(1)
@@ -881,7 +893,7 @@ class CdAssistPage(PageBase):
             row.addSpacing(self._spacing("sm", 8))
             row.addWidget(reminder_label)
 
-            reminder_spin = QDoubleSpinBox()
+            reminder_spin = _NoWheelSpinBox()
             reminder_spin.setRange(SKILL_REMINDER_MIN, SKILL_REMINDER_MAX)
             reminder_spin.setSingleStep(SKILL_STEP)
             reminder_spin.setDecimals(1)

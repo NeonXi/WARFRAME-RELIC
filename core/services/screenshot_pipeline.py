@@ -475,8 +475,13 @@ class ScreenshotPipelineService:
 
         if enabled_modes:
             try:
-                self._overlay.show_mode_buttons(enabled_modes)
-                self._start_eager_ocr(enabled_modes)
+                # 只有一个功能开启 → 直接执行,不弹按钮让用户再点
+                if len(enabled_modes) == 1:
+                    self._start_eager_ocr(enabled_modes)
+                    self._on_mode_selected(enabled_modes[0])
+                else:
+                    self._overlay.show_mode_buttons(enabled_modes)
+                    self._start_eager_ocr(enabled_modes)
             except Exception as e:
                 self._log("error", f"截图后处理异常: {e}")
                 import traceback

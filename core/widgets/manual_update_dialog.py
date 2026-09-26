@@ -65,9 +65,9 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
     REPOS = [
         {
             "name": "warframe-items",
-            "desc": "遗物 / 物品数据",
-            "url": "https://github.com/WFCD/warframe-items",
-            "files": ["All.json", "i18n.json", "Relics.json"],
+            "desc": "遗物 / 物品数据(旧 All.json 已拆分为 26 个分类文件)",
+            "url": "https://github.com/WFCD/warframe-items/tree/develop/data/json",
+            "files": ["分类文件 *.json(Warframes/Primary/Relics 等)", "i18n/zh.json → 重命名为 i18n.json"],
             "target": "external/warframe-items_sparse/data/json/",
         },
         {

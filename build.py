@@ -25,6 +25,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import shutil
 import subprocess
 import sys
@@ -105,6 +106,43 @@ def collect_datas() -> list[tuple[str, str]]:
 
 
 # ── 3. PyInstaller 构建 ──────────────────────────────────────────────
+
+# (import 名, pip 包名) —— 打包前必须存在于当前解释器的关键依赖
+_REQUIRED_PACKAGES: list[tuple[str, str]] = [
+    ("PyInstaller", "pyinstaller"),
+    ("PySide6", "PySide6"),
+    ("requests", "requests"),
+    ("yaml", "PyYAML"),
+    ("numpy", "numpy"),
+    ("PIL", "Pillow"),
+    ("cv2", "opencv-python"),
+    ("rapidocr_onnxruntime", "rapidocr-onnxruntime"),
+]
+
+
+def preflight_check() -> None:
+    """打包前依赖预检:当前解释器缺关键包时立即失败,给出明确安装命令。
+
+    背景:PyInstaller 只收集「执行 build.py 的那个解释器」里的包。
+    系统存在多个 Python 时极易用错解释器,缺包要等到几分钟构建后的
+    冒烟测试才暴露 —— 这里在构建前一秒拦下。
+    """
+    missing: list[str] = []
+    for import_name, pip_name in _REQUIRED_PACKAGES:
+        if importlib.util.find_spec(import_name) is None:
+            missing.append(pip_name)
+    if not missing:
+        _ok(f"依赖预检通过({len(_REQUIRED_PACKAGES)} 个关键包齐全)")
+        return
+
+    _fail("依赖预检失败:当前解释器缺少以下包")
+    print(f"    当前解释器: {sys.executable}", flush=True)
+    print(f"    缺失: {', '.join(missing)}", flush=True)
+    print("    安装命令:", flush=True)
+    print(f'    "{sys.executable}" -m pip install ' + " ".join(missing), flush=True)
+    print("    (注意:必须用上面这个解释器安装,装到别的 Python 无效)", flush=True)
+    sys.exit(1)
+
 
 def run_build(clean: bool) -> None:
     mods = collect_local_modules()
@@ -270,6 +308,7 @@ def main() -> None:
     _log("WARFRAME-RELIC 打包开始(onedir + windowed)")
     _log("=" * 50)
 
+    preflight_check()
     run_build(clean=not args.no_clean)
 
     missing, total = self_check()

@@ -5,8 +5,10 @@
 从 data/build_warframe_db.py 迁移而来。
 
 数据源:
-  - external/warframe-items_sparse/data/json/All.json   → 全物品数据
+  - external/warframe-items_sparse/data/json/*.json → 全物品数据
+    (上游 2025 年重构:旧 All.json 已拆分为 26 个分类文件,运行时聚合)
   - external/warframe-items_sparse/data/json/i18n.json  → 物品多语言翻译
+    (上游原文件为 data/json/i18n/zh.json,拉取时重命名)
   - external/warframe-drop-data_sparse/data/all.json    → 掉落数据（DE 官方）
   - external/warframe-i18n_sparse/dict.en.json          → 游戏术语英文
   - external/warframe-i18n_sparse/dict.zh.json          → 游戏术语中文
@@ -31,6 +33,7 @@ OPTIONS: 有疑义先读 .trae/rules/开发规范.md §6.2。
 """
 
 import json
+import re
 import sqlite3
 import shutil
 import time
@@ -55,12 +58,15 @@ from core.paths import app_root as _app_root, user_data_dir as _user_data_dir
 DATA_DIR = _user_data_dir()
 EXTERNAL_DIR = _app_root() / "external"
 
-ALL_JSON = EXTERNAL_DIR / "warframe-items_sparse" / "data" / "json" / "All.json"
-I18N_JSON = EXTERNAL_DIR / "warframe-items_sparse" / "data" / "json" / "i18n.json"
+ITEMS_JSON_DIR = EXTERNAL_DIR / "warframe-items_sparse" / "data" / "json"
+I18N_JSON = ITEMS_JSON_DIR / "i18n.json"
 DROP_DATA_JSON = EXTERNAL_DIR / "warframe-drop-data_sparse" / "data" / "all.json"
-RELICS_JSON = EXTERNAL_DIR / "warframe-items_sparse" / "data" / "json" / "Relics.json"
+RELICS_JSON = ITEMS_JSON_DIR / "Relics.json"
 DICT_EN_JSON = EXTERNAL_DIR / "warframe-i18n_sparse" / "dict.en.json"
 DICT_ZH_JSON = EXTERNAL_DIR / "warframe-i18n_sparse" / "dict.zh.json"
+
+# 旧 All.json 的拆分产物(分类文件名即旧 category 字段值)
+from core.services.repo_puller import _ITEMS_CATEGORY_FILES
 
 DB_PATH = DATA_DIR / "warframe.db"
 
@@ -469,6 +475,34 @@ def _extract_type_attrs(item: dict) -> dict:
     return attrs
 
 
+def _load_all_items(_log=print) -> list:
+    """聚合分类文件,替代已被上游删除的 All.json。
+
+    分类文件中的物品可能缺少 category 字段(类别由所在文件隐含),
+    这里按文件名补上,保持与旧 All.json 数据一致。
+    """
+    all_items: list = []
+    loaded_files = 0
+    for cat_file in _ITEMS_CATEGORY_FILES:
+        path = ITEMS_JSON_DIR / cat_file
+        if not path.exists():
+            continue
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                items = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            _log(f"  [!] 读取 {cat_file} 失败: {e}")
+            continue
+        category = cat_file[:-5]  # 去掉 .json
+        for item in items:
+            if isinstance(item, dict) and not item.get('category'):
+                item['category'] = category
+            all_items.append(item)
+        loaded_files += 1
+    _log(f"  聚合 {loaded_files}/{len(_ITEMS_CATEGORY_FILES)} 个分类文件")
+    return all_items
+
+
 def _build_name_map(items_data: list) -> dict:
     """构建 name -> uniqueName 映射。"""
     name_map = {}
@@ -480,17 +514,49 @@ def _build_name_map(items_data: list) -> dict:
     return name_map
 
 
+def _iter_i18n(i18n_data: dict):
+    """把 i18n 数据展开为 (unique_name, lang, {name, description})。
+
+    兼容上游两种格式:
+      - 旧多语言 i18n.json: {unique_name: {lang: {name, description}}}
+      - 新单语言 i18n/zh.json: {unique_name: {name, description}}
+        (文件本身就是中文,lang 固定记为 zh)
+    """
+    for unique_name, entry in i18n_data.items():
+        if not isinstance(entry, dict):
+            continue
+        if "name" in entry or "description" in entry:
+            yield unique_name, "zh", entry
+        else:
+            for lang, texts in entry.items():
+                if isinstance(texts, dict):
+                    yield unique_name, lang, texts
+
+
+def _i18n_lookup(i18n_data: dict, unique_name: str,
+                 lang: str = "zh") -> dict:
+    """取单物品某语言的 {name, description};结构兼容同 _iter_i18n。"""
+    entry = i18n_data.get(unique_name)
+    if not isinstance(entry, dict):
+        return {}
+    if "name" in entry or "description" in entry:
+        return entry  # 单语言文件(zh.json),本身即目标语言
+    texts = entry.get(lang)
+    return texts if isinstance(texts, dict) else {}
+
+
 def _build_prime_parts(cur, conn, all_items: list, i18n_data: dict):
     """
-    构建 prime_parts 表 —— 遗物内含 Prime 部件专用表。
+    构建 prime_parts 表 —— 遗物奖励部件专用表。
 
-    数据源：
-      - Relics.json → en_name, slug (warframeMarket.urlName)
-      - All.json components → unique_name (合法物品ID), parent_en
-      - i18n.json → parent 中文翻译
-      - 部件中文名映射表 → part_type 的中文
+    全部按 uniqueName 精确关联,不做字符串猜测:
+      - Relics.json 奖励 item: name / uniqueName / warframeMarket.urlName
+      - 父物品 components: comp.uniqueName → parent.name(反查归属)
+      - i18n(zh.json 单语言或旧多语言): 部件官方译名 / parent 中文
 
-    纯确定性逻辑，零模糊匹配。
+    中文名两条轨道:
+      ① 部件 uniqueName 在 i18n 有官方译名 → 直接用;
+      ② 否则用「parent 中文 + 部件词中文」组合。
     """
 
     # ---- 1. 部件类型中文名映射（游戏官方汉化，硬编码常量） ----
@@ -533,158 +599,133 @@ def _build_prime_parts(cur, conn, all_items: list, i18n_data: dict):
         'Band': '项圈带',
     }
 
-    # ---- 2. 从 All.json 构建：en_name → unique_name + parent 映射 ----
-    # 遍历所有物品的 components 字段，提取 Blueprint/部件的合法 unique_name
-    _comp_map = {}  # "{parent} {component}" -> (unique_name, parent_en)
+    # ---- 2. uniqueName 精确索引(不依赖 comp.name,规避上游命名变体) ----
+    _uniq_to_parent = {}  # 部件 uniqueName → parent 英文名
+    _name_to_uniq = {}    # parent 英文名 → parent uniqueName
     for item in all_items:
-        parent_name = item.get('name', '')
-        parent_uniq = item.get('uniqueName', '')
-        for comp in item.get('components', []):
-            comp_name = comp.get('name', '')
-            comp_uniq = comp.get('uniqueName', '')
-            if not comp_name or not comp_uniq:
-                continue
-            full_name = f"{parent_name} {comp_name}"
-            if full_name not in _comp_map:
-                _comp_map[full_name] = (comp_uniq, parent_name)
-            # ★ 短名索引：处理 component.name 自带完整前缀的情况
-            # 如 All.json 中 "Kavasa Prime Band" 是 "Kavasa Prime Kubrow Collar" 的
-            # component，名字已经带前缀；Relics.json 中也用短名。建立短名映射
-            # 仅在短名不在 _comp_map 中时（避免覆盖"Ash Prime Blueprint"等正常匹配）
-            if comp_name not in _comp_map and comp_name != full_name:
-                _comp_map[comp_name] = (comp_uniq, parent_name)
-
-    # ---- 3. 从 i18n.json 构建：parent unique_name → 中文名 ----
-    # i18n_data 结构: {unique_name: {lang: {name, description}, ...}}
-    _parent_zh = {}  # parent_unique_name -> zh_name(纯字符串)
-    for uniq, trans in i18n_data.items():
-        if not isinstance(trans, dict):
+        pname = item.get('name', '')
+        puniq = item.get('uniqueName', '')
+        if pname and puniq and pname not in _name_to_uniq:
+            _name_to_uniq[pname] = puniq
+        if not pname:
             continue
-        zh_dict = trans.get('zh') or trans.get('tc')
-        if isinstance(zh_dict, dict):
-            zh_name = zh_dict.get('name', '')
-            if zh_name:
-                _parent_zh[uniq] = zh_name
+        for comp in item.get('components', []):
+            cu = comp.get('uniqueName', '')
+            if not cu:
+                continue
+            if cu not in _uniq_to_parent:
+                _uniq_to_parent[cu] = pname
+            # 战甲部件桥接:components 中是 XxxComponent,遗物奖励的部件蓝图
+            # uniqueName 是 XxxBlueprint(如 ChassisComponent → ChassisBlueprint)
+            if cu.endswith('Component'):
+                bp_uniq = cu[:-len('Component')] + 'Blueprint'
+                if bp_uniq not in _uniq_to_parent:
+                    _uniq_to_parent[bp_uniq] = pname
 
-    # 也从 all_items 中已知的 name 做反向映射（有些父物品在 items 表中）
-    # _name_to_zh: 暂不需要，zh_name 通过 parent_unique → _parent_zh 直接查
+    # ---- 3. parent uniqueName → 中文名(单语言/多语言 i18n 兼容) ----
+    _parent_zh = {}
+    for uniq in i18n_data.keys():
+        d = _i18n_lookup(i18n_data, uniq, "zh")
+        n = d.get("name", "")
+        if n:
+            _parent_zh[uniq] = n
 
-    # ---- 4. 加载 Relics.json，收集所有遗物奖励物品 ----
+    # 同名物品修正:部分物品有 StoreItems/正常两个 uniqueName,
+    # 优先选 i18n 中有中文的那个(如 Forma)
+    for name, uniq in list(_name_to_uniq.items()):
+        if uniq in _parent_zh:
+            continue
+        for item in all_items:
+            if item.get('name') == name:
+                cand = item.get('uniqueName', '')
+                if cand and cand in _parent_zh:
+                    _name_to_uniq[name] = cand
+                    break
+
+    # ---- 4. Relics.json: 收集全部奖励(item 直接带 uniqueName) ----
     with open(RELICS_JSON, 'r', encoding='utf-8') as f:
         relics_data = json.load(f)
-
-    # 收集唯一物品信息
-    _relic_items = {}  # en_name -> {slug, rarity}
+    _relic_items = {}  # en_name → {'slug', 'unique'}
     for relic in relics_data:
         for rw in relic.get('rewards', []):
             item_obj = rw.get('item', {})
             name = item_obj.get('name', '')
-            if not name:
+            if not name or name in _relic_items:
                 continue
-            wm = item_obj.get('warframeMarket', {})
-            slug = wm.get('urlName') or ''
-            if name not in _relic_items:
-                _relic_items[name] = {'slug': slug}
+            _relic_items[name] = {
+                'slug': item_obj.get('warframeMarket', {}).get('urlName', ''),
+                'unique': item_obj.get('uniqueName', ''),
+            }
 
-    # ---- 5. 判定 part_type（确定性：从名称尾部匹配已知部件词） ----
-    def _detect_part_type(en_name: str) -> str:
-        """从英文名末尾提取部件类型。"""
-        for pt in sorted(_PART_ZH_MAP.keys(), key=len, reverse=True):
-            if en_name.endswith(pt):
-                return pt
-        return ''
-
-    # ---- 6. 组装数据并写入 prime_parts 表 ----
-    cur.execute("DELETE FROM prime_parts")  # 每次重建全量刷新
-    pp_rows = []
-    # ★ parent 别名映射表：当 i18n 中文不符合期望时，用更短的概念。
-    # 例如 "Kavasa Prime Kubrow Collar" 在游戏中就是"喀婆萨 Prime 项圈"，
-    # 截图里出现的就是"喀婆萨 Prime 项圈带"，不应带"库狛"前缀。
+    # parent 中文名人工修正(i18n 译名与使用习惯不符时)
     _PARENT_ZH_OVERRIDE = {
-        'Kavasa Prime Kubrow Collar': '喀婆萨 Prime',  # 简化掉"项圈"，截图里就是"喀婆萨 Prime 项圈带"
+        'Kavasa Prime Kubrow Collar': '喀婆萨 Prime',
     }
-    for en_name in sorted(_relic_items.keys()):
-        slug = _relic_items[en_name]['slug']
-        part_type = _detect_part_type(en_name)
 
-        # 从 All.json components 查 unique_name 和 parent
-        comp_info = _comp_map.get(en_name, ('', ''))
-        unique_name = comp_info[0]
-        parent_en = comp_info[1]
+    def _part_phrase(remainder: str) -> str:
+        """parent 名之后的英文部件词逐个翻中文并拼接。
 
-        # ★ 拆分匹配：处理多部件名（如 "Ash Prime Chassis Blueprint"、
-        # "Odonata Prime Wings Blueprint"）
-        # Relics.json 的战甲/Archwing 掉落名常把多个部件词组合在一起，
-        # 而 All.json components 是单层扁平结构，需要逐层剥开分别匹配
-        if not unique_name and part_type and parent_en == '':
-            # 从外到内逐层剥掉 part_type 和内层部件词
-            remaining = en_name[:-(len(part_type))].rstrip()
-            found_parts = [part_type]
-            # 循环剥离内层部件词，直到剩余不是已知名部件
-            while True:
-                stripped = False
-                for pt_inner in sorted(_PART_ZH_MAP.keys(), key=len, reverse=True):
-                    if remaining.endswith(pt_inner) and pt_inner not in found_parts:
-                        remaining = remaining[:-(len(pt_inner))].rstrip()
-                        found_parts.append(pt_inner)
-                        stripped = True
-                        break
-                if not stripped:
+        如 'Chassis Blueprint' → '机体蓝图'; 'Lower Limb' → '下弓臂'。
+        """
+        keys = sorted(_PART_ZH_MAP.keys(), key=len, reverse=True)
+        out = []
+        r = remainder.strip()
+        while r:
+            for k in keys:
+                if r.startswith(k):
+                    out.append(_PART_ZH_MAP[k])
+                    r = r[len(k):].strip()
                     break
-            candidate_parent = remaining
-            if candidate_parent and any(i.get('name') == candidate_parent for i in all_items):
-                # 用拆出的每个部件分别查 components，优先取 Blueprint 类
-                for try_part in sorted(found_parts, key=lambda p: 0 if p == 'Blueprint' else 1):
-                    full_key = f"{candidate_parent} {try_part}"
-                    if full_key in _comp_map:
-                        unique_name = _comp_map[full_key][0]
-                        parent_en = candidate_parent
-                        break
-                # ★ 记录拆分出的内层部件词（用于生成完整 zh_name）
-                # found_parts 已包含 Blueprint 和内层部件词
-                # 把内层部件词存到 comp_info 的第三个元素
-                # （前面 comp_info 是个元组，这里需要扩展）
-                if unique_name and len(found_parts) > 1:
-                    # 把内层部件词拼到 part_type 后，part_type 形如 "Chassis Blueprint"
-                    # 但 Blueprint 已被 Blueprint 表达，所以 part_type 存内层部件词
-                    inner_parts = [p for p in found_parts if p != 'Blueprint']
-                    if inner_parts:
-                        part_type = inner_parts[0]  # 战甲通常是单个内层部件
-
-        # 查 parent 的 unique_name（用于查 i18n）
-        parent_unique = ''
-        for item in all_items:
-            if item.get('name') == parent_en:
-                parent_unique = item.get('uniqueName', '')
+            else:
                 break
+        return ''.join(out)
+    # ---- 5. 组装数据并写入 ----
+    cur.execute("DELETE FROM prime_parts")
+    pp_rows = []
+    for en_name in sorted(_relic_items.keys()):
+        info = _relic_items[en_name]
+        unique_name = info['unique']
+        slug = info['slug']
 
-        # 组合 zh_name: parent中文 + "Prime" + 部件中文
+        # parent 归属:直接用部件 uniqueName 反查 components(精确)
+        parent_en = _uniq_to_parent.get(unique_name, '')
+        parent_unique = _name_to_uniq.get(parent_en, '')
+
+        # 部件词原文:en_name 中 parent 名之后的部分
+        # find 兼容数量前缀(如 '2X Forma Blueprint')
+        remainder = ''
+        if parent_en:
+            pos = en_name.find(parent_en)
+            if pos >= 0:
+                remainder = en_name[pos + len(parent_en):].strip()
+        part_type = remainder
+
         zh_name = ''
-        # ★ 优先用别名覆盖（处理 i18n 翻译冗长的情况）
-        if parent_en in _PARENT_ZH_OVERRIDE:
-            base_zh_full = _PARENT_ZH_OVERRIDE[parent_en]
-        elif parent_unique and parent_unique in _parent_zh:
-            base_zh_full = _parent_zh[parent_unique]
-        else:
-            base_zh_full = ''
-        if base_zh_full:
-            # 去重：把末尾所有连续的 "Prime"（可能多个）全部去掉
-            import re as _re
-            base_zh = _re.sub(r'\s*Prime\s*$', '', base_zh_full).rstrip()
-            part_zh = _PART_ZH_MAP.get(part_type, '')
-            # 判断 en_name 末尾是否含 Blueprint（决定是否追加"蓝图"）
-            has_blueprint = en_name.endswith('Blueprint')
-            if base_zh and part_zh:
-                # 如果 base_zh 已含 "Prime"，不再额外添加
-                if 'Prime' in base_zh:
-                    zh_name = f"{base_zh} {part_zh}"
-                else:
-                    zh_name = f"{base_zh} Prime {part_zh}"
-                # 蓝图后缀补齐（战甲/Archwing 蓝图）
-                if has_blueprint and '蓝图' not in zh_name:
-                    zh_name = f"{zh_name} 蓝图"
+        # 轨道①: parent 中文 + 部件词中文(组合完整名,如「迅发电浆炮 Prime 枪管」)
+        # 前提:en_name 必须确实包含 parent 名,排除「材料被引用进其它物品
+        # components」的误归属(如 Kuva 出现在破损珽杖材料中)
+        if parent_en and en_name.find(parent_en) >= 0:
+            base_full = (_PARENT_ZH_OVERRIDE.get(parent_en)
+                         or _parent_zh.get(parent_unique, ''))
+            if base_full:
+                base = re.sub(r'\s*Prime\s*$', '', base_full).rstrip()
+                phrase = _part_phrase(remainder or 'Blueprint')
+                if base and phrase:
+                    # 仅当物品英文名含 Prime 时才补 Prime(Forma/Kuva 等非 Prime 不加)
+                    if 'Prime' in en_name and 'Prime' not in base:
+                        zh_name = f"{base} Prime {phrase}"
+                    else:
+                        zh_name = f"{base} {phrase}"
 
-        pp_rows.append((en_name, unique_name, slug, zh_name, part_type, parent_en, parent_unique))
+        # 轨道②: 组合失败(无 parent/无 parent 中文)时,
+        # 用部件 uniqueName 自身的官方译名(赤毒/阿耶坦/安魂密语等独立物品)
+        if not zh_name:
+            own = _i18n_lookup(i18n_data, unique_name, 'zh')
+            if own.get('name'):
+                zh_name = own['name']
+
+        pp_rows.append((en_name, unique_name, slug, zh_name, part_type,
+                        parent_en, parent_unique))
 
     cur.executemany(
         "INSERT INTO prime_parts "
@@ -765,12 +806,11 @@ def build(
     relic_vaulted_map = {}
 
     # ================================================================
-    # Step 1: 解析 All.json
+    # Step 1: 聚合分类物品文件(旧 All.json)
     # ================================================================
-    _log("[1/6] 解析 All.json...")
-    if ALL_JSON.exists():
-        with open(ALL_JSON, 'r', encoding='utf-8') as f:
-            all_items = json.load(f)
+    _log("[1/6] 聚合分类物品文件(旧 All.json)...")
+    all_items = _load_all_items(_log)
+    if all_items:
         name_map = _build_name_map(all_items)
         _log(f"  加载 {len(all_items)} 条物品数据")
 
@@ -870,7 +910,7 @@ def build(
         stats['patchlogs'] = len(patchlog_rows)
         _log(f"  items={len(item_rows)}, attrs={len(attr_rows)}, abilities={len(ability_rows)}, attacks={len(attack_rows)}")
     else:
-        _log(f"  [!] All.json 不存在: {ALL_JSON}")
+        _log("  [!] 未加载到任何分类物品文件,请检查拉取步骤")
 
     # ================================================================
     # Step 2: i18n.json → 翻译 + 回填中文
@@ -884,19 +924,15 @@ def build(
         trans_rows = []
         zh_updates = []
 
-        for unique_name, translations in i18n_data.items():
-            if not isinstance(translations, dict):
-                continue
-            for lang, texts in translations.items():
-                if not isinstance(texts, dict):
-                    continue
-                trans_rows.append((unique_name, lang,
-                    _safe_str(texts.get('name', '')), _safe_str(texts.get('description', ''))))
-                if lang == 'zh':
-                    zh_name = _safe_str(texts.get('name', ''))
-                    zh_desc = _safe_str(texts.get('description', ''))
-                    if zh_name or zh_desc:
-                        zh_updates.append((zh_name, zh_desc, unique_name))
+        # _iter_i18n 同时兼容旧多语言和 zh.json 单语言结构
+        for unique_name, lang, texts in _iter_i18n(i18n_data):
+            trans_rows.append((unique_name, lang,
+                _safe_str(texts.get('name', '')), _safe_str(texts.get('description', ''))))
+            if lang == 'zh':
+                zh_name = _safe_str(texts.get('name', ''))
+                zh_desc = _safe_str(texts.get('description', ''))
+                if zh_name or zh_desc:
+                    zh_updates.append((zh_name, zh_desc, unique_name))
 
         cur.executemany("INSERT OR IGNORE INTO item_translations (unique_name, lang, name, description) VALUES (?,?,?,?)", trans_rows)
         cur.executemany("UPDATE items SET zh_name=?, description_zh=? WHERE unique_name=? AND (zh_name='' OR zh_name IS NULL)", zh_updates)
@@ -924,6 +960,7 @@ def build(
         _log(f"  pinyin={len(py_updates)}")
     else:
         _log(f"  [!] i18n.json 不存在: {I18N_JSON}")
+        i18n_data = {}  # 兜底:保证后续 _build_prime_parts 等引用不 UnboundLocal
 
     # ================================================================
     # Step 3: 掉落数据 all.json
@@ -937,6 +974,63 @@ def build(
         relic_rows = []
         reward_rows = []
         relic_id_map = {}
+
+        # ── 构建「实际可获得遗物」集合 ──
+        # 上游 Relics.json 的 vaulted 语义是「不在 Prime 常规轮换池」,
+        # 但大量遗物(如 Citrine Prime 批次)仍可通过任务/赏金/瞬时奖励
+        # 等途径获得。drop-data 的掉落表是游戏实际数据,以此为出库的
+        # 最终依据:凡在常规掉落源中出现的遗物一律标为出库。
+        # 例外: 九重天(Railjack)任务的奖励表是 DE 为入库遗物设置的
+        # 特殊回归途径——仅在九重天(Skirmish 节点及其 Extra/Caches
+        # 变体,含 Veil Proxima 全域)出现的遗物仍认定为入库。
+        import re as _re
+        _RELIC_NAME_RE = _re.compile(
+            r"^(Lith|Meso|Neo|Axi|Requiem|Vanguard)\s+(\S+?)\s+Relic")
+        _live_relics = set()      # 常规来源
+        _railjack_relics = set()  # 九重天来源
+
+        def _make_scan(target_set):
+            def _scan(obj):
+                if isinstance(obj, dict):
+                    for k, v in obj.items():
+                        if k == "itemName" and isinstance(v, str):
+                            m = _RELIC_NAME_RE.match(v)
+                            if m:
+                                target_set.add((m.group(1), m.group(2)))
+                        else:
+                            _scan(v)
+                elif isinstance(obj, list):
+                    for v in obj:
+                        _scan(v)
+            return _scan
+
+        _scan_live = _make_scan(_live_relics)
+        _scan_rj = _make_scan(_railjack_relics)
+
+        # missionRewards: 区分九重天节点与常规节点
+        for _planet, _nodes in drop_data.get("missionRewards", {}).items():
+            # Skirmish = 九重天任务模式;其 (Extra)/(Caches) 变体同前缀
+            _rj_bases = {
+                _n.split(" (")[0]
+                for _n, _nd in _nodes.items()
+                if _nd.get("gameMode") == "Skirmish"
+            }
+            for _node, _ndata in _nodes.items():
+                if _planet == "Veil Proxima" or _node.split(" (")[0] in _rj_bases:
+                    _scan_rj(_ndata)   # 九重天来源单独收集
+                else:
+                    _scan_live(_ndata)
+
+        # 其他掉落源(赏金/突击/瞬时/钥匙/集团)全部视为常规来源
+        for _drop_key in (
+            "cetusBountyRewards", "solarisBountyRewards",
+            "deimosRewards", "zarimanRewards", "entratiLabRewards",
+            "hexRewards", "sortieRewards", "transientRewards",
+            "keyRewards", "syndicates",
+        ):
+            _scan_live(drop_data.get(_drop_key))
+        _log(f"  常规途径可获得的遗物: {len(_live_relics)} 种; "
+             f"九重天来源: {len(_railjack_relics)} 种")
 
         # ★ 优先从 Relics.json 构建（数据更丰富：含 item_unique + wm_url_name）
         if RELICS_JSON.exists():
@@ -953,11 +1047,21 @@ def build(
                 if len(parts) >= 3:
                     tier, rname, state = parts[0], parts[1], parts[2]
                 elif len(parts) == 2:
-                    tier, rname = parts[0], parts[1]
+                    # 上游内部占位符(如 "Axi Relic"/"Void Relic"),无实际意义,跳过
+                    continue
                 else:
                     continue
 
-                vaulted = 1 if relic.get('vaulted') else 0
+                # 出库判定: 以 drop-data(游戏客户端实时解析的掉落表)为唯一权威
+                # 1. 常规掉落源出现 → 出库
+                # 2. Requiem(安魂) → 常驻:I/II/III/IV 经赤毒玄骸系统、
+                #    Eterna 经瞬时奖励获得,均不在常规掉落表,强制出库
+                # 3. 其他一律入库(含: 仅九重天缓存的回归遗物、Vanguard
+                #    先锋遗物(活动已结束不可获取)、上游 vaulted 滞后的)
+                if (tier, rname) in _live_relics or tier == 'Requiem':
+                    vaulted = 0
+                else:
+                    vaulted = 1
                 did = relic.get('uniqueName', '')
                 cur.execute("INSERT OR IGNORE INTO relics (tier, relic_name, state, vaulted, drop_data_id) VALUES (?,?,?,?,?)",
                             (tier, rname, state, vaulted, did))

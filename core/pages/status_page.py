@@ -632,9 +632,11 @@ class StatusPage(PageBase):
 
         # 检查必要文件是否存在（直接用 Path 构造，避免导入 db_builder 触发 pypinyin 依赖）
         _ext = self._data_dir.parent / "external"
-        required = [
-            ("All.json", _ext / "warframe-items_sparse" / "data" / "json" / "All.json"),
-            ("i18n.json", _ext / "warframe-items_sparse" / "data" / "json" / "i18n.json"),
+        from core.services.repo_puller import ITEMS_OUTPUT_FILES
+        _items_json = _ext / "warframe-items_sparse" / "data" / "json"
+        # warframe-items: i18n.json + 26 个分类文件(旧 All.json 已拆分)
+        required = [(name, _items_json / name) for name in ITEMS_OUTPUT_FILES]
+        required += [
             ("all.json", _ext / "warframe-drop-data_sparse" / "data" / "all.json"),
             ("dict.en.json", _ext / "warframe-i18n_sparse" / "dict.en.json"),
             ("dict.zh.json", _ext / "warframe-i18n_sparse" / "dict.zh.json"),

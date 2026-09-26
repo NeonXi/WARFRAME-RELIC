@@ -209,6 +209,7 @@ class DataPipelineWorker:
                 update_drop_data_existing,
                 init_i18n_sparse_checkout,
                 update_i18n_existing,
+                ITEMS_OUTPUT_FILES,
             )
 
             def _wfcd_log(level: str, msg: str):
@@ -226,7 +227,7 @@ class DataPipelineWorker:
             external_dir = _app_root() / "external"
             sparse_repos = [
                 ("warframe-items", "遗物/物品", "warframe-items_sparse",
-                 ["Relics.json", "i18n.json", "All.json"],
+                 ITEMS_OUTPUT_FILES,
                  external_dir / "warframe-items_sparse" / "data" / "json",
                  init_items_sparse_checkout, update_items_existing),
                 ("warframe-drop-data", "掉落数据", "warframe-drop-data_sparse",
@@ -239,7 +240,10 @@ class DataPipelineWorker:
                  init_i18n_sparse_checkout, update_i18n_existing),
             ]
 
-            from core.proxy_config import get_sorted_mirrors, resolve_url
+            from core.proxy_config import (
+                get_sorted_mirrors, resolve_url, get_repo_defs,
+                update_test_result,
+            )
 
             all_ok = True
             for repo_idx, (repo_key, repo_name, repo_dir_name, files, output_dir,
@@ -250,64 +254,82 @@ class DataPipelineWorker:
 
                 self.repo_progress.emit(repo_name, 0, "准备中...")
 
-                sorted_mirrors = get_sorted_mirrors(repo_key)
+                # ── 直连优先:先试 GitHub 官方地址,失败后再用镜像兜底 ──
+                owner, repo = get_repo_defs()[repo_key]
+                direct_url = f"https://github.com/{owner}/{repo}.git"
+
+                # 镜像列表中剔除官方直连(避免重复尝试);并记录直连模板的原索引
+                fallback_mirrors = []
+                direct_idx_orig = None
+                for orig_idx, mirror_template in get_sorted_mirrors(repo_key):
+                    if resolve_url(repo_key, mirror_template) == direct_url:
+                        direct_idx_orig = orig_idx
+                    else:
+                        fallback_mirrors.append((orig_idx, mirror_template))
+
+                # 尝试序列: (URL, 镜像原索引);原索引为 None 表示直连
+                attempts = [(direct_url, direct_idx_orig)]
+                for orig_idx, mirror_template in fallback_mirrors:
+                    mirror_url = resolve_url(repo_key, mirror_template)
+                    if mirror_url:
+                        attempts.append((mirror_url, orig_idx))
+                    else:
+                        self._emit_log("warn", f"  镜像 [{orig_idx}] 无法解析，跳过")
 
                 is_update = repo_dir.exists() and (repo_dir / ".git").exists()
                 if is_update:
                     self._emit_log("info", f"仓库已存在，删除后重新初始化...")
                     self.repo_progress.emit(repo_name, 0, "删除旧仓库...")
 
-                self._emit_log("info", f"拉取仓库（{len(sorted_mirrors)} 个代理可用）...")
+                self._emit_log(
+                    "info",
+                    f"先直连 GitHub 官方,失败再试 {len(fallback_mirrors)} 个镜像...",
+                )
                 ok = False
-                for mirror_idx, (mirror_idx_orig, mirror_template) in enumerate(sorted_mirrors):
+                total_attempts = len(attempts)
+                for attempt_idx, (clone_url, orig_idx) in enumerate(attempts):
                     if self._cancelled:
                         break
-                    clone_url = resolve_url(repo_key, mirror_template)
-                    if not clone_url:
-                        self._emit_log("warn", f"  代理 [{mirror_idx_orig}] 无法解析，跳过")
-                        continue
+                    is_direct = attempt_idx == 0
+                    tag = "直连官方" if is_direct else f"镜像[{orig_idx}]"
 
-                    op_label = "更新" if (is_update and mirror_idx == 0) else "克隆"
-                    self._emit_log("info",
-                                    f"  尝试代理 [{mirror_idx_orig}] ({mirror_idx + 1}/{len(sorted_mirrors)})")
+                    self._emit_log(
+                        "info",
+                        f"  [{attempt_idx + 1}/{total_attempts}] {tag}",
+                    )
                     self.repo_progress.emit(
                         repo_name,
-                        int(mirror_idx / len(sorted_mirrors) * 80),
-                        f"{op_label}中... 代理[{mirror_idx_orig}]",
+                        int(attempt_idx / total_attempts * 80),
+                        f"git clone... {tag}",
                     )
 
-                    if is_update and mirror_idx == 0:
+                    if is_update and attempt_idx == 0:
                         ok = update_fn(
                             log_callback=_wfcd_log,
                             progress_callback=_wfcd_progress,
                             clone_url=clone_url,
                         )
                     else:
-                        # 克隆前发射一次明确状态
-                        _wfcd_log("info", f"  git clone {clone_url[:60]}...")
-                        self.repo_progress.emit(
-                            repo_name,
-                            int(mirror_idx / len(sorted_mirrors) * 80),
-                            f"git clone... 代理[{mirror_idx_orig}]",
-                        )
                         ok = init_fn(
                             log_callback=_wfcd_log,
                             progress_callback=_wfcd_progress,
                             clone_url=clone_url,
                         )
                     if ok:
-                        from core.proxy_config import update_test_result
-                        update_test_result(repo_key, mirror_idx_orig, True)
-                        self._emit_log("ok", f"  [OK] 代理 [{mirror_idx_orig}] 成功")
-                        self.repo_progress.emit(repo_name, 100, f"[OK] 代理 [{mirror_idx_orig}] 成功")
+                        # 直连模板若存在于镜像列表(默认列表中就有),同步记录状态
+                        if orig_idx is not None:
+                            update_test_result(repo_key, orig_idx, True)
+                        self._emit_log("ok", f"  [OK] {tag} 成功")
+                        self.repo_progress.emit(repo_name, 100, f"[OK] {tag} 成功")
                         break
                     else:
-                        from core.proxy_config import update_test_result
-                        update_test_result(repo_key, mirror_idx_orig, False)
-                        self._emit_log("warn", f"  [X] 代理 [{mirror_idx_orig}] 失败，尝试下一个...")
+                        if orig_idx is not None:
+                            update_test_result(repo_key, orig_idx, False)
+                        tail = "，尝试下一个..." if attempt_idx + 1 < total_attempts else ""
+                        self._emit_log("warn", f"  [X] {tag} 失败{tail}")
 
                 if not ok:
-                    self.repo_progress.emit(repo_name, 100, "[X] 所有代理均失败")
+                    self.repo_progress.emit(repo_name, 100, "[X] 直连和所有镜像均失败")
 
                 if ok:
                     for f in files:
@@ -396,8 +418,12 @@ def get_pipeline_summary() -> dict:
     drop_dir = external_dir / "warframe-drop-data_sparse" / "data"
     i18n_dir = external_dir / "warframe-i18n_sparse"
 
+    # 旧 All.json 已拆分为分类文件:全部存在才记 True
+    from core.services.repo_puller import _ITEMS_CATEGORY_FILES
+    category_present = all((wfcd_dir / name).exists() for name in _ITEMS_CATEGORY_FILES)
+
     info = {
-        "All.json": (wfcd_dir / "All.json").exists(),
+        "category_json": category_present,
         "Relics.json": (wfcd_dir / "Relics.json").exists(),
         "i18n.json": (wfcd_dir / "i18n.json").exists(),
         "all.json": (drop_dir / "all.json").exists(),
@@ -407,9 +433,15 @@ def get_pipeline_summary() -> dict:
     }
 
     sizes = {}
+    # 分类文件大小汇总(同名前缀,便于 UI 展示)
+    cat_total = 0
+    for name in _ITEMS_CATEGORY_FILES:
+        p = wfcd_dir / name
+        if p.exists():
+            cat_total += p.stat().st_size
+    if cat_total:
+        sizes["category_json"] = cat_total
     for name, path in [
-        ("All.json", wfcd_dir / "All.json"),
-        ("Relics.json", wfcd_dir / "Relics.json"),
         ("i18n.json", wfcd_dir / "i18n.json"),
         ("all.json", drop_dir / "all.json"),
         ("dict.en.json", i18n_dir / "dict.en.json"),
