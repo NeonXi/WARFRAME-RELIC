@@ -580,6 +580,19 @@ class ItemsPage(PageBase):
         if hasattr(self, '_tip_widget') and self._tip_widget is not None:
             self._tip_widget.hide()
 
+    @staticmethod
+    def _soften_hex(hex_color: str, sat_factor: float = 0.5) -> str:
+        """对 hex 颜色降饱和(色相不变),用于密集文本 tooltip 柔化霓虹色。
+
+        sat_factor: 目标饱和度占原始的比例(0~1),越小越灰。
+        """
+        c = QColor(hex_color)
+        if not c.isValid():
+            return hex_color
+        h, s, l, a = c.getHsl()
+        c.setHsl(h, max(0, min(255, int(s * sat_factor))), l, a)
+        return c.name()
+
     def _build_hover_tooltip(self, item_data: dict) -> str:
         """构建悬停 tooltip 的 HTML 内容。
 
@@ -599,26 +612,27 @@ class ItemsPage(PageBase):
         text_dim = self._color("text.disabled")
         text_sec = self._color("text.secondary")
         # YAML 主题金银铜色
-        c_gold = self._color("raw.game.gold")    # 概率最低 → 金
-        c_silver = self._color("raw.game.silver") # 中等概率 → 银
-        c_copper = self._color("raw.game.copper") # 最高概率 → 铜
-        cyan = self._color("accent.secondary")
-        red = self._color("semantic.danger")
-        green = self._color("semantic.success")
-        purple = self._color("accent.tertiary")
-        orange = self._color("semantic.warning")
+        c_gold = self._soften_hex(self._color("raw.game.gold"), 0.65)    # 概率最低 → 金
+        c_silver = self._soften_hex(self._color("raw.game.silver"), 0.65) # 中等概率 → 银
+        c_copper = self._soften_hex(self._color("raw.game.copper"), 0.6) # 最高概率 → 铜
+        # 霓虹语义色在密集文本 tooltip 中过艳,统一降饱和(色相不变,仅柔化)
+        cyan = self._soften_hex(self._color("accent.secondary"), 0.5)
+        red = self._soften_hex(self._color("semantic.danger"), 0.5)
+        green = self._soften_hex(self._color("semantic.success"), 0.5)
+        purple = self._soften_hex(self._color("accent.tertiary"), 0.5)
+        orange = self._soften_hex(self._color("semantic.warning"), 0.55)
 
         display_name = zh_name if zh_name else en_name
         if zh_name and en_name and zh_name != en_name:
             display_name = f"{zh_name} / {en_name}"
 
-        # ── 按品级/稀有度决定名称颜色 ──
+        # ── 按品级/稀有度决定名称颜色(与 tooltip 内其他色统一柔化) ──
         rarity = (item_data.get("rarity") or "").strip().lower()
         _RARITY_COLOR_MAP = {
-            "legendary": self._color("raw.game.gold"),
-            "rare":      self._color("raw.game.gold"),
-            "uncommon":  self._color("raw.game.silver"),
-            "common":    self._color("raw.game.copper"),
+            "legendary": c_gold,
+            "rare":      c_gold,
+            "uncommon":  c_silver,
+            "common":    c_copper,
         }
         name_color = _RARITY_COLOR_MAP.get(rarity, accent)
 
