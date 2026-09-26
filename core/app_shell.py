@@ -717,7 +717,9 @@ class AppShell(QMainWindow):
             from core.widgets.base import CyberWidgetMixin
             immersive = CyberWidgetMixin._cyber_immersive
             strength = CyberWidgetMixin._cyber_immersive_strength
-            color_mode = CyberWidgetMixin._cyber_immersive_color_mode
+            # 从背景服务读取当前颜色模式（避免直接访问 mixin 私有属性）
+            from core.services.background_service import BackgroundService
+            color_mode = BackgroundService.instance().immersive_color
             self._immersive_ctrl.apply_nav_container_style(immersive, strength, color_mode)
 
         # 刷新导航栏
