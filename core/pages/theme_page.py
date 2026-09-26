@@ -653,7 +653,63 @@ class ThemePage(PageBase):
         if self._app_shell is not None:
             self._app_shell.refresh_theme()
 
+        # 刷新滑块样式（QSS 需要重新应用）
+        self._refresh_slider_styles()
+
         print(f"[ThemePage] 已切换到预设主题: {preset_name}", flush=True)
+
+    def _refresh_slider_styles(self) -> None:
+        """重新应用所有滑块的 QSS 样式（切换预设后颜色变化时调用）。"""
+        accent = self._color("accent.primary")
+        disabled = self._color("text.tertiary")
+        track_h = self._spacing("xs", 4) + 2
+        handle_size = self._spacing("sm", 8) + 4
+        handle_radius = handle_size // 2
+        qss = (
+            f"QSlider::groove:horizontal {{"
+            f"  background: {self._color('components.progress.track_bg')};"
+            f"  height: {track_h}px;"
+            f"  border-radius: {track_h // 2}px;"
+            f"}}"
+            f"QSlider::handle:horizontal {{"
+            f"  background: {accent};"
+            f"  width: {handle_size}px;"
+            f"  height: {handle_size}px;"
+            f"  margin: -{self._spacing('xs', 4) + 1}px 0;"
+            f"  border-radius: {handle_radius}px;"
+            f"}}"
+            f"QSlider::handle:horizontal:hover {{"
+            f"  background: {self._color('accent.secondary')};"
+            f"}}"
+            f"QSlider::sub-page:horizontal {{"
+            f"  background: {accent};"
+            f"  border-radius: {track_h // 2}px;"
+            f"}}"
+            f"QSlider::handle:horizontal:disabled {{"
+            f"  background: {disabled};"
+            f"}}"
+            f"QSlider::sub-page:horizontal:disabled {{"
+            f"  background: {disabled};"
+            f"}}"
+        )
+        for slider in (
+            self._opacity_slider,
+            self._bg_opacity_slider,
+            self._bg_blur_slider,
+            self._immersive_slider,
+        ):
+            if slider is not None:
+                self._style(slider, raw=qss)
+        # 数值标签颜色
+        for label in (
+            self._opacity_label,
+            self._bg_opacity_label,
+            self._bg_blur_label,
+            self._immersive_val_label,
+        ):
+            if label is not None:
+                self._style(label, color="accent.primary", font_size="md",
+                           font_weight="bold", raw="font-family: monospace;")
 
     def on_enter(self):
         """进入主题页:从 ui_prefs.json 读最新透明度,同步滑块位置。
