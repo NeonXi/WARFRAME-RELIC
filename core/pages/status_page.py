@@ -621,7 +621,21 @@ class StatusPage(PageBase):
 
     def _on_open_manual_update_tutorial(self) -> None:
         """打开手动更新数据教程对话框。"""
-        dialog = ManualUpdateDialog(parent=self)
+        from core.services.repo_puller import ITEMS_OUTPUT_FILES
+
+        # 构建 external/ 最终目录结构文本(pages 层可访问 services)
+        lines = ["external/"]
+        lines.append("├─ warframe-items_sparse/data/json/  (共 27 个文件)")
+        for i, name in enumerate(ITEMS_OUTPUT_FILES):
+            branch = "└─" if i == len(ITEMS_OUTPUT_FILES) - 1 else "├─"
+            lines.append(f"│  {branch} {name}")
+        lines.append("├─ warframe-drop-data_sparse/data/")
+        lines.append("│  └─ all.json")
+        lines.append("└─ warframe-i18n_sparse/")
+        lines.append("   ├─ dict.en.json")
+        lines.append("   └─ dict.zh.json")
+
+        dialog = ManualUpdateDialog(parent=self, dir_tree="\n".join(lines))
         dialog.exec()
 
     def _on_manual_build_db(self) -> None:

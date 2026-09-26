@@ -32,7 +32,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QFrame, QApplication,
+    QFrame, QApplication, QPlainTextEdit,
 )
 from PySide6.QtGui import QFont, QColor
 from PySide6.QtCore import Qt
@@ -86,7 +86,11 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
         },
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, dir_tree: str = ""):
+        """
+        :param dir_tree: external/ 目录最终结构文本(由调用方构建,
+                         widgets 层禁止 import services 获取文件清单)
+        """
         QDialog.__init__(self, parent)
         self.setWindowTitle("手动更新数据 — 教程")
         self.setMinimumSize(580, 520)
@@ -140,6 +144,31 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
         for repo in self.REPOS:
             card = self._build_repo_card(repo)
             layout.addWidget(card)
+
+        # ── 最终目录结构 ──
+        if dir_tree:
+            tree_title = QLabel("放置完成后的目录结构:")
+            tree_title.setStyleSheet(
+                f"color: {_text_pri.name()}; background: transparent; border: none; "
+                f"font-weight: bold;"
+            )
+            layout.addWidget(tree_title)
+
+            tree_view = QPlainTextEdit()
+            tree_view.setReadOnly(True)
+            tree_view.setPlainText(dir_tree)
+            tree_view.setFont(QFont("Consolas", 10))
+            tree_view.setFixedHeight(200)
+            tree_view.setStyleSheet(f"""
+                QPlainTextEdit {{
+                    color: {_text_sec.name()};
+                    background-color: {_bg.name()};
+                    border: 1px solid {_border.name()}60;
+                    border-radius: 4px;
+                    padding: 6px;
+                }}
+            """)
+            layout.addWidget(tree_view)
 
         # ── 底部按钮行 ──
         btn_row = QHBoxLayout()
