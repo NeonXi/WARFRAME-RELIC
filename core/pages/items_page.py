@@ -534,6 +534,19 @@ class ItemsPage(PageBase):
 
         tip = self._tip_widget
         label = tip._label
+
+        # ★ 每次显示时刷新背景色,确保跟随当前主题切换
+        _bg_hex = self._color("bg.base")
+        _border = self._color("border.subtle")
+        _radius = self._spacing("corner.sm", 6)
+        tip.setStyleSheet(
+            f"background-color: {_bg_hex};"
+            f"border: 1px solid {_border};"
+            f"border-radius: {_radius}px;"
+        )
+        tip._scroll.setStyleSheet(f"background-color: {_bg_hex};")
+        tip._scroll.viewport().setStyleSheet(f"background-color: {_bg_hex};")
+
         label.setText(html)
 
         # 限制悬浮窗最大尺寸，避免过长内容撑破屏幕
