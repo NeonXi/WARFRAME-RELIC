@@ -85,8 +85,9 @@ class CyberButton(CyberWidgetMixin, QPushButton):
         # 光标
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        # 无原生边框/背景，完全自绘
+        # 无原生边框/背景，完全自绘；透明背景让玻璃效果透出下层
         self.setStyleSheet("QPushButton { border: none; background: transparent; }")
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
     # ── 属性 ──
 

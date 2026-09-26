@@ -269,6 +269,31 @@ components:
     border_focus:  "@accent.primary"
     corner_size:   6
 
+  # ---- 下拉框 (CyberComboBox) ----
+  combo_box:
+    bg:            "rgba(30, 41, 59, 0.60)"       # 玻璃质感：60% 透明
+    text:          "@text.primary"
+    border:        "@border.default"
+    border_focus:  "@accent.primary"
+    corner_size:   6
+
+  # ---- 开关 (CyberToggleSwitch) ----
+  toggle:
+    track_bg:      "rgba(30, 41, 59, 0.50)"       # 玻璃质感：50% 透明
+    track_border:  "@border.default"
+    thumb_bg:      "@accent.primary"
+    thumb_border:  "@accent.secondary"
+    corner_size:   4
+
+  # ---- 滑块 (CyberSlider) ----
+  slider:
+    track_bg:      "rgba(15, 23, 42, 0.50)"       # 稍深，突出滑块区
+    track_border:  "@border.subtle"
+    fill:          "@accent.primary"
+    thumb_bg:      "@accent.secondary"
+    thumb_border:  "@accent.primary"
+    corner_size:   4
+
   # ---- 进度条 (CyberProgressBar) ----
   progress:
     track_bg:      "rgba(15, 23, 42, 0.50)"
@@ -309,6 +334,30 @@ components:
     item_selected_bg: "@accent.primary"
     item_selected_text: "@bg.base"
     divider:         "@border.subtle"
+
+  # ---- 滚动条 (ScrollBar) ----
+  scrollbar:
+    track_bg:      "rgba(15, 23, 42, 0.30)"       # 玻璃质感：30% 透明
+    thumb_bg:      "rgba(168, 199, 250, 0.40)"   # 玻璃质感：40% 蓝白
+    thumb_hover:   "rgba(168, 199, 250, 0.60)"   # hover 稍深
+    thumb_pressed: "rgba(168, 199, 250, 0.80)"   # pressed 更深
+    corner_size:   4
+
+  # ---- 复选框 (CheckBox) ----
+  checkbox:
+    bg:            "rgba(30, 41, 59, 0.50)"       # 玻璃质感：50% 透明
+    border:        "@border.default"
+    border_focus:  "@accent.primary"
+    check_color:   "@accent.primary"
+    corner_size:   4
+
+  # ---- 单选框 (RadioButton) ----
+  radio:
+    bg:            "rgba(30, 41, 59, 0.50)"       # 玻璃质感：50% 透明
+    border:        "@border.default"
+    border_focus:  "@accent.primary"
+    check_color:   "@accent.primary"
+    corner_size:   4
 
 # ═══════════════════════════════════════════════════
 #  空间与尺寸令牌（Design Space Tokens）

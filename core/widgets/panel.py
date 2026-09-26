@@ -90,7 +90,7 @@ class CyberPanel(CyberWidgetMixin, QFrame):
         self._content_layout.setContentsMargins(content_pad, content_pad, content_pad, content_pad)
         self._layout.addWidget(self._content, stretch=1)
 
-        # 样式
+        # 样式：透明背景让玻璃效果透出下层
         self.setStyleSheet("""
             QFrame#CyberPanel { border: none; background: transparent; }
             QLabel#cyberPanelTitle {
@@ -100,6 +100,7 @@ class CyberPanel(CyberWidgetMixin, QFrame):
             }
             QWidget#cyberPanelContent { background: transparent; }
         """)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setObjectName("CyberPanel")
 
     @property

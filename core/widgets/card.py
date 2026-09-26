@@ -92,11 +92,12 @@ class CyberCard(CyberWidgetMixin, QFrame):
         self._content_layout.setContentsMargins(pad_h, pad_v_top, pad_h, pad_v_bot)
         self._layout.addWidget(self._content)
 
-        # 样式
+        # 样式：透明背景让玻璃效果透出下层
         self.setStyleSheet("""
             QFrame#CyberCard { border: none; background: transparent; }
             QWidget#cyberCardContent { background: transparent; }
         """)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setObjectName("CyberCard")
         self._content.setObjectName("cyberCardContent")
 
