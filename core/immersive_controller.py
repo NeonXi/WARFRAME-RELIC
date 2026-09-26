@@ -90,8 +90,15 @@ class ImmersiveStyleController:
 
         沉浸底色用 #AARRGGBB 八位色(Qt QSS 支持),颜色计算走 immersive 模块。
         color_mode="black" 时:沉浸开启 → 底色 RGB 覆写为纯黑;关闭 → 沿用原色。
+        玻璃拟态模式下使用极浅冰蓝半透明。
         """
-        nav_bg_str = self._tm.get("alias.bg.base")
+        # 玻璃拟态模式使用 nav.bg token（极浅冰蓝半透明）
+        is_glass = self._tm.current_preset == "glassmorphism"
+        if is_glass:
+            nav_bg_str = self._tm.get("nav.bg") or "rgba(227, 242, 253, 0.40)"
+        else:
+            nav_bg_str = self._tm.get("alias.bg.base")
+
         if immersive:
             c = QColor(nav_bg_str)
             if color_mode == "black":
