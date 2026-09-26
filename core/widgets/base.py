@@ -512,6 +512,13 @@ class CyberWidgetMixin:
         """
         from PySide6.QtGui import QBrush, QPen, QLinearGradient, QColor
 
+        # 应用沉浸强度：折减 alpha
+        if self._cyber_immersive:
+            strength = max(0, min(100, int(self._cyber_immersive_strength)))
+            alpha_factor = 1.0 - strength / 100.0
+            bg_color = QColor(bg_color)
+            bg_color.setAlphaF(bg_color.alphaF() * alpha_factor)
+
         path = self._chamfered_path(rect, corner)
         painter.setClipPath(path)
 
