@@ -107,6 +107,9 @@ class ImmersiveStyleController:
                 c = _immersive.black_rgb(self._tm)
             c.setAlphaF(1.0 - strength / 100.0)
             nav_bg_str = c.name(QColor.NameFormat.HexArgb)
+        # 转换为 QSS 兼容的 rgba() 格式（QSS 不支持 #AARRGGBB）
+        c = QColor(nav_bg_str)
+        nav_bg_str = f"rgba({c.red()}, {c.green()}, {c.blue()}, {c.alphaF():.2f})"
         border_str = self._tm.get("alias.border.subtle")
         self._shell._nav_container.setStyleSheet(f"""
             QWidget#navContainer {{
