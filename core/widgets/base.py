@@ -486,7 +486,7 @@ class CyberWidgetMixin:
     def _is_glass_mode(self) -> bool:
         """检查当前是否为玻璃拟态模式。"""
         from core.tokens.manager import TokenManager
-        return TokenManager.instance()._current_preset == "glassmorphism"
+        return TokenManager.instance().current_preset == "glassmorphism"
 
     def _draw_glass_bg(
         self,
