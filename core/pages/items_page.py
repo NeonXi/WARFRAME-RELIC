@@ -470,11 +470,13 @@ class ItemsPage(PageBase):
         scroll.setWidget(label)
         layout.addWidget(scroll)
 
-        # 整体背景色（与主题一致）
+        # 整体背景:用 bg.raised 主题色 + 90% 不透明度,保证阅读性
+        # (不用 components.card.bg:glassmorphism 下仅 25% 不透明,文字难辨)
+        _bg_c = TokenManager.instance().get_qcolor("bg.raised")
         self._style(
             container,
-            background="components.card.bg",
             raw=lambda: (
+                f"background-color: rgba({_bg_c.red()},{_bg_c.green()},{_bg_c.blue()},230);"
                 f"border: 1px solid {self._color('border.subtle')};"
                 f"border-radius: {self._spacing('corner.sm', 6)}px;"
             ),
