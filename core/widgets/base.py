@@ -778,6 +778,9 @@ class CyberWidgetMixin:
         if is_glass:
             # 玻璃模式下使用半透明背景，透出下层
             glass_bg = QColor(bg_color)
+            # 降低饱和度，与页面控件协调（HSL 饱和度降低 40%）
+            h, s, l = glass_bg.getHslF()[0], glass_bg.getHslF()[1], glass_bg.getHslF()[2]
+            glass_bg.setHslF(h, max(s * 0.6, 0.05), l)  # 饱和度降低 40%，保留色相
             if selected and hover:
                 glass_bg.setAlphaF(0.65)
             elif selected:
