@@ -77,8 +77,6 @@ class CyberCard(CyberWidgetMixin, QFrame):
                 font_size = 11
             title_font = QFont("Iceberg", font_size)
             self._title_bar.setFont(title_font)
-            accent = self.token_color("accent.primary")
-            self._title_bar.setStyleSheet(f"color: {accent.name()}; padding: 10px 16px 6px 16px;")
             self._layout.addWidget(self._title_bar)
         else:
             self._title_bar = None
@@ -104,6 +102,18 @@ class CyberCard(CyberWidgetMixin, QFrame):
         # 可点击时光标
         if clickable:
             self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        # 标题栏文字色来自 token,需在主题切换时重建
+        self._cyber_subscribe_theme()
+        self.cyber_refresh_style()
+
+    def cyber_refresh_style(self) -> None:
+        """重建标题栏文字色(token 内联 QSS,主题切换时更新)。"""
+        if self._title_bar is not None:
+            accent = self.token_color("accent.primary")
+            self._title_bar.setStyleSheet(
+                f"color: {accent.name()}; padding: 10px 16px 6px 16px;"
+            )
 
     @property
     def clickable(self) -> bool:

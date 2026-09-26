@@ -163,6 +163,78 @@ class CyberProxyDialog(QDialog, CyberWidgetMixin):
         self._build_ui()
         self._load_mirrors()
 
+        # 订阅主题切换,重建含 token 的 QSS
+        self._cyber_subscribe_theme()
+        self.cyber_refresh_style()
+
+    def cyber_refresh_style(self) -> None:
+        """重建对话框所有含 token 颜色的 QSS。"""
+        bg = self._tc("bg.base")
+        border_c = self._tc("alias.border.default")
+        text_dim = self._tc("text.disabled")
+        accent = self._tc("accent.primary")
+        card_bg = self._tc("components.card.bg")
+        cyan = self._tc("accent.secondary")
+        text_main = self._tc("text.primary")
+        raised = self._tc("bg.raised", QColor(30, 34, 50))
+
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: rgba({bg.red()},{bg.green()},{bg.blue()}, 250);
+            }}
+            QLabel {{ color: {text_dim.name()}; background: transparent; }}
+        """)
+        if hasattr(self, "_title"):
+            self._title.setStyleSheet(f"color: {accent.name()}; background: transparent; border: none;")
+        if hasattr(self, "_desc"):
+            self._desc.setStyleSheet(f"color: {text_dim.name()}; font-size: {self.space('font.xs', 11)}px; background: transparent; border: none;")
+        if self._text_edit is not None:
+            self._text_edit.setStyleSheet(f"""
+                QPlainTextEdit {{
+                    background-color: rgba({card_bg.red()},{card_bg.green()},{card_bg.blue()}, 200);
+                    color: {text_main.name()};
+                    border: 1px solid {border_c.name()};
+                    border-radius: {self.space('corner.sm', 6)}px;
+                    font-family: Consolas, Microsoft YaHei, monospace;
+                    font-size: {self.space('font.sm', 12)}px;
+                    padding: {self.space('spacing.sm', 8)}px;
+                }}
+                QScrollBar:vertical {{
+                    background: rgba({raised.red()},{raised.green()},{raised.blue()}, 180);
+                    width: {self.space('height.scrollbar', 8)}px; border-radius: {self.space('corner.xs', 4)}px;
+                }}
+                QScrollBar::handle:vertical {{
+                    background: {border_c.name()}; border-radius: {self.space('corner.xs', 4)}px; min-height: {self.space('spacing.xxxl', 32)}px;
+                }}
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0px; }}
+            """)
+        if hasattr(self, "_hint"):
+            self._hint.setStyleSheet(f"color: {cyan.name()}; font-size: {self.space('font.micro', 10)}px; background: transparent; border: none;")
+        if self._test_progress is not None:
+            self._test_progress.setStyleSheet(f"""
+                QProgressBar {{
+                    border: 1px solid {border_c.name()}; border-radius: 4px;
+                    background-color: rgba({card_bg.red()},{card_bg.green()},{card_bg.blue()}, 180);
+                    text-align: center;
+                    color: {accent.name()}; font-size: {self.space('font.micro', 10)}px;
+                }}
+                QProgressBar::chunk {{
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 {cyan.name()}, stop:1 {accent.name()});
+                    border-radius: {self.space('corner.xs', 4)}px;
+                }}
+            """)
+        if self._test_log is not None:
+            self._test_log.setStyleSheet(f"""
+                QTextEdit {{
+                    background-color: rgba({card_bg.red()},{card_bg.green()},{card_bg.blue()}, 160);
+                    color: {text_main.name()};
+                    border: 1px solid {border_c.name()}; border-radius: {self.space('corner.sm', 6)}px;
+                    font-family: Consolas, monospace;
+                    font-size: {self.space('font.xs', 11)}px; padding: 8px;
+                }}
+            """)
+
     # ── UI 构建 ──
 
     def _build_ui(self):
@@ -180,20 +252,20 @@ class CyberProxyDialog(QDialog, CyberWidgetMixin):
         orange = self._tc("semantic.warning")
 
         # 标题
-        title = QLabel(self.copy("proxy.title", "GitHub 代理镜像列表"))
-        title.setFont(QFont("Iceberg", self.space("font.lg", 14)))
-        title.setStyleSheet(f"color: {accent.name()}; background: transparent; border: none;")
-        layout.addWidget(title)
+        self._title = QLabel(self.copy("proxy.title", "GitHub 代理镜像列表"))
+        self._title.setFont(QFont("Iceberg", self.space("font.lg", 14)))
+        self._title.setStyleSheet(f"color: {accent.name()}; background: transparent; border: none;")
+        layout.addWidget(self._title)
 
         # 说明
-        desc = QLabel(self.copy("proxy.desc",
+        self._desc = QLabel(self.copy("proxy.desc",
             "每行一个代理镜像 URL 模板。\n"
             "支持占位符: {{owner}}（仓库所有者）、{{repo}}（仓库名）\n"
             "拉取失败时按顺序尝试，连通性测试通过的和上次成功的优先使用。"
         ))
-        desc.setWordWrap(True)
-        desc.setStyleSheet(f"color: {text_dim.name()}; font-size: {self.space('font.xs', 11)}px; background: transparent; border: none;")
-        layout.addWidget(desc)
+        self._desc.setWordWrap(True)
+        self._desc.setStyleSheet(f"color: {text_dim.name()}; font-size: {self.space('font.xs', 11)}px; background: transparent; border: none;")
+        layout.addWidget(self._desc)
 
         # 编辑区
         self._text_edit = QPlainTextEdit()
@@ -221,15 +293,15 @@ class CyberProxyDialog(QDialog, CyberWidgetMixin):
 
         # 配置文件路径提示
         config_path = get_config_path()
-        hint = QLabel(
+        self._hint = QLabel(
             self.copy("proxy.hint_config",
                 "配置文件: {path}\n你也可以直接编辑此文件，修改后无需重启程序即可生效。",
                 path=config_path,
             )
         )
-        hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {cyan.name()}; font-size: {self.space('font.micro', 10)}px; background: transparent; border: none;")
-        layout.addWidget(hint)
+        self._hint.setWordWrap(True)
+        self._hint.setStyleSheet(f"color: {cyan.name()}; font-size: {self.space('font.micro', 10)}px; background: transparent; border: none;")
+        layout.addWidget(self._hint)
 
         # 测试进度条
         self._test_progress = QProgressBar()

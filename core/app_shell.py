@@ -51,6 +51,7 @@ from PySide6.QtGui import QFont, QPainter
 
 from core.tokens.manager import TokenManager
 from core.widgets.base import CyberWidgetMixin
+from core.theme_manager import ThemeManager
 
 
 # ══════════════════════════════════════════════
@@ -178,6 +179,9 @@ class AppShell(QMainWindow):
         from core.immersive_controller import ImmersiveStyleController
         self._immersive_ctrl = ImmersiveStyleController(self, self._tm)
 
+        # ── 订阅全局主题切换信号(ThemeManager 是唯一切换入口) ──
+        ThemeManager.instance().theme_changed.connect(self._on_theme_changed)
+
         # ── 辅助触发器引擎 ──
         self._trigger_manager = self._create_trigger_manager()
 
@@ -220,17 +224,9 @@ class AppShell(QMainWindow):
         except Exception:
             pass
 
-        # ── 恢复上次主题预设(从 ui_prefs.json 读) ──
+        # ── 恢复上次主题预设(统一走 ThemeManager) ──
         # 失败回 cyberpunk(默认),不阻塞启动
-        try:
-            from core.services.ui_prefs import load_theme_preset
-            preset = load_theme_preset()
-            if preset != "cyberpunk":
-                from core.tokens.manager import TokenManager
-                TokenManager.instance().load_preset(preset)
-                print(f"[AppShell] 已恢复主题预设: {preset}", flush=True)
-        except Exception:
-            pass
+        ThemeManager.instance().apply_on_startup()
 
     # ══════════════════════════════════
     #  主窗口透明度(供 ThemePage 调)
@@ -705,6 +701,14 @@ class AppShell(QMainWindow):
     # ══════════════════════════════════
     #  主题刷新
     # ══════════════════════════════════
+
+    def _on_theme_changed(self, preset_name: str) -> None:
+        """ThemeManager.theme_changed 信号槽:触发全局主题刷新。
+
+        所有页面的 on_theme_change 会重放 _style 登记的 QSS 配方;
+        自绘控件(CyberWidgetMixin)在下次 paintEvent 自动用新 token。
+        """
+        self.refresh_theme()
 
     def refresh_theme(self) -> None:
         """刷新整个应用的主题（切换 token 预设后调用）。

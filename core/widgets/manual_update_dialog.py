@@ -97,14 +97,69 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
         self.setModal(True)
 
         _tm = TokenManager.instance()
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 16, 20, 16)
+        layout.setSpacing(14)
+
+        self._title = QLabel("手动更新数据 — 教程")
+        self._title.setFont(QFont("Iceberg", 15))
+        layout.addWidget(self._title)
+
+        # ── 说明文字 ──
+        self._hint = QLabel(
+            "自动更新流程: 先直连 GitHub 官方 → 失败后自动切换镜像 → 全部失败才需手动操作。\n"
+            "若已进入手动教程，说明所有网络途径均不可用。请下载下方文件并放到对应目录，"
+            "然后点击「手动构建数据库」完成更新。\n"
+            "链接和路径均可鼠标选中后 Ctrl+C 复制。"
+        )
+        self._hint.setWordWrap(True)
+        layout.addWidget(self._hint)
+
+        # ── 各仓库信息卡片 ──
+        self._repo_cards: list[QFrame] = []
+        for repo in self.REPOS:
+            card = self._build_repo_card(repo)
+            self._repo_cards.append(card)
+            layout.addWidget(card)
+
+        # ── 最终目录结构 ──
+        self._tree_title: QLabel | None = None
+        self._tree_view: QPlainTextEdit | None = None
+        if dir_tree:
+            self._tree_title = QLabel("放置完成后的目录结构:")
+            layout.addWidget(self._tree_title)
+
+            self._tree_view = QPlainTextEdit()
+            self._tree_view.setReadOnly(True)
+            self._tree_view.setPlainText(dir_tree)
+            self._tree_view.setFont(QFont("Consolas", 10))
+            self._tree_view.setFixedHeight(200)
+            layout.addWidget(self._tree_view)
+
+        # ── 底部按钮行 ──
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+
+        btn_close = CyberButton(text="关闭", variant="ghost")
+        btn_close.setFixedWidth(80)
+        btn_close.clicked.connect(self.close)
+        btn_row.addWidget(btn_close)
+
+        layout.addLayout(btn_row)
+
+        # 订阅主题切换,重建所有含 token 的 QSS
+        self._cyber_subscribe_theme()
+        self.cyber_refresh_style()
+
+    def cyber_refresh_style(self) -> None:
+        """重建对话框所有含 token 颜色的 QSS。"""
+        _tm = TokenManager.instance()
         _bg = _tm.get_qcolor("bg.base")
-        _bg_raised = _tm.get_qcolor("bg.raised")
         _text_pri = _tm.get_qcolor("text.primary")
         _text_sec = _tm.get_qcolor("text.secondary")
         _text_ter = _tm.get_qcolor("text.tertiary")
-        _border = _tm.get_qcolor("border.default")
         _accent = _tm.get_qcolor("accent.primary")
-        _accent_sec = _tm.get_qcolor("accent.secondary")
 
         self.setStyleSheet(f"""
             QDialog {{
@@ -118,48 +173,16 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
                 border: none;
             }}
         """)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 16, 20, 16)
-        layout.setSpacing(14)
-
-        # ── 标题 ──
-        title = QLabel("手动更新数据 — 教程")
-        title.setFont(QFont("Iceberg", 15))
-        title.setStyleSheet(f"color: {_accent.name()}; background: transparent; border: none;")
-        layout.addWidget(title)
-
-        # ── 说明文字 ──
-        hint = QLabel(
-            "自动更新流程: 先直连 GitHub 官方 → 失败后自动切换镜像 → 全部失败才需手动操作。\n"
-            "若已进入手动教程，说明所有网络途径均不可用。请下载下方文件并放到对应目录，"
-            "然后点击「手动构建数据库」完成更新。\n"
-            "链接和路径均可鼠标选中后 Ctrl+C 复制。"
-        )
-        hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {_text_ter.name()}; background: transparent; border: none;")
-        layout.addWidget(hint)
-
-        # ── 各仓库信息卡片 ──
-        for repo in self.REPOS:
-            card = self._build_repo_card(repo)
-            layout.addWidget(card)
-
-        # ── 最终目录结构 ──
-        if dir_tree:
-            tree_title = QLabel("放置完成后的目录结构:")
-            tree_title.setStyleSheet(
+        self._title.setStyleSheet(f"color: {_accent.name()}; background: transparent; border: none;")
+        self._hint.setStyleSheet(f"color: {_text_ter.name()}; background: transparent; border: none;")
+        if self._tree_title is not None:
+            self._tree_title.setStyleSheet(
                 f"color: {_text_pri.name()}; background: transparent; border: none; "
                 f"font-weight: bold;"
             )
-            layout.addWidget(tree_title)
-
-            tree_view = QPlainTextEdit()
-            tree_view.setReadOnly(True)
-            tree_view.setPlainText(dir_tree)
-            tree_view.setFont(QFont("Consolas", 10))
-            tree_view.setFixedHeight(200)
-            tree_view.setStyleSheet(f"""
+        if self._tree_view is not None:
+            _border = _tm.get_qcolor("border.default")
+            self._tree_view.setStyleSheet(f"""
                 QPlainTextEdit {{
                     color: {_text_sec.name()};
                     background-color: {_bg.name()};
@@ -168,18 +191,58 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
                     padding: 6px;
                 }}
             """)
-            layout.addWidget(tree_view)
+        # 仓库卡片
+        for card in self._repo_cards:
+            self._refresh_repo_card(card)
 
-        # ── 底部按钮行 ──
-        btn_row = QHBoxLayout()
-        btn_row.addStretch()
+    def _refresh_repo_card(self, card: QFrame) -> None:
+        """重建单个仓库卡片的 QSS(按 objectName 识别仓库)。"""
+        name = card.objectName().replace("manualUpdateCard_", "")
+        repo = next((r for r in self.REPOS if r["name"] == name), None)
+        if repo is None:
+            return
+        _tm = TokenManager.instance()
+        _border = _tm.get_qcolor("border.default")
+        _accent = _tm.get_qcolor("accent.primary")
+        _accent_sec = _tm.get_qcolor("accent.secondary")
+        _text_sec = _tm.get_qcolor("text.secondary")
+        _text_ter = _tm.get_qcolor("text.tertiary")
+        _card_bg = _tm.get_qcolor("bg.base")
 
-        btn_close = CyberButton(text="关闭", variant="ghost")
-        btn_close.setFixedWidth(80)
-        btn_close.clicked.connect(self.close)
-        btn_row.addWidget(btn_close)
-
-        layout.addLayout(btn_row)
+        card.setStyleSheet(f"""
+            QFrame#manualUpdateCard_{repo['name']} {{
+                background-color: rgba({_card_bg.red()}, {_card_bg.green()}, {_card_bg.blue()}, 0.75);
+                border: 1px solid {_border.name()}60;
+                border-radius: {_tm.space('corner.sm', 6)}px;
+            }}
+        """)
+        for lbl in card.findChildren(QLabel):
+            txt = lbl.text()
+            if txt.startswith("["):
+                lbl.setStyleSheet(
+                    f"color: {_accent.name()}; background: transparent; border: none; font-weight: bold;"
+                )
+            elif txt.startswith("http"):
+                lbl.setStyleSheet(
+                    f"color: {_accent_sec.name()}; "
+                    f"background: rgba({_accent_sec.red()}, {_accent_sec.green()}, {_accent_sec.blue()}, 0.08); "
+                    f"border: 1px solid {_border.name()}40; "
+                    f"border-radius: 4px; padding: 4px 8px; font-family: Consolas, monospace;"
+                )
+            elif txt.startswith("文件:"):
+                lbl.setStyleSheet(
+                    f"color: {_text_ter.name()}; background: transparent; border: none; "
+                    f"font-size: 11px;"
+                )
+            elif txt.startswith("放置到:"):
+                lbl.setStyleSheet(
+                    f"color: {_text_sec.name()}; background: transparent; border: none; "
+                    f"font-family: Consolas, monospace; font-size: 11px;"
+                )
+            elif txt == repo["desc"]:
+                lbl.setStyleSheet(
+                    f"color: {_text_sec.name()}; background: transparent; border: none;"
+                )
 
     def _build_repo_card(self, repo: dict) -> QFrame:
         """构建单个仓库的信息卡片。"""

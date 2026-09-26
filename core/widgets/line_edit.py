@@ -70,6 +70,11 @@ class CyberLineEdit(CyberWidgetMixin, QLineEdit):
         """)
 
         # 文字颜色
+        self._cyber_subscribe_theme()
+        self.cyber_refresh_style()
+
+    def cyber_refresh_style(self) -> None:
+        """重建输入框文字色(palette token 内联,主题切换时更新)。"""
         text_color = self.token_color("components.input.text")
         palette = self.palette()
         palette.setColor(palette.ColorRole.Text, text_color)

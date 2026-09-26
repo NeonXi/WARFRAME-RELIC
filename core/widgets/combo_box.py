@@ -59,6 +59,13 @@ class CyberComboBox(CyberWidgetMixin, QComboBox):
         # 沉浸黑色模式切换时由 AppShell 重新调用以应用最新底色)
         self._apply_popup_style()
 
+        # 弹窗 QSS 含 token 颜色,主题切换时需重建
+        self._cyber_subscribe_theme()
+
+    def cyber_refresh_style(self) -> None:
+        """主题切换时重建弹窗 QSS(token 内联颜色)。"""
+        self._apply_popup_style()
+
     # ── 事件 ──
 
     def wheelEvent(self, event) -> None:

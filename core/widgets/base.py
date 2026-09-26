@@ -347,6 +347,43 @@ class CyberWidgetMixin:
         return TokenManager.instance().copy(key, default, **kwargs)
 
     # ══════════════════════════════════════════════
+    #  主题切换响应(ThemeManager 统一入口)
+    # ══════════════════════════════════════════════
+
+    def _cyber_subscribe_theme(self) -> None:
+        """订阅全局主题切换信号(供子类 __init__ 末尾调用)。
+
+        自绘主背景在 paintEvent 里读 token,天然响应主题切换;
+        但通过 setStyleSheet / QPalette 内联的颜色(token 内插字符串)
+        会被固化,需要在 theme_changed 时重建。
+
+        子类若有 QSS/palette 颜色,重写 cyber_refresh_style() 重建即可;
+        若纯自绘无 QSS 颜色,无需重写(本方法仍会调 update() 触发重绘)。
+        """
+        try:
+            from core.theme_manager import ThemeManager
+            ThemeManager.instance().theme_changed.connect(self._cyber_on_theme_changed)
+        except Exception:
+            pass  # 测试环境无 ThemeManager 时跳过
+
+    def _cyber_on_theme_changed(self, _preset_name: str) -> None:
+        """theme_changed 信号槽:重建 QSS/palette + 触发重绘。"""
+        try:
+            self.cyber_refresh_style()
+        except Exception:
+            pass
+        self.update()
+
+    def cyber_refresh_style(self) -> None:
+        """重建 QSS / QPalette 中的 token 颜色(子类按需重写)。
+
+        默认空实现;只有用 setStyleSheet(f"...{token}...") 或
+        palette.setColor(token) 内联颜色的控件需要重写。
+        自绘背景无需重写(paintEvent 自动读新 token)。
+        """
+        pass
+
+    # ══════════════════════════════════════════════
     #  状态机
     # ══════════════════════════════════════════════
 

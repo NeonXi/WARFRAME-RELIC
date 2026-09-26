@@ -530,6 +530,58 @@ class PixelFontEditorPanel(QFrame):
         self._setup_ui()
         self._load_letter(self._current_char)
 
+        # 订阅主题切换:重建含 token 的 QSS(字母/位置按钮、frame、label)
+        try:
+            from core.theme_manager import ThemeManager
+            ThemeManager.instance().theme_changed.connect(self._on_theme_changed)
+        except Exception:
+            pass
+
+    def _on_theme_changed(self, _preset_name: str) -> None:
+        """主题切换:重建所有含 token 颜色的 QSS。"""
+        # frame 边框/底色
+        for w in self.findChildren(QFrame):
+            obj = w.objectName()
+            # grid_frame / preview_group 无 objectName,用样式特征判断
+            ss = w.styleSheet()
+            if "background-color:" in ss and "border:" in ss:
+                w.setStyleSheet(self._frame_style())
+        # info_label / preview_title 等文字色
+        for lbl in self.findChildren(QLabel):
+            ss = lbl.styleSheet()
+            if "color:" in ss:
+                if lbl is self._info_label:
+                    lbl.setStyleSheet(
+                        f"color: {_tc('text.tertiary')}; font-size: 11px;"
+                    )
+                elif "预览" in lbl.text() or lbl is self._preview_label:
+                    continue
+                else:
+                    # 其它含 color 的 label 按通用规则重建(保留 font-size)
+                    parts = [p.strip() for p in ss.split(";") if p.strip()]
+                    font_part = next((p for p in parts if p.startswith("font-size")), "")
+                    weight_part = next((p for p in parts if p.startswith("font-weight")), "")
+                    lbl.setStyleSheet(
+                        f"color: {_tc('text.disabled')};"
+                        f" {font_part};"
+                        f" {weight_part};"
+                    )
+        # 字母按钮 + 位置按钮:按当前选中态重建
+        self._refresh_button_styles()
+
+    def _refresh_button_styles(self) -> None:
+        """重建字母按钮和位置按钮的 QSS(按当前选中态)。"""
+        selected = getattr(self, "_selected_letter", self._current_char)
+        for btn in self.findChildren(QPushButton):
+            text = btn.text()
+            if len(text) == 1 and text in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                btn.setStyleSheet(self._letter_style(active=(text == selected)))
+        # 位置按钮(若存在)
+        pos_btns = getattr(self, "_position_buttons", [])
+        selected_pos = getattr(self, "_selected_position", -1)
+        for i, btn in enumerate(pos_btns):
+            btn.setStyleSheet(self._position_style(active=(i == selected_pos)))
+
     # ── UI 构建 ──
 
     def _setup_ui(self) -> None:

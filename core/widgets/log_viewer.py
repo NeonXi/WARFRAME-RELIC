@@ -97,6 +97,49 @@ class CyberLogViewer(CyberWidgetMixin, QFrame):
         # 样式
         self.setObjectName("CyberLogViewer")
 
+        # 订阅主题切换:重建 header 文字色/按钮样式 + 文本区 QSS
+        self._cyber_subscribe_theme()
+        self.cyber_refresh_style()
+
+    def cyber_refresh_style(self) -> None:
+        """重建标题栏文字色、清空按钮样式、日志文本区 QSS。"""
+        self._apply_text_style()
+        # 标题文字
+        if getattr(self, "_title_lbl", None) is not None:
+            title_color = self.token_color("alias.text.disabled")
+            self._title_lbl.setStyleSheet(
+                f"color: {title_color.name()}; background: transparent; border: none;"
+            )
+        # 计数标签
+        if self._count_label is not None:
+            self._count_label.setStyleSheet(
+                f"color: {self.token_color('alias.text.disabled').name()}; "
+                f"font-size: {self.space('font.micro', 10)}px; "
+                f"background: transparent; border: none;"
+            )
+        # 清空按钮
+        if getattr(self, "_clear_btn", None) is not None:
+            btn_text = self.token_color("alias.text.disabled")
+            btn_hover = self.token_color("alias.accent.secondary")
+            _white = self.token_color("text.primary")
+            self._clear_btn.setStyleSheet(f"""
+                QPushButton {{
+                    color: {btn_text.name()};
+                    background: transparent;
+                    border: 1px solid {self.token_color('border.subtle').name()};
+                    border-radius: {self.space('corner.xs', 4)}px;
+                    font-size: {self.space('font.xs', 11)}px;
+                    padding: {self.space('spacing.none', 2)}px {self.space('spacing.sm', 8)}px;
+                }}
+                QPushButton:hover {{
+                    color: {btn_hover.name()};
+                    border-color: {btn_hover.name()};
+                }}
+                QPushButton:pressed {{
+                    background: rgba({_white.red()},{_white.green()},{_white.blue()},0.05);
+                }}
+            """)
+
     # ── 构建 ──
 
     def _build_header(self) -> None:
@@ -108,14 +151,14 @@ class CyberLogViewer(CyberWidgetMixin, QFrame):
         hdr_layout.setSpacing(8)
 
         # 标题文字
-        title_lbl = QLabel(self._title)
-        title_font = title_lbl.font()
+        self._title_lbl = QLabel(self._title)
+        title_font = self._title_lbl.font()
         title_font.setPointSize(self.space("font.xs", 11))
         title_font.setBold(True)
-        title_lbl.setFont(title_font)
+        self._title_lbl.setFont(title_font)
         title_color = self.token_color("alias.text.disabled")
-        title_lbl.setStyleSheet(f"color: {title_color.name()}; background: transparent; border: none;")
-        hdr_layout.addWidget(title_lbl)
+        self._title_lbl.setStyleSheet(f"color: {title_color.name()}; background: transparent; border: none;")
+        hdr_layout.addWidget(self._title_lbl)
 
         # 日志计数
         self._count_label = QLabel("0 条")
@@ -125,13 +168,13 @@ class CyberLogViewer(CyberWidgetMixin, QFrame):
         hdr_layout.addStretch()
 
         # 清空按钮
-        clear_btn = QPushButton("清空")
-        clear_btn.setFixedSize(48, self.space("height.btn_sm", 28))
-        clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._clear_btn = QPushButton("清空")
+        self._clear_btn.setFixedSize(48, self.space("height.btn_sm", 28))
+        self._clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_text = self.token_color("alias.text.disabled")
         btn_hover = self.token_color("alias.accent.secondary")
         _white = self.token_color("text.primary")
-        clear_btn.setStyleSheet(f"""
+        self._clear_btn.setStyleSheet(f"""
             QPushButton {{
                 color: {btn_text.name()};
                 background: transparent;
@@ -148,8 +191,8 @@ class CyberLogViewer(CyberWidgetMixin, QFrame):
                 background: rgba({_white.red()},{_white.green()},{_white.blue()},0.05);
             }}
         """)
-        clear_btn.clicked.connect(self.clear)
-        hdr_layout.addWidget(clear_btn)
+        self._clear_btn.clicked.connect(self.clear)
+        hdr_layout.addWidget(self._clear_btn)
 
         self._layout.addWidget(header)
 

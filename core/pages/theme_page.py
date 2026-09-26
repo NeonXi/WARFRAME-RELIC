@@ -563,20 +563,20 @@ class ThemePage(PageBase):
             )
 
     def _on_preset_clicked(self, preset_name: str) -> None:
-        """预设主题按钮被点击：切换 token 预设 + 保存 + 刷新 UI。
+        """预设主题按钮被点击:统一走 ThemeManager.switch_preset。
 
-        Args:
-            preset_name: "cyberpunk" / "glassmorphism"
+        ThemeManager 内部: load_preset → save → emit theme_changed,
+        AppShell 订阅信号后自动 refresh_theme(所有页面 on_theme_change
+        重放 QSS 配方,滑块/复选框颜色一并刷新)。
         """
-        from core.tokens.manager import TokenManager
-        from core.services.ui_prefs import save_theme_preset
+        from core.theme_manager import ThemeManager
 
-        # 切换 token 预设
-        TokenManager.instance().load_preset(preset_name)
+        ok = ThemeManager.instance().switch_preset(preset_name)
+        if not ok:
+            print(f"[ThemePage] 切换预设失败: {preset_name}", flush=True)
+            return
+
         self._current_preset = preset_name
-
-        # 保存到 ui_prefs.json
-        save_theme_preset(preset_name)
 
         # 更新按钮选中状态
         if self._preset_cyber_btn is not None:
@@ -587,13 +587,6 @@ class ThemePage(PageBase):
             self._preset_glass_btn.variant = (
                 "solid" if preset_name == "glassmorphism" else "outlined"
             )
-
-        # 刷新整个 AppShell（内部会对所有页面调 on_theme_change,
-        # 重放 _style 登记的 callable QSS 配方,滑块/复选框颜色一并刷新）
-        if self._app_shell is not None:
-            self._app_shell.refresh_theme()
-
-        print(f"[ThemePage] 已切换到预设主题: {preset_name}", flush=True)
 
     def _slider_qss(self) -> str:
         """滑块 QSS 构建器(含 :disabled 灰显)。
