@@ -457,6 +457,9 @@ class ItemsPage(PageBase):
         scroll.setFrameStyle(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # ★ viewport 必须透明,否则会用调色板 base 色覆盖 container 的半透明背景
+        scroll.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        scroll.viewport().setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         label = QLabel()
         label.setTextFormat(Qt.TextFormat.RichText)
