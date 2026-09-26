@@ -218,15 +218,11 @@ class ItemsPage(PageBase):
         self._result_list.viewport().installEventFilter(self)
 
         list_bg = self._color("components.list_item.bg_normal")
-        list_bg_hover = self._color("components.list_item.bg_hover")
-        accent = self._color("accent.primary")
-
-        # 复杂 QSS(多选择器)走 raw 通道
-        # 选中态:从"整行蓝底"改为"蓝色边框"——避免和 tooltip 背景混色,
-        # 也让"已复制"反馈更克制(蓝边框就是视觉信号)
-        self._style(
-            self._result_list,
-            raw=(
+        # 复杂 QSS(多选择器)走 raw 通道;callable 形式支持主题切换重放
+        def _list_qss():
+            hover_bg = self._color("components.list_item.bg_hover")
+            ac = self._color("accent.primary")
+            return (
                 f"QListWidget {{"
                 f"  background-color: transparent;"
                 f"  border: none;"
@@ -242,14 +238,14 @@ class ItemsPage(PageBase):
                 f"}}"
                 f"QListWidget::item:selected {{"
                 f"  background-color: transparent;"  # 整行变蓝底 → 改为透明
-                f"  color: {accent};"
-                f"  border: 1px solid {accent};"     # 蓝色边框(单/双击后视觉提示)
+                f"  color: {ac};"
+                f"  border: 1px solid {ac};"     # 蓝色边框(单/双击后视觉提示)
                 f"}}"
                 f"QListWidget::item:hover {{"
-                f"  border: 1px solid {accent};"
+                f"  border: 1px solid {ac};"
                 f"}}"
-            ),
-        )
+            )
+        self._style(self._result_list, raw=_list_qss)
         self._result_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         result_layout.addWidget(self._result_list, stretch=1)
@@ -475,7 +471,7 @@ class ItemsPage(PageBase):
         self._style(
             container,
             background="components.card.bg",
-            raw=(
+            raw=lambda: (
                 f"border: 1px solid {self._color('border.subtle')};"
                 f"border-radius: {self._spacing('corner.sm', 6)}px;"
             ),
@@ -483,7 +479,7 @@ class ItemsPage(PageBase):
         self._style(
             label,
             transparent=True,
-            raw=(
+            raw=lambda: (
                 f"padding: {self._spacing('spacing.sm', 8)}px "
                 f"{self._spacing('spacing.lg', 16)}px;"
             ),

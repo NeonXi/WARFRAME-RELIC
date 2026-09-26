@@ -137,7 +137,17 @@ class PageBase(QWidget):
 
         顺序固定: color → background → font_size → font_weight → padding →
                   margin → border → transparent → raw
+
+        样式配方会保存到 widget 的 ``_cyber_style_props`` 属性,
+        ``on_theme_change()`` 时用当前 token 值重放,避免切换预设后
+        QSS 残留旧预设颜色(复选框/滑块等「颜色污染」的根因)。
         """
+        # 保存样式配方到 widget 实例,供主题切换时重放(无副作用)
+        widget.setProperty("_cyber_style_props", dict(props))
+        self._apply_style_props(widget, props)
+
+    def _apply_style_props(self, widget: QWidget, props: dict) -> None:
+        """实际构造并应用 QSS(on_theme_change 重放时复用)。"""
         # ── 颜色解析:token key 走 _color(),其他(hex/rgba)字面量直传 ──
         def _resolve_color(value) -> str:
             if value is None:
@@ -188,9 +198,10 @@ class PageBase(QWidget):
         # ── transparent ──
         if props.get("transparent"):
             parts.append("background: transparent; border: none;")
-        # ── raw CSS ──
+        # ── raw CSS(支持 str 或零参 callable;callable 在重放时重新求值) ──
         if "raw" in props:
-            parts.append(props["raw"])
+            raw_val = props["raw"]
+            parts.append(raw_val() if callable(raw_val) else raw_val)
 
         if parts:
             widget.setStyleSheet(" ".join(parts))
@@ -236,7 +247,16 @@ class PageBase(QWidget):
         pass
 
     def on_theme_change(self):
-        """主题变更时调用，用于刷新颜色等。"""
+        """主题变更时调用:重放所有通过 ``_style()`` 登记的样式配方。
+
+        QSS 是构建期内联的静态字符串,``widget.update()`` 只触发重绘
+        不会重新计算 QSS,因此切换预设后必须用新 token 值重建样式表。
+        对页面内所有子控件查找 ``_cyber_style_props`` 配方并重新应用。
+        """
+        for w in self.findChildren(QWidget):
+            props = w.property("_cyber_style_props")
+            if props:
+                self._apply_style_props(w, props)
         self.update()
 
     # ══════════════════════════════════

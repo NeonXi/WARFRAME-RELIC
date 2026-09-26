@@ -777,18 +777,20 @@ class CyberWidgetMixin:
         is_glass = self._is_glass_mode()
         if is_glass:
             # 玻璃模式下使用半透明背景，透出下层
+            # 注意:此填充叠在导航容器 QSS(nav.bg)之上,两者 alpha 会复合,
+            # 因此标签 alpha 必须偏低,否则浅色+浅色在亮壁纸上白成一片
             glass_bg = QColor(bg_color)
             # 降低饱和度，与页面控件协调（HSL 饱和度降低 40%）
             h, s, l = glass_bg.getHslF()[0], glass_bg.getHslF()[1], glass_bg.getHslF()[2]
             glass_bg.setHslF(h, max(s * 0.6, 0.05), l)  # 饱和度降低 40%，保留色相
             if selected and hover:
-                glass_bg.setAlphaF(0.65)
+                glass_bg.setAlphaF(0.60)
             elif selected:
-                glass_bg.setAlphaF(0.55)
-            elif hover:
                 glass_bg.setAlphaF(0.50)
+            elif hover:
+                glass_bg.setAlphaF(0.35)
             else:
-                glass_bg.setAlphaF(0.40)
+                glass_bg.setAlphaF(0.20)
             # 应用沉浸强度折减
             glass_bg.setAlphaF(self._cyber_immersive_alpha(glass_bg.alphaF()))
             painter.fillPath(main_path, QBrush(glass_bg))

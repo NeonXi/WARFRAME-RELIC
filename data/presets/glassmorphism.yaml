@@ -327,7 +327,7 @@ components:
 
   # ---- 导航栏 (Navigation) ----
   nav:
-    item_bg:         "rgba(240, 248, 255, 0.25)"    # 玻璃质感：25% 极淡冰蓝(接近白)
+    item_bg:         "rgba(209, 232, 248, 0.25)"    # 玻璃质感：25% 淡冰蓝
     item_text:       "@text.tertiary"
     item_hover_bg:   "@item_bg"
     item_hover_text: "@text.primary"
@@ -465,7 +465,7 @@ space:
     inner_pad:          16
     font_size:          11
     border:             "@accent.secondary"
-    bg:                 "rgba(240, 248, 255, 0.30)"   # 玻璃质感：30% 极淡冰蓝(接近白)
+    bg:                 "rgba(209, 232, 248, 0.25)"   # 玻璃质感：25% 淡冰蓝
     bar:                "@accent.secondary"
     bar_selected:       "@accent.secondary"
     text:               "@text.primary"

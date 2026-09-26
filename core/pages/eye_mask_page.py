@@ -446,34 +446,35 @@ class EyeMaskPage(PageBase):
         self._opacity_slider.setTickInterval(10)
         self._opacity_slider.valueChanged.connect(self._on_opacity_changed)
 
-        accent_secondary = self._color("accent.secondary")
-        track_h = self._spacing("xs", 4) + 2  # 6
-        handle_size = self._spacing("sm", 8) + 4  # 12
-        handle_radius = handle_size // 2
-        self._style(
-            self._opacity_slider,
-            raw=(
+        # 复杂 QSS(多选择器)走 raw 通道;callable 形式支持主题切换重放
+        def _slider_qss():
+            ac = self._color("accent.primary")
+            ac2 = self._color("accent.secondary")
+            t_h = self._spacing("xs", 4) + 2  # 6
+            h_size = self._spacing("sm", 8) + 4  # 12
+            h_radius = h_size // 2
+            return (
                 f"QSlider::groove:horizontal {{"
                 f"  background: {self._color('components.progress.track_bg')};"
-                f"  height: {track_h}px;"
-                f"  border-radius: {track_h // 2}px;"
+                f"  height: {t_h}px;"
+                f"  border-radius: {t_h // 2}px;"
                 f"}}"
                 f"QSlider::handle:horizontal {{"
-                f"  background: {accent};"
-                f"  width: {handle_size}px;"
-                f"  height: {handle_size}px;"
+                f"  background: {ac};"
+                f"  width: {h_size}px;"
+                f"  height: {h_size}px;"
                 f"  margin: -{self._spacing('xs', 4) + 1}px 0;"
-                f"  border-radius: {handle_radius}px;"
+                f"  border-radius: {h_radius}px;"
                 f"}}"
                 f"QSlider::handle:horizontal:hover {{"
-                f"  background: {accent_secondary};"
+                f"  background: {ac2};"
                 f"}}"
                 f"QSlider::sub-page:horizontal {{"
-                f"  background: {accent};"
-                f"  border-radius: {track_h // 2}px;"
+                f"  background: {ac};"
+                f"  border-radius: {t_h // 2}px;"
                 f"}}"
-            ),
-        )
+            )
+        self._style(self._opacity_slider, raw=_slider_qss)
         slider_row.addWidget(self._opacity_slider, stretch=1)
 
         self._opacity_label = QLabel(f"{self._opacity_pct}%")

@@ -112,19 +112,18 @@ class HotkeysPage(PageBase):
 
         # ── 冲突检测提示 ──
         tip_frame = QFrame()
-        _hk_accent = TokenManager.instance().get_qcolor("accent.primary")
-        # 复杂 QSS(rgba 透明叠加)走 raw 通道,在 f-string 之外解析
-        self._style(
-            tip_frame,
-            raw=(
+        # 复杂 QSS(rgba 透明叠加)走 raw 通道;callable 形式支持主题切换重放
+        def _tip_frame_qss():
+            a = TokenManager.instance().get_qcolor("accent.primary")
+            return (
                 f"QFrame {{"
-                f"  background-color: rgba({_hk_accent.red()}, {_hk_accent.green()}, {_hk_accent.blue()}, 0.06);"
-                f"  border: 1px solid rgba({_hk_accent.red()}, {_hk_accent.green()}, {_hk_accent.blue()}, 0.2);"
+                f"  background-color: rgba({a.red()}, {a.green()}, {a.blue()}, 0.06);"
+                f"  border: 1px solid rgba({a.red()}, {a.green()}, {a.blue()}, 0.2);"
                 f"  border-radius: {self._spacing('corner.xs', 4)}px;"
                 f"  padding: {self._spacing('spacing.sm', 8)}px;"
                 f"}}"
-            ),
-        )
+            )
+        self._style(tip_frame, raw=_tip_frame_qss)
         tip_layout = QHBoxLayout(tip_frame)
         tip_layout.setContentsMargins(12, 8, 12, 8)
 

@@ -162,34 +162,8 @@ class ThemePage(PageBase):
         self._opacity_slider.valueChanged.connect(self._on_opacity_changed)
         self._opacity_slider.installEventFilter(self._wheel_filter)
 
-        accent = self._color("accent.primary")
-        track_h = self._spacing("xs", 4) + 2  # 6
-        handle_size = self._spacing("sm", 8) + 4  # 12
-        handle_radius = handle_size // 2
-        self._style(
-            self._opacity_slider,
-            raw=(
-                f"QSlider::groove:horizontal {{"
-                f"  background: {self._color('components.progress.track_bg')};"
-                f"  height: {track_h}px;"
-                f"  border-radius: {track_h // 2}px;"
-                f"}}"
-                f"QSlider::handle:horizontal {{"
-                f"  background: {accent};"
-                f"  width: {handle_size}px;"
-                f"  height: {handle_size}px;"
-                f"  margin: -{self._spacing('xs', 4) + 1}px 0;"
-                f"  border-radius: {handle_radius}px;"
-                f"}}"
-                f"QSlider::handle:horizontal:hover {{"
-                f"  background: {self._color('accent.secondary')};"
-                f"}}"
-                f"QSlider::sub-page:horizontal {{"
-                f"  background: {accent};"
-                f"  border-radius: {track_h // 2}px;"
-                f"}}"
-            ),
-        )
+        # QSS 走 callable 注册,切换预设时由 on_theme_change 自动重放
+        self._style(self._opacity_slider, raw=self._slider_qss)
         slider_row.addWidget(self._opacity_slider, stretch=1)
 
         self._opacity_label = QLabel(f"{self._opacity_pct}%")
@@ -283,7 +257,7 @@ class ThemePage(PageBase):
         self._immersive_cb.setCursor(Qt.CursorShape.PointingHandCursor)
         self._style(
             self._immersive_cb,
-            raw=(
+            raw=lambda: (
                 f"QCheckBox {{"
                 f"  color: {self._color('text.primary')};"
                 f"  font-size: {self._font_size('sm_md', 13)}px;"
@@ -381,7 +355,7 @@ class ThemePage(PageBase):
         # 复杂 QSS(多选择器)走 raw 通道
         self._style(
             splash_cb,
-            raw=(
+            raw=lambda: (
                 f"QCheckBox {{"
                 f"  color: {self._color('text.primary')};"
                 f"  font-size: {self._font_size('sm_md', 13)}px;"
@@ -467,43 +441,8 @@ class ThemePage(PageBase):
         slider.setTickInterval(10)
         slider.installEventFilter(self._wheel_filter)
 
-        accent = self._color("accent.primary")
-        disabled = self._color("text.tertiary")
-        track_h = self._spacing("xs", 4) + 2       # 6
-        handle_size = self._spacing("sm", 8) + 4   # 12
-        handle_radius = handle_size // 2
-        self._style(
-            slider,
-            raw=(
-                f"QSlider::groove:horizontal {{"
-                f"  background: {self._color('components.progress.track_bg')};"
-                f"  height: {track_h}px;"
-                f"  border-radius: {track_h // 2}px;"
-                f"}}"
-                f"QSlider::handle:horizontal {{"
-                f"  background: {accent};"
-                f"  width: {handle_size}px;"
-                f"  height: {handle_size}px;"
-                f"  margin: -{self._spacing('xs', 4) + 1}px 0;"
-                f"  border-radius: {handle_radius}px;"
-                f"}}"
-                f"QSlider::handle:horizontal:hover {{"
-                f"  background: {self._color('accent.secondary')};"
-                f"}}"
-                f"QSlider::sub-page:horizontal {{"
-                f"  background: {accent};"
-                f"  border-radius: {track_h // 2}px;"
-                f"}}"
-                # 禁用态:整体灰显,让用户一眼感知「不可调节」
-                # (沉浸强度滑块在沉浸关闭时禁用)
-                f"QSlider::handle:horizontal:disabled {{"
-                f"  background: {disabled};"
-                f"}}"
-                f"QSlider::sub-page:horizontal:disabled {{"
-                f"  background: {disabled};"
-                f"}}"
-            ),
-        )
+        # QSS 走 callable 注册,切换预设时由 on_theme_change 自动重放
+        self._style(slider, raw=self._slider_qss)
         row.addWidget(slider, stretch=1)
 
         val_label = QLabel(str(int(initial)))
@@ -649,23 +588,26 @@ class ThemePage(PageBase):
                 "solid" if preset_name == "glassmorphism" else "outlined"
             )
 
-        # 刷新整个 AppShell（触发所有控件重绘）
+        # 刷新整个 AppShell（内部会对所有页面调 on_theme_change,
+        # 重放 _style 登记的 callable QSS 配方,滑块/复选框颜色一并刷新）
         if self._app_shell is not None:
             self._app_shell.refresh_theme()
 
-        # 刷新滑块样式（QSS 需要重新应用）
-        self._refresh_slider_styles()
-
         print(f"[ThemePage] 已切换到预设主题: {preset_name}", flush=True)
 
-    def _refresh_slider_styles(self) -> None:
-        """重新应用所有滑块的 QSS 样式（切换预设后颜色变化时调用）。"""
+    def _slider_qss(self) -> str:
+        """滑块 QSS 构建器(含 :disabled 灰显)。
+
+        以 callable 形式注册进 _style(raw=...),切换预设时由
+        PageBase.on_theme_change() 重放,无需手动刷新。
+        禁用态灰显用于沉浸强度滑块(沉浸关闭时禁用)。
+        """
         accent = self._color("accent.primary")
         disabled = self._color("text.tertiary")
         track_h = self._spacing("xs", 4) + 2
         handle_size = self._spacing("sm", 8) + 4
         handle_radius = handle_size // 2
-        qss = (
+        return (
             f"QSlider::groove:horizontal {{"
             f"  background: {self._color('components.progress.track_bg')};"
             f"  height: {track_h}px;"
@@ -692,24 +634,6 @@ class ThemePage(PageBase):
             f"  background: {disabled};"
             f"}}"
         )
-        for slider in (
-            self._opacity_slider,
-            self._bg_opacity_slider,
-            self._bg_blur_slider,
-            self._immersive_slider,
-        ):
-            if slider is not None:
-                self._style(slider, raw=qss)
-        # 数值标签颜色
-        for label in (
-            self._opacity_label,
-            self._bg_opacity_label,
-            self._bg_blur_label,
-            self._immersive_val_label,
-        ):
-            if label is not None:
-                self._style(label, color="accent.primary", font_size="md",
-                           font_weight="bold", raw="font-family: monospace;")
 
     def on_enter(self):
         """进入主题页:从 ui_prefs.json 读最新透明度,同步滑块位置。

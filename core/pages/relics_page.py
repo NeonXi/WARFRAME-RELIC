@@ -193,14 +193,12 @@ class RelicsPage(PageBase):
         self._result_list.itemEntered.connect(self._on_item_hovered)
         self._result_list.viewport().installEventFilter(self)
 
-        list_bg_hover = self._color("components.list_item.bg_hover")
-        accent = self._color("accent.primary")
-        _subtle_border = TokenManager.instance().get_qcolor("border.subtle")
-
-        # 复杂 QSS(多选择器 + rgba)走 raw 通道
-        self._style(
-            self._result_list,
-            raw=(
+        # 复杂 QSS(多选择器 + rgba)走 raw 通道;callable 形式支持主题切换重放
+        def _list_qss():
+            hover_bg = self._color("components.list_item.bg_hover")
+            ac = self._color("accent.primary")
+            sb = TokenManager.instance().get_qcolor("border.subtle")
+            return (
                 f"QListWidget {{"
                 f"  background-color: transparent;"
                 f"  border: none;"
@@ -210,18 +208,18 @@ class RelicsPage(PageBase):
                 f"QListWidget::item {{"
                 f"  color: {self._color('text.primary')};"
                 f"  padding: {self._spacing('spacing.sm', 10)}px {self._spacing('spacing.md', 12)}px;"
-                f"  border-bottom: 1px solid rgba({_subtle_border.red()}, {_subtle_border.green()}, {_subtle_border.blue()}, 0.05);"
+                f"  border-bottom: 1px solid rgba({sb.red()}, {sb.green()}, {sb.blue()}, 0.05);"
                 f"  border-radius: {self._spacing('corner.xs', 4)}px;"
                 f"}}"
                 f"QListWidget::item:selected {{"
-                f"  background-color: {list_bg_hover};"
-                f"  color: {accent};"
+                f"  background-color: {hover_bg};"
+                f"  color: {ac};"
                 f"}}"
                 f"QListWidget::item:hover {{"
-                f"  background-color: {list_bg_hover};"
+                f"  background-color: {hover_bg};"
                 f"}}"
-            ),
-        )
+            )
+        self._style(self._result_list, raw=_list_qss)
         self._result_list.setMinimumHeight(300)
         self._result_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 

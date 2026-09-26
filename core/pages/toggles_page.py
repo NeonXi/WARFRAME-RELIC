@@ -347,19 +347,18 @@ class TogglesPage(PageBase):
 
         # ── 提示 ──
         tip_frame = QFrame()
-        _tip_accent = TokenManager.instance().get_qcolor("accent.primary")
-        # 复杂 QSS(rgba 透明)走 raw 通道
-        self._style(
-            tip_frame,
-            raw=(
+        # 复杂 QSS(rgba 透明)走 raw 通道;callable 形式支持主题切换重放
+        def _tip_frame_qss():
+            a = TokenManager.instance().get_qcolor("accent.primary")
+            return (
                 f"QFrame {{"
-                f"  background-color: rgba({_tip_accent.red()}, {_tip_accent.green()}, {_tip_accent.blue()}, 0.06);"
-                f"  border: 1px solid rgba({_tip_accent.red()}, {_tip_accent.green()}, {_tip_accent.blue()}, 0.2);"
+                f"  background-color: rgba({a.red()}, {a.green()}, {a.blue()}, 0.06);"
+                f"  border: 1px solid rgba({a.red()}, {a.green()}, {a.blue()}, 0.2);"
                 f"  border-radius: 4px;"
                 f"  padding: {self._spacing('spacing.sm', 8)}px;"
                 f"}}"
-            ),
-        )
+            )
+        self._style(tip_frame, raw=_tip_frame_qss)
         tip_layout = QHBoxLayout(tip_frame)
         tip_layout.setContentsMargins(12, 8, 12, 8)
 
@@ -391,10 +390,10 @@ class TogglesPage(PageBase):
         cb = QCheckBox(label_text)
         cb.setChecked(bool(current_val))
         cb.setCursor(Qt.CursorShape.PointingHandCursor)
-        # 复杂 QSS(多选择器)走 raw 通道
+        # 复杂 QSS(多选择器)走 raw 通道;lambda 形式支持主题切换重放
         self._style(
             cb,
-            raw=(
+            raw=lambda: (
                 f"QCheckBox {{"
                 f"  color: {self._color('text.primary')};"
                 f"  font-size: {self._font_size('sm_md', 13)}px;"

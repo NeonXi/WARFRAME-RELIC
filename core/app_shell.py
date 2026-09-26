@@ -726,9 +726,9 @@ class AppShell(QMainWindow):
         for tab in self._nav_tabs:
             tab.update()
 
-        # 刷新所有页面
+        # 刷新所有页面(on_theme_change 会重放 _style 登记的 QSS 配方)
         for page in self._pages.values():
-            page.update()
+            page.on_theme_change()
 
         # 刷新背景层
         if self._bg_layer is not None:

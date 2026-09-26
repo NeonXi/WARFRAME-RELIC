@@ -213,29 +213,28 @@ class StatusPage(PageBase):
         self._progress_bar.setValue(0)
         self._progress_bar.setVisible(False)  # 默认隐藏
         self._progress_bar.setFixedHeight(22)
-        accent = self._color("accent.primary")
-        _pb_bg = self._color("bg.raised")
-        _pb_end = self._color("semantic.warning")
-        corner_xs = self._spacing('corner.xs', 4)
-        # 复杂 QSS(多选择器 + 渐变)走 raw 通道
-        self._style(
-            self._progress_bar,
-            raw=(
+        # 复杂 QSS(多选择器 + 渐变)走 raw 通道;callable 形式支持主题切换重放
+        def _pb_qss():
+            ac = self._color("accent.primary")
+            pb_bg = self._color("bg.raised")
+            pb_end = self._color("semantic.warning")
+            c_xs = self._spacing('corner.xs', 4)
+            return (
                 f"QProgressBar {{"
-                f"  background-color: {_pb_bg};"
-                f"  border: 1px solid {accent}40;"
-                f"  border-radius: {corner_xs}px;"
+                f"  background-color: {pb_bg};"
+                f"  border: 1px solid {ac}40;"
+                f"  border-radius: {c_xs}px;"
                 f"  text-align: center;"
-                f"  color: {accent};"
+                f"  color: {ac};"
                 f"  font-size: {self._font_size('sm', 11)}px;"
                 f"}}"
                 f"QProgressBar::chunk {{"
                 f"  background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
-                f"    stop:0 {accent}, stop:1 {_pb_end});"
-                f"  border-radius: {corner_xs}px;"
+                f"    stop:0 {ac}, stop:1 {pb_end});"
+                f"  border-radius: {c_xs}px;"
                 f"}}"
-            ),
-        )
+            )
+        self._style(self._progress_bar, raw=_pb_qss)
         log_layout.addWidget(self._progress_bar)
 
         layout.addWidget(log_card)
