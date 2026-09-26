@@ -221,35 +221,51 @@ class CyberButton(CyberWidgetMixin, QPushButton):
                 text_color = self.token_color(f"semantic.state.disabled.text")
 
         # ── 填充背景 ──
-        if v == "ghost":
-            bg_color.setAlphaF(0)
-        elif v == "outlined":
-            bg_color.setAlphaF(0.06 if state == "normal" else 0.12)
+        is_glass = self._is_glass_mode()
+        if is_glass:
+            # 玻璃拟态：半透明填充 + 细边框 + 微弱高光
+            glass_bg = QColor(bg_color)
+            if v == "ghost":
+                glass_bg.setAlphaF(0)
+            elif v == "outlined":
+                glass_bg.setAlphaF(0.08 if state == "normal" else 0.15)
+            # solid 直接用 token 中的透明度（如 rgba(168,199,250,0.15)）
+            self._draw_glass_bg(
+                painter, QRectF(self.rect()), corner,
+                glass_bg, border_color, border_width=1
+            )
+            # 玻璃模式下不画外发光，边框已在 _draw_glass_bg 中处理
+        else:
+            # 赛博朋克风格：纯色填充 + 外发光
+            if v == "ghost":
+                bg_color.setAlphaF(0)
+            elif v == "outlined":
+                bg_color.setAlphaF(0.06 if state == "normal" else 0.12)
 
-        painter.fillPath(path, QBrush(bg_color))
+            painter.fillPath(path, QBrush(bg_color))
 
-        # ── 外发光（仅 solid / outlined）──
-        if glow_opacity_map and state in glow_opacity_map:
-            glow_color = self.token_color("accent.secondary")
-            glow_color.setAlphaF(glow_opacity_map[state])
-            painter.setPen(QPen(glow_color, 1))
-            painter.drawPath(path)
+            # ── 外发光（仅 solid / outlined）──
+            if glow_opacity_map and state in glow_opacity_map:
+                glow_color = self.token_color("accent.secondary")
+                glow_color.setAlphaF(glow_opacity_map[state])
+                painter.setPen(QPen(glow_color, 1))
+                painter.drawPath(path)
 
-        # ── 边框 ──
-        if v in ("outlined", "ghost", "semantic.danger"):
-            pen_width = 1.5 if state == "focused" else 1.0
-            pen_color = border_color
-            if state == "focused":
-                pen_color = self.token_color("border.focus")
-            painter.setPen(QPen(pen_color, pen_width))
-            painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.drawPath(path)
-        elif v == "solid":
-            # solid 默认无边框，focused / pressed 时画细边框
-            if state in ("focused", "pressed"):
-                painter.setPen(QPen(border_color, 1.2))
+            # ── 边框 ──
+            if v in ("outlined", "ghost", "semantic.danger"):
+                pen_width = 1.5 if state == "focused" else 1.0
+                pen_color = border_color
+                if state == "focused":
+                    pen_color = self.token_color("border.focus")
+                painter.setPen(QPen(pen_color, pen_width))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawPath(path)
+            elif v == "solid":
+                # solid 默认无边框，focused / pressed 时画细边框
+                if state in ("focused", "pressed"):
+                    painter.setPen(QPen(border_color, 1.2))
+                    painter.setBrush(Qt.BrushStyle.NoBrush)
+                    painter.drawPath(path)
 
         # ── 文字（交给 Qt 原生渲染）──
         painter.setPen(text_color)

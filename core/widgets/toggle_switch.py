@@ -125,36 +125,51 @@ class CyberToggleSwitch(CyberWidgetMixin, QPushButton):
         path = self._chamfered_path(QRectF(0, 0, w, h), corner, mode="br")
 
         # ── 填充 ──
-        fill = QColor(accent)
-        if is_checked:
-            if state == "pressed":
-                fill = fill.darker(130)
-            elif state == "hover":
-                fill = fill.lighter(110)
-        else:
-            if state == "hover":
-                fill.setAlpha(20)       # 关闭态 hover：微弱显示
-            elif state == "pressed":
-                fill.setAlpha(45)
+        is_glass = self._is_glass_mode()
+        if is_glass:
+            # 玻璃拟态：半透明填充 + 细边框 + 微弱高光
+            if is_checked:
+                # 开启态：主色半透明
+                glass_bg = QColor(accent)
+                glass_bg.setAlphaF(0.35)
+                border_color = QColor(accent)
             else:
-                fill.setAlpha(0)
+                # 关闭态：背景色半透明
+                glass_bg = self.token_color("components.toggle.track_bg")
+                border_color = self.token_color("components.toggle.track_border")
+            self._draw_glass_bg(painter, QRectF(0, 0, w, h), corner, glass_bg, border_color)
+        else:
+            # 赛博朋克风格：纯色填充 + 外发光 + 边框
+            fill = QColor(accent)
+            if is_checked:
+                if state == "pressed":
+                    fill = fill.darker(130)
+                elif state == "hover":
+                    fill = fill.lighter(110)
+            else:
+                if state == "hover":
+                    fill.setAlpha(20)       # 关闭态 hover：微弱显示
+                elif state == "pressed":
+                    fill.setAlpha(45)
+                else:
+                    fill.setAlpha(0)
 
-        painter.fillPath(path, QBrush(fill))
+            painter.fillPath(path, QBrush(fill))
 
-        # ── 外发光（hover / pressed）──
-        if state in ("hover", "pressed"):
-            glow = QColor(accent)
-            glow.setAlphaF(0.15 if state == "hover" else 0.22)
-            painter.setPen(QPen(glow, 2))
+            # ── 外发光（hover / pressed）──
+            if state in ("hover", "pressed"):
+                glow = QColor(accent)
+                glow.setAlphaF(0.15 if state == "hover" else 0.22)
+                painter.setPen(QPen(glow, 2))
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawPath(path)
+
+            # ── 边框 ──
+            pen_color = QColor(accent)
+            pen_width = 1.5
+            painter.setPen(QPen(pen_color, pen_width))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawPath(path)
-
-        # ── 边框 ──
-        pen_color = QColor(accent)
-        pen_width = 1.5
-        painter.setPen(QPen(pen_color, pen_width))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawPath(path)
 
         # ── 文字 ──
         text_color = self.token_color("surface.base") if is_checked else accent

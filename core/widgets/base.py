@@ -479,6 +479,107 @@ class CyberWidgetMixin:
         self._cache_rect_size = size
         return path
 
+    # ══════════════════════════════════
+    #  玻璃效果绘制（毛玻璃风格）
+    # ══════════════════════════════════
+
+    def _is_glass_mode(self) -> bool:
+        """检查当前是否为玻璃拟态模式。"""
+        from core.tokens.manager import TokenManager
+        return TokenManager.instance()._current_preset == "glassmorphism"
+
+    def _draw_glass_bg(
+        self,
+        painter: "QPainter",
+        rect: "QRectF",
+        corner: float,
+        bg_color: "QColor",
+        border_color: "QColor",
+        border_width: int = 1,
+    ) -> None:
+        """绘制玻璃质感背景：半透明填充 + 细边框 + 微弱高光。
+
+        在玻璃拟态模式下替代 _draw_chamfered_bg 使用。
+        控件需设置 WA_TranslucentBackground 才能透出下层背景。
+
+        Args:
+            painter: 已初始化的 QPainter（需开启 Antialiasing）
+            rect: 绘制区域
+            corner: 切角大小
+            bg_color: 背景色（QColor，建议带 alpha）
+            border_color: 边框色（QColor）
+            border_width: 边框宽度（默认 1）
+        """
+        from PySide6.QtGui import QBrush, QPen, QLinearGradient, QColor
+
+        path = self._chamfered_path(rect, corner)
+        painter.setClipPath(path)
+
+        # 1. 半透明填充（透出下层模糊背景）
+        painter.fillPath(path, QBrush(bg_color))
+
+        # 2. 微弱顶部高光（模拟玻璃反光）
+        highlight = QLinearGradient(0, 0, 0, rect.height() * 0.3)
+        highlight.setColorAt(0, QColor(255, 255, 255, 20))  # 微弱白色
+        highlight.setColorAt(1, QColor(255, 255, 255, 0))
+        painter.fillPath(path, QBrush(highlight))
+
+        # 3. 细边框
+        if border_color.alpha() > 0:
+            painter.setPen(QPen(border_color, border_width))
+            painter.drawPath(path)
+
+    def _draw_glass_bg_with_noise(
+        self,
+        painter: "QPainter",
+        rect: "QRectF",
+        corner: float,
+        bg_color: "QColor",
+        border_color: "QColor",
+        noise_opacity: float = 0.03,
+    ) -> None:
+        """绘制带噪点的毛玻璃背景：半透明填充 + 噪点纹理 + 细边框。
+
+        Args:
+            painter: 已初始化的 QPainter（需开启 Antialiasing）
+            rect: 绘制区域
+            corner: 切角大小
+            bg_color: 背景色（QColor，建议带 alpha）
+            border_color: 边框色（QColor）
+            noise_opacity: 噪点透明度 0-1（默认 0.03）
+        """
+        from PySide6.QtGui import QBrush, QPen, QLinearGradient, QColor
+        import random
+
+        path = self._chamfered_path(rect, corner)
+        painter.setClipPath(path)
+
+        # 1. 半透明填充
+        painter.fillPath(path, QBrush(bg_color))
+
+        # 2. 噪点纹理（模拟玻璃颗粒感）
+        if noise_opacity > 0:
+            noise_color = QColor(255, 255, 255, int(noise_opacity * 255))
+            painter.setPen(QPen(noise_color, 1))
+            # 在区域内随机画噪点（限制数量避免性能问题）
+            noise_count = int(rect.width() * rect.height() * 0.0005)
+            noise_count = min(noise_count, 200)  # 上限 200 个
+            for _ in range(noise_count):
+                x = random.randint(int(rect.left()), int(rect.right()))
+                y = random.randint(int(rect.top()), int(rect.bottom()))
+                painter.drawPoint(x, y)
+
+        # 3. 微弱顶部高光
+        highlight = QLinearGradient(0, 0, 0, rect.height() * 0.3)
+        highlight.setColorAt(0, QColor(255, 255, 255, 25))
+        highlight.setColorAt(1, QColor(255, 255, 255, 0))
+        painter.fillPath(path, QBrush(highlight))
+
+        # 4. 细边框
+        if border_color.alpha() > 0:
+            painter.setPen(QPen(border_color, 1))
+            painter.drawPath(path)
+
     def _invalidate_path_cache(self) -> None:
         """使切角路径缓存失效（在 resizeEvent 中调用）。"""
         self._path_cache = None

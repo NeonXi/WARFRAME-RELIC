@@ -106,30 +106,42 @@ class CyberLineEdit(CyberWidgetMixin, QLineEdit):
 
         # 背景(沉浸黑色模式时覆写 RGB,折减 alpha)
         state = self._state
-        if state == "focused":
-            # focused 态优先用 semantic.state.focused.bg,token 缺失时回退到 input.bg
-            try:
-                base_c = self.token_color("semantic.state.focused.bg")
-            except Exception:
-                base_c = self.token_color("components.input.bg")
-            bg_color = self._cyber_immersive_resolve_bg_qcolor(base_c, 0.95)
-        elif state == "hover":
-            bg_color = self._cyber_immersive_resolve_bg("components.input.bg", 0.85)
+        is_glass = self._is_glass_mode()
+
+        if is_glass:
+            # 玻璃拟态：半透明填充 + 细边框 + 微弱高光
+            bg_color = self.token_color("components.input.bg")
+            if state == "focused":
+                border_color = self.token_color("components.input.border_focus")
+            else:
+                border_color = self.token_color("components.input.border")
+            self._draw_glass_bg(painter, self.rect(), corner, bg_color, border_color)
         else:
-            bg_color = self._cyber_immersive_resolve_bg("components.input.bg", 0.75)
+            # 赛博朋克风格：纯色填充 + 边框
+            if state == "focused":
+                # focused 态优先用 semantic.state.focused.bg,token 缺失时回退到 input.bg
+                try:
+                    base_c = self.token_color("semantic.state.focused.bg")
+                except Exception:
+                    base_c = self.token_color("components.input.bg")
+                bg_color = self._cyber_immersive_resolve_bg_qcolor(base_c, 0.95)
+            elif state == "hover":
+                bg_color = self._cyber_immersive_resolve_bg("components.input.bg", 0.85)
+            else:
+                bg_color = self._cyber_immersive_resolve_bg("components.input.bg", 0.75)
 
-        painter.fillPath(path, QBrush(bg_color))
+            painter.fillPath(path, QBrush(bg_color))
 
-        # 边框
-        if state == "focused":
-            border_color = self.token_color("components.input.border_focus")
-            pen_width = 1.5
-        else:
-            border_color = self.token_color("components.input.border")
-            pen_width = 1.0
+            # 边框
+            if state == "focused":
+                border_color = self.token_color("components.input.border_focus")
+                pen_width = 1.5
+            else:
+                border_color = self.token_color("components.input.border")
+                pen_width = 1.0
 
-        painter.setPen(QPen(border_color, pen_width))
-        painter.drawPath(path)
+            painter.setPen(QPen(border_color, pen_width))
+            painter.drawPath(path)
 
         # 让 Qt 渲染文字（光标、选中、占位符等）
         super().paintEvent(event)

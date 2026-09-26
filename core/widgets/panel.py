@@ -131,19 +131,27 @@ class CyberPanel(CyberWidgetMixin, QFrame):
         corner = self.space("components.panel.corner_size", 12)
         path = self._chamfered_path(self.rect(), corner, mode="all")
 
-        # 背景
-        opacity = float(self.token("components.panel.bg_opacity") or "0.92")
-        bg_color = self._cyber_immersive_resolve_bg("components.panel.bg", opacity)
-        painter.fillPath(path, QBrush(bg_color))
+        is_glass = self._is_glass_mode()
+        if is_glass:
+            # 玻璃拟态：半透明填充 + 细边框 + 微弱高光
+            bg_color = self.token_color("components.panel.bg")
+            border_color = self.token_color("components.panel.border")
+            self._draw_glass_bg(painter, self.rect(), corner, bg_color, border_color)
+            # 玻璃模式下不画角落装饰线（简洁风格）
+        else:
+            # 赛博朋克风格：纯色填充 + 外发光 + 角落装饰
+            opacity = float(self.token("components.panel.bg_opacity") or "0.92")
+            bg_color = self._cyber_immersive_resolve_bg("components.panel.bg", opacity)
+            painter.fillPath(path, QBrush(bg_color))
 
-        # 边框
-        border_color = self.token_color("components.panel.border")
-        border_width = float(self.token("components.panel.border_width") or "1")
-        painter.setPen(QPen(border_color, border_width))
-        painter.drawPath(path)
+            # 边框
+            border_color = self.token_color("components.panel.border")
+            border_width = float(self.token("components.panel.border_width") or "1")
+            painter.setPen(QPen(border_color, border_width))
+            painter.drawPath(path)
 
-        # 角落装饰线
-        self._draw_corner_decor(painter, path)
+            # 角落装饰线
+            self._draw_corner_decor(painter, path)
 
         super().paintEvent(event)
 

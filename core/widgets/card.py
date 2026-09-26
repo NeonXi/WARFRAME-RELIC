@@ -151,20 +151,31 @@ class CyberCard(CyberWidgetMixin, QFrame):
 
         # 背景
         state = self._state
+        is_glass = self._is_glass_mode()
 
-        if state == "hover" and self._clickable:
-            hover_color = self._cyber_immersive_resolve_bg(
-                "components.list_item.bg_hover", 0.85
-            )
-            painter.fillPath(path, QBrush(hover_color))
+        if is_glass:
+            # 玻璃拟态：半透明填充 + 细边框 + 微弱高光
+            bg_color = self.token_color("components.card.bg")
+            if state == "hover" and self._clickable:
+                # hover 时稍微加深
+                bg_color.setAlphaF(min(bg_color.alphaF() * 1.3, 0.6))
+            border_color = self.token_color("components.card.border")
+            self._draw_glass_bg(painter, self.rect(), corner, bg_color, border_color)
         else:
-            bg_color = self._cyber_immersive_resolve_bg("components.card.bg", 0.85)
-            painter.fillPath(path, QBrush(bg_color))
+            # 赛博朋克风格：纯色填充 + 边框
+            if state == "hover" and self._clickable:
+                hover_color = self._cyber_immersive_resolve_bg(
+                    "components.list_item.bg_hover", 0.85
+                )
+                painter.fillPath(path, QBrush(hover_color))
+            else:
+                bg_color = self._cyber_immersive_resolve_bg("components.card.bg", 0.85)
+                painter.fillPath(path, QBrush(bg_color))
 
-        # 边框
-        border_color = self.token_color("components.card.border")
-        border_width = float(self.token("components.card.border_width") or "1")
-        painter.setPen(QPen(border_color, border_width))
-        painter.drawPath(path)
+            # 边框
+            border_color = self.token_color("components.card.border")
+            border_width = float(self.token("components.card.border_width") or "1")
+            painter.setPen(QPen(border_color, border_width))
+            painter.drawPath(path)
 
         super().paintEvent(event)
