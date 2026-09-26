@@ -198,7 +198,7 @@ class AboutPage(PageBase):
         ver_layout.setSpacing(8)
 
         ver_layout.addLayout(
-            self._make_info_row("版本号", "v3.2.1 (Build 20250609)"))
+            self._make_info_row("版本号", "v4.0.0 (Build 20260927)"))
         ver_layout.addLayout(
             self._make_info_row("UI 架构", "Token 主题系统 + ThemeManager 信号驱动"))
         ver_layout.addLayout(
