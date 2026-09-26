@@ -200,9 +200,9 @@ class AboutPage(PageBase):
         ver_layout.addLayout(
             self._make_info_row("版本号", "v3.2.1 (Build 20250609)"))
         ver_layout.addLayout(
-            self._make_info_row("UI 框架", "Cyberpunk UI v1.0"))
+            self._make_info_row("UI 架构", "Token 主题系统 + ThemeManager 信号驱动"))
         ver_layout.addLayout(
-            self._make_info_row("运行环境", "Python 3.12 / PySide6"))
+            self._make_info_row("运行环境", "Python 3.12 · PySide6 6.11 · Qt6"))
         ver_layout.addLayout(
             self._make_info_row("数据来源", "Warframe 官方 API + 社区贡献"))
 
@@ -224,7 +224,7 @@ class AboutPage(PageBase):
             "• 掉落来源追踪（任务、赏金、突击等）\n"
             "• 游戏内截图 OCR 自动识别遗物\n"
             "• 拼音搜索\n"
-            "• 赛博朋克风格可换肤 UI"
+            "• Token 驱动的多主题可换肤 UI（赛博朋克 / 玻璃拟态）"
         )
         desc.setStyleSheet(
             f"color: {text_secondary}; "
@@ -247,37 +247,67 @@ class AboutPage(PageBase):
 
         accent_secondary = self._color("accent.secondary")
 
-        tech_items = [
-            ("PySide6", "Qt6 Python 绑定，UI 渲染引擎"),
-            ("dxcam", "基于 DirectX DDA 的高性能屏幕捕获"),
-            ("rapidocr", "ONNX Runtime 驱动的 OCR 识别引擎"),
-            ("Token 系统", "YAML 驱动的赛博朋克主题配置"),
-            ("自定义组件", "CyberButton / CyberCard / SplashScreen 等"),
-            ("内嵌字体", "Iceberg / Monoton / Alibaba PuHuiTi"),
+        # 技术栈按类别组织：每类一个标题行 + 若干条目
+        tech_groups = [
+            ("UI / 框架", [
+                ("PySide6 6.11", "Qt6 Python 绑定，UI 渲染引擎"),
+                ("ThemeManager", "统一主题切换架构，信号驱动全应用刷新"),
+                ("Token 系统", "YAML 驱动的多主题配置（赛博朋克 / 玻璃拟态）"),
+                ("自定义控件", "CyberButton / CyberCard / CyberLineEdit 等，\n继承原生 Qt + Mixin 自绘"),
+                ("内嵌字体", "Iceberg / Monoton / 阿里巴巴普惠体"),
+            ]),
+            ("OCR / 图像", [
+                ("RapidOCR", "ONNX Runtime 驱动的 OCR 识别引擎"),
+                ("OpenCV", "图像预处理与裁剪"),
+                ("dxcam", "基于 DirectX DDA 的高性能屏幕捕获"),
+                ("Pillow", "图像加载与缩放"),
+                ("NumPy", "矩阵运算与像素数据处理"),
+            ]),
+            ("数据 / 搜索", [
+                ("SQLite", "本地数据库（遗物 / 物品 / 市场价格）"),
+                ("pypinyin", "中文拼音模糊搜索"),
+                ("PyYAML", "主题 Token 解析引擎"),
+                ("requests", "Warframe 官方 API / 社区市场数据拉取"),
+            ]),
+            ("系统 / 打包", [
+                ("Win32 API", "全局热键钩子、悬浮窗透明穿透（ctypes）"),
+                ("PyInstaller", "EXE 一键打包分发（--windowed / --noupx）"),
+            ]),
         ]
 
-        for tech_name, tech_desc in tech_items:
-            trow = QHBoxLayout()
-            trow.setSpacing(8)
-
-            tname = QLabel(tech_name)
-            tname.setStyleSheet(
-                f"color: {accent_secondary}; "
+        for group_name, items in tech_groups:
+            # 类别标题行
+            group_lbl = QLabel(group_name)
+            group_lbl.setStyleSheet(
+                f"color: {accent}; "
                 f"font-size: {self._font_size('sm', 12)}px; "
-                f"font-weight: bold;"
+                f"font-weight: bold; "
+                f"padding: 8px 0 2px 0;"
             )
-            tname.setFixedWidth(100)
-            trow.addWidget(tname)
+            tech_layout.addWidget(group_lbl)
 
-            tdesc = QLabel(tech_desc)
-            tdesc.setStyleSheet(
-                f"color: {text_tertiary}; "
-                f"font-size: {self._font_size('xs', 11)}px;"
-            )
-            tdesc.setWordWrap(True)
-            trow.addWidget(tdesc, stretch=1)
+            for tech_name, tech_desc in items:
+                trow = QHBoxLayout()
+                trow.setSpacing(8)
 
-            tech_layout.addLayout(trow)
+                tname = QLabel(tech_name)
+                tname.setStyleSheet(
+                    f"color: {accent_secondary}; "
+                    f"font-size: {self._font_size('sm', 12)}px; "
+                    f"font-weight: bold;"
+                )
+                tname.setFixedWidth(116)
+                trow.addWidget(tname)
+
+                tdesc = QLabel(tech_desc)
+                tdesc.setStyleSheet(
+                    f"color: {text_tertiary}; "
+                    f"font-size: {self._font_size('xs', 11)}px;"
+                )
+                tdesc.setWordWrap(True)
+                trow.addWidget(tdesc, stretch=1)
+
+                tech_layout.addLayout(trow)
 
         layout.addWidget(tech_card)
 
