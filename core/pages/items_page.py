@@ -446,7 +446,8 @@ class ItemsPage(PageBase):
         container.setWindowFlags(
             Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint
         )
-        container.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        # 不设 WA_TranslucentBackground: 透明窗口下 QSS background-color 不渲染,
+        # 导致 tooltip 完全透明无法阅读。改用不透明背景色保证可读性。
 
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -457,9 +458,6 @@ class ItemsPage(PageBase):
         scroll.setFrameStyle(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        # ★ viewport 必须透明,否则会用调色板 base 色覆盖 container 的半透明背景
-        scroll.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        scroll.viewport().setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         label = QLabel()
         label.setTextFormat(Qt.TextFormat.RichText)
@@ -470,17 +468,19 @@ class ItemsPage(PageBase):
         scroll.setWidget(label)
         layout.addWidget(scroll)
 
-        # 整体背景:用 bg.raised 主题色 + 90% 不透明度,保证阅读性
-        # (不用 components.card.bg:glassmorphism 下仅 25% 不透明,文字难辨)
-        _bg_c = TokenManager.instance().get_qcolor("bg.raised")
+        # 整体背景:bg.base(比 raised 更深更暗,不刺眼)纯色不透明
+        _bg_hex = self._color("bg.base")
         self._style(
             container,
             raw=lambda: (
-                f"background-color: rgba({_bg_c.red()},{_bg_c.green()},{_bg_c.blue()},230);"
+                f"background-color: {_bg_hex};"
                 f"border: 1px solid {self._color('border.subtle')};"
                 f"border-radius: {self._spacing('corner.sm', 6)}px;"
             ),
         )
+        # scroll viewport 同步背景色,避免滚动时出现色块
+        scroll.setStyleSheet(f"background-color: {_bg_hex};")
+        scroll.viewport().setStyleSheet(f"background-color: {_bg_hex};")
         self._style(
             label,
             transparent=True,
