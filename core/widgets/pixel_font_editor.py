@@ -117,6 +117,33 @@ def _tc(key: str) -> str:
 _TM = TokenManager.instance()
 
 
+def _card_bg_resolved() -> QColor:
+    """编辑器框体底色: components.card.bg + 沉浸覆写/折减(与 CyberCard 一致)。
+
+    - 玻璃拟态: token 自带 25% alpha,resolve_current_alpha 保留并叠加沉浸折减;
+    - 赛博朋克: 纯色 token,与 CyberCard 相同的 0.85 基准 alpha + 沉浸折减。
+
+    注意: 必须用 tm.get() 取字符串交给 QColor 解析(#AARRGGBB,alpha 在前);
+    get_qcolor() 走 resolve_color 只取 (R,G,B),8 位 hex 会被误读且丢失 alpha。
+    """
+    from core.widgets import immersive
+    try:
+        c = QColor(str(_TM.get("components.card.bg")))
+        if not c.isValid():
+            raise ValueError
+    except Exception:
+        c = QColor(_tc("bg.base") or "#0F0F19")
+    if _TM.current_preset == "glassmorphism":
+        return immersive.resolve_current_alpha(c)
+    return immersive.resolve_qcolor(c, 0.85)
+
+
+def _card_bg_qss() -> str:
+    """_card_bg_resolved 的 rgba() 字符串形式(QSS 可靠解析)。"""
+    c = _card_bg_resolved()
+    return f"rgba({c.red()}, {c.green()}, {c.blue()}, {c.alphaF():.2f})"
+
+
 # ── 像素字体固定尺寸(所有字母统一) ──────────────────────────
 # 26 字母 ASCII art 全部统一为 14 行字形 + 6 行装饰 = 20 行,
 # 列宽统一 16。统一尺寸让开屏画面字符间距一致,不能调整。
@@ -152,7 +179,11 @@ class _GridCell(QFrame):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         on_color = QColor(_tc("accent.secondary") or "#00C8FF")
-        off_color = QColor(_tc("bg.raised") or "#1E1E2D")
+        # 灭格:半透明底色(随沉浸强度折减),与卡片框体融合
+        from core.widgets import immersive
+        off_color = immersive.resolve_qcolor(
+            QColor(_tc("bg.raised") or "#1E1E2D"), 0.55
+        )
         border_color = QColor(_tc("border.subtle") or "#3C3C50")
         painter.fillRect(self.rect(), on_color if self._on else off_color)
         painter.setPen(QPen(border_color, 1))
@@ -235,8 +266,8 @@ class _PreviewLabel(QLabel):
         painter = QPainter(self)
         painter.setRenderHints(QPainter.RenderHint(0), False)
 
-        # 背景
-        painter.fillRect(self.rect(), QColor(_tc("bg.base") or "#0F0F19"))
+        # 背景:半透明卡片底色(随沉浸强度折减),与编辑器框体一致
+        painter.fillRect(self.rect(), _card_bg_resolved())
 
         # 画 splash_text(整段字串自适应居中)
         if self._text and self._data:
@@ -539,13 +570,7 @@ class PixelFontEditorPanel(QFrame):
 
     def _on_theme_changed(self, _preset_name: str) -> None:
         """主题切换:重建所有含 token 颜色的 QSS。"""
-        # frame 边框/底色
-        for w in self.findChildren(QFrame):
-            obj = w.objectName()
-            # grid_frame / preview_group 无 objectName,用样式特征判断
-            ss = w.styleSheet()
-            if "background-color:" in ss and "border:" in ss:
-                w.setStyleSheet(self._frame_style())
+        self._refresh_frame_styles()
         # info_label / preview_title 等文字色
         for lbl in self.findChildren(QLabel):
             ss = lbl.styleSheet()
@@ -568,6 +593,32 @@ class PixelFontEditorPanel(QFrame):
                     )
         # 字母按钮 + 位置按钮:按当前选中态重建
         self._refresh_button_styles()
+        # 格子/预览是自绘(paintEvent 实时读 token),需手动触发重绘
+        self._repaint_canvas()
+
+    def cyber_refresh_immersive_style(self) -> None:
+        """沉浸开关/强度/底色变化时由 ImmersiveStyleController 调用。
+
+        框体 QSS 的 alpha 随沉浸强度折减,必须重建 setStyleSheet;
+        格子与预览在 paintEvent 实时读沉浸状态,update() 触发重绘即可。
+        """
+        self._refresh_frame_styles()
+        self._repaint_canvas()
+
+    def _refresh_frame_styles(self) -> None:
+        """重建 grid_frame / preview_group 的框体 QSS(含卡片底色)。"""
+        for w in self.findChildren(QFrame):
+            # grid_frame / preview_group 无 objectName,用样式特征判断
+            ss = w.styleSheet()
+            if "background-color:" in ss and "border:" in ss:
+                w.setStyleSheet(self._frame_style())
+
+    def _repaint_canvas(self) -> None:
+        """触发像素格 + 预览区重绘(自绘控件不会随 QSS 重建自动刷新)。"""
+        for cell in self._cells:
+            cell.update()
+        if self._preview_label is not None:
+            self._preview_label.update()
 
     def _refresh_button_styles(self) -> None:
         """重建字母按钮和位置按钮的 QSS(按当前选中态)。"""
@@ -685,7 +736,7 @@ class PixelFontEditorPanel(QFrame):
     def _frame_style(self) -> str:
         return (
             f"QFrame {{"
-            f"  background-color: {_tc('bg.base')};"
+            f"  background-color: {_card_bg_qss()};"
             f"  border: 1px solid {_tc('border.default')};"
             f"  border-radius: {_TM.space('corner.xs', 4)}px;"
             f"}}"
