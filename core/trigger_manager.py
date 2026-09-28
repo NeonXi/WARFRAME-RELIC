@@ -125,10 +125,18 @@ _WM_QUIT = 0x0012
 
 
 class _MSLLHOOKSTRUCT(ctypes.Structure):
+    """WH_MOUSE_LL 低级鼠标钩子结构(微软官方定义)。
+
+    注意: 与普通 WH_MOUSE 钩子的 MOUSEHOOKSTRUCT 不同,低级钩子
+    没有 hwnd/wHitTestCode 字段,而是 mouseData/flags/time。
+    对 WM_XBUTTONDOWN/UP,mouseData 的高 16 位是 XBUTTON 编号
+    (1=XBUTTON1,2=XBUTTON2),低 16 位保留。
+    """
     _fields_ = [
         ("pt", wintypes.POINT),
-        ("hwnd", wintypes.HWND),
-        ("wHitTestCode", wintypes.UINT),
+        ("mouseData", wintypes.DWORD),
+        ("flags", wintypes.DWORD),
+        ("time", wintypes.DWORD),
         ("dwExtraInfo", ctypes.POINTER(ctypes.c_ulong)),
     ]
 
@@ -226,17 +234,20 @@ class _MouseHookThread:
 
     def _hook_proc(self, nCode, wParam, lParam):
         if nCode >= 0:
-            # wParam 低 16 位是消息类型;侧键时高 16 位是 XBUTTON 编号
-            msg = wParam & 0xFFFF
-            if msg in _WM_BTN_MAP:
-                button, event_type = _WM_BTN_MAP[msg]
-            elif msg in (_WM_XBUTTONDOWN, _WM_XBUTTONUP):
-                # 侧键:高 16 位为 XBUTTON 编号(1=后退,2=前进)
-                xbtn = (wParam >> 16) & 0xFFFF
+            # wParam 就是消息标识符(低级钩子不含 XButton 信息)
+            if wParam in _WM_BTN_MAP:
+                button, event_type = _WM_BTN_MAP[wParam]
+            elif wParam in (_WM_XBUTTONDOWN, _WM_XBUTTONUP):
+                # 侧键:XButton 编号在 lParam->MSLLHOOKSTRUCT.mouseData
+                # 的高 16 位(1=XBUTTON1/鼠标4键,2=XBUTTON2/鼠标5键)
+                ms = ctypes.cast(
+                    lParam, ctypes.POINTER(_MSLLHOOKSTRUCT)
+                ).contents
+                xbtn = (ms.mouseData >> 16) & 0xFFFF
                 button = _XBUTTON_TO_NAME.get(xbtn)
                 if button is None:
                     return _user32.CallNextHookEx(None, nCode, wParam, lParam)
-                event_type = "press" if msg == _WM_XBUTTONDOWN else "release"
+                event_type = "press" if wParam == _WM_XBUTTONDOWN else "release"
             else:
                 return _user32.CallNextHookEx(None, nCode, wParam, lParam)
             evt = _MouseEvent(event_type, button)

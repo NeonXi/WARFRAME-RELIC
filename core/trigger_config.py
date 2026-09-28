@@ -52,10 +52,10 @@ MOUSE_BUTTONS = [
     ("right_release", "右键 抬起"),
     ("middle_press",  "中键 按下"),
     ("middle_release","中键 抬起"),
-    ("side1_press",   "侧键1 按下"),   # XBUTTON1,通常为浏览器后退
-    ("side1_release", "侧键1 抬起"),
-    ("side2_press",   "侧键2 按下"),   # XBUTTON2,通常为浏览器前进
-    ("side2_release", "侧键2 抬起"),
+    ("side1_press",   "鼠标4键 按下"),   # XBUTTON1(侧键1,常为浏览器后退)
+    ("side1_release", "鼠标4键 抬起"),
+    ("side2_press",   "鼠标5键 按下"),   # XBUTTON2(侧键2,常为浏览器前进)
+    ("side2_release", "鼠标5键 抬起"),
 ]
 
 # 简写映射：旧配置兼容（"left"/"right"/"middle" → 默认为按下）
