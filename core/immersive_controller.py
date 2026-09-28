@@ -101,11 +101,19 @@ class ImmersiveStyleController:
 
         if immersive:
             c = QColor(nav_bg_str)
-            if color_mode == "black":
+            # 玻璃拟态: 跳过纯黑 RGB 覆写 —— glass 的 surface.overlay 是亮蓝
+            # #1976D2,覆写后与页面卡片的冰蓝半透明材质割裂;沉浸仅折减 alpha。
+            # 注意折减方式是「乘」而非「覆盖」:nav.bg 自带 0.25 alpha,
+            # 乘算后强度 0 时与页面卡片同透明度,100 时全透
+            if color_mode == "black" and not is_glass:
                 # 纯黑底色计算收敛在 core/widgets/immersive.py
                 from core.widgets import immersive as _immersive
                 c = _immersive.black_rgb(self._tm)
-            c.setAlphaF(1.0 - strength / 100.0)
+                c.setAlphaF(1.0 - strength / 100.0)
+            elif is_glass:
+                c.setAlphaF(c.alphaF() * (1.0 - strength / 100.0))
+            else:
+                c.setAlphaF(1.0 - strength / 100.0)
             nav_bg_str = c.name(QColor.NameFormat.HexArgb)
         # 转换为 QSS 兼容的 rgba() 格式（QSS 不支持 #AARRGGBB）
         c = QColor(nav_bg_str)
