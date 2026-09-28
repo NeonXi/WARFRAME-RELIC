@@ -46,12 +46,16 @@ TRIGGER_INPUT_LABELS = {
 }
 
 MOUSE_BUTTONS = [
-    ("left_press",   "左键 按下"),
-    ("left_release", "左键 抬起"),
-    ("right_press",  "右键 按下"),
-    ("right_release","右键 抬起"),
-    ("middle_press", "中键 按下"),
+    ("left_press",    "左键 按下"),
+    ("left_release",  "左键 抬起"),
+    ("right_press",   "右键 按下"),
+    ("right_release", "右键 抬起"),
+    ("middle_press",  "中键 按下"),
     ("middle_release","中键 抬起"),
+    ("side1_press",   "侧键1 按下"),   # XBUTTON1,通常为浏览器后退
+    ("side1_release", "侧键1 抬起"),
+    ("side2_press",   "侧键2 按下"),   # XBUTTON2,通常为浏览器前进
+    ("side2_release", "侧键2 抬起"),
 ]
 
 # 简写映射：旧配置兼容（"left"/"right"/"middle" → 默认为按下）
@@ -59,6 +63,8 @@ MOUSE_BUTTON_LEGACY_MAP = {
     "left":   "left_press",
     "right":  "right_press",
     "middle": "middle_press",
+    "side1":  "side1_press",
+    "side2":  "side2_press",
 }
 
 MOUSE_BUTTON_VALUES = [b[0] for b in MOUSE_BUTTONS]

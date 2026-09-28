@@ -142,6 +142,8 @@ _HOOKPROC = ctypes.CFUNCTYPE(
 )
 
 # 消息 → (按钮名, 事件类型)  支持 press/release 精确匹配
+# XButton(侧键) 的消息在 _hook_proc 里单独处理,因为同一 WM_XBUTTONDOWN/UP
+# 对应两个按钮,需读 wParam 高位区分 XBUTTON1(1)/XBUTTON2(2)
 _WM_BTN_MAP = {
     _WM_LBUTTONDOWN: ("left",   "press"),
     _WM_LBUTTONUP:   ("left",   "release"),
@@ -150,6 +152,9 @@ _WM_BTN_MAP = {
     _WM_MBUTTONDOWN: ("middle", "press"),
     _WM_MBUTTONUP:   ("middle", "release"),
 }
+
+# XButton 编号 → 内部按钮名 (与 trigger_config.MOUSE_BUTTONS 的 side1/side2 对齐)
+_XBUTTON_TO_NAME = {1: "side1", 2: "side2"}
 
 
 class _MouseEvent:
@@ -220,8 +225,20 @@ class _MouseHookThread:
         self._cb_ref = None
 
     def _hook_proc(self, nCode, wParam, lParam):
-        if nCode >= 0 and wParam in _WM_BTN_MAP:
-            button, event_type = _WM_BTN_MAP[wParam]
+        if nCode >= 0:
+            # wParam 低 16 位是消息类型;侧键时高 16 位是 XBUTTON 编号
+            msg = wParam & 0xFFFF
+            if msg in _WM_BTN_MAP:
+                button, event_type = _WM_BTN_MAP[msg]
+            elif msg in (_WM_XBUTTONDOWN, _WM_XBUTTONUP):
+                # 侧键:高 16 位为 XBUTTON 编号(1=后退,2=前进)
+                xbtn = (wParam >> 16) & 0xFFFF
+                button = _XBUTTON_TO_NAME.get(xbtn)
+                if button is None:
+                    return _user32.CallNextHookEx(None, nCode, wParam, lParam)
+                event_type = "press" if msg == _WM_XBUTTONDOWN else "release"
+            else:
+                return _user32.CallNextHookEx(None, nCode, wParam, lParam)
             evt = _MouseEvent(event_type, button)
             try:
                 self._callback(evt)
@@ -436,16 +453,22 @@ from core.trigger_config import (
 
 _MOUSE_BUTTON_MAP = {
     # 新格式：press/release 精确匹配
-    "left_press":   "left_press",
-    "left_release": "left_release",
-    "right_press":  "right_press",
-    "right_release": "right_release",
-    "middle_press": "middle_press",
+    "left_press":     "left_press",
+    "left_release":   "left_release",
+    "right_press":    "right_press",
+    "right_release":  "right_release",
+    "middle_press":   "middle_press",
     "middle_release": "middle_release",
+    "side1_press":    "side1_press",
+    "side1_release":  "side1_release",
+    "side2_press":    "side2_press",
+    "side2_release":  "side2_release",
     # 旧格式兼容（已废弃，保留防止崩溃）
     "left":   "left",
     "right":  "right",
     "middle": "middle",
+    "side1":  "side1",
+    "side2":  "side2",
 }
 
 # 反向映射（用于从 hook 事件匹配用户配置）
