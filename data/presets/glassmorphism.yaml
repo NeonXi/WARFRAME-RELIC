@@ -50,7 +50,7 @@ raw:
   surface:
     base:    "#0D47A1"    # 最底层背景（深蓝）
     raised:  "#1565C0"    # 浮起面（卡片/弹窗）
-    overlay: "#1976D2"    # 遮罩层（半透明使用）
+    overlay: "#0A1428"    # 遮罩层 / 沉浸「纯黑」底色（近黑深蓝）
 
   # ---- 业务语义色（游戏相关）----
   game:
@@ -102,7 +102,7 @@ alias:
   bg:
     base:     "@surface.base"       # #0D47A1
     raised:   "@surface.raised"     # #1565C0
-    overlay:  "@surface.overlay"    # #1976D2
+    overlay:  "@surface.overlay"    # #0A1428
 
   # 渐变色（鲜亮冰蓝过渡）
   gradient:

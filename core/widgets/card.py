@@ -169,6 +169,13 @@ class CyberCard(CyberWidgetMixin, QFrame):
             if state == "hover" and self._clickable:
                 # hover 时稍微加深
                 bg_color.setAlphaF(min(bg_color.alphaF() * 1.3, 0.6))
+            # 沉浸模式参与底色切换(主题色=沿用 token 色相,纯黑=覆写 RGB)。
+            # 基准 alpha 用固定 0.5:token 的 0.25 是装饰性半透明,直接乘算
+            # 折减后(强度 60 时仅 ~9%)色彩模式切换感知不到;0.5 在低强度
+            # 时呈磨砂质感、高强度时仍可淡出,与赛博卡片 0.85 基准同思路
+            from core.widgets import immersive as _immersive
+            if _immersive.is_active():
+                bg_color = _immersive.resolve_qcolor(bg_color, 0.5)
             border_color = self.token_color("components.card.border")
             self._draw_glass_bg(painter, self.rect(), corner, bg_color, border_color)
         else:

@@ -175,13 +175,9 @@ class CyberWidgetMixin:
         """
         from PySide6.QtGui import QColor
         from core.widgets import immersive
-        color = QColor(fallback_str)
-        # 玻璃拟态: 导航标签与页面卡片保持同一冰蓝半透明材质,
-        # 跳过纯黑 RGB 覆写(glass 的 surface.overlay 是亮蓝 #1976D2,
-        # 覆写后 nav 与卡片风格割裂);沉浸 alpha 折减仍由调用方正常生效
-        if self._is_glass_mode():
-            return color
-        return immersive.override_rgb(color)
+        # 玻璃拟态的 surface.overlay 已是近黑深蓝,纯黑覆写在两种预设下
+        # 语义都正确,无需按预设跳过(主题色模式 override=None 不覆写)
+        return immersive.override_rgb(QColor(fallback_str))
 
     def _cyber_immersive_resolve_token_str(
         self,
