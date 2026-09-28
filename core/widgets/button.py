@@ -232,7 +232,8 @@ class CyberButton(CyberWidgetMixin, QPushButton):
             # solid 直接用 token 中的透明度（如 rgba(168,199,250,0.15)）
             self._draw_glass_bg(
                 painter, QRectF(self.rect()), corner,
-                glass_bg, border_color, border_width=1
+                glass_bg, border_color, border_width=1,
+                override_bg=False,  # 按钮是强调色,不随沉浸底色覆写
             )
             # 玻璃模式下不画外发光，边框已在 _draw_glass_bg 中处理
         else:

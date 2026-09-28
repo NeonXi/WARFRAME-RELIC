@@ -137,7 +137,10 @@ class CyberToggleSwitch(CyberWidgetMixin, QPushButton):
                 # 关闭态：背景色半透明
                 glass_bg = self.token_color("components.toggle.track_bg")
                 border_color = self.token_color("components.toggle.track_border")
-            self._draw_glass_bg(painter, QRectF(0, 0, w, h), corner, glass_bg, border_color)
+            self._draw_glass_bg(
+                painter, QRectF(0, 0, w, h), corner, glass_bg, border_color,
+                override_bg=not is_checked,  # 开启态是 accent 强调色,不覆写
+            )
         else:
             # 赛博朋克风格：纯色填充 + 外发光 + 边框
             fill = QColor(accent)

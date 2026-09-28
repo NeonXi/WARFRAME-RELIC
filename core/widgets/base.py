@@ -535,6 +535,7 @@ class CyberWidgetMixin:
         bg_color: "QColor",
         border_color: "QColor",
         border_width: int = 1,
+        override_bg: bool = True,
     ) -> None:
         """绘制玻璃质感背景：半透明填充 + 细边框 + 微弱高光。
 
@@ -548,8 +549,19 @@ class CyberWidgetMixin:
             bg_color: 背景色（QColor，建议带 alpha）
             border_color: 边框色（QColor）
             border_width: 边框宽度（默认 1）
+            override_bg: 是否在沉浸模式下覆写 bg_color 的 RGB。
+                         True=背景色(随沉浸底色切换);False=强调色
+                         (如开关开启态的 accent,不应被覆写)
         """
         from PySide6.QtGui import QBrush, QPen, QLinearGradient, QColor
+        from core.widgets import immersive as _immersive
+
+        # 沉浸底色覆写:override_rgb 只改 RGB 不改 alpha(纯黑/主题色),
+        # 让玻璃背景色相随沉浸模式切换;强调色(override_bg=False)跳过
+        if override_bg and _immersive.is_active():
+            orig_alpha = bg_color.alphaF()
+            bg_color = _immersive.override_rgb(bg_color)
+            bg_color.setAlphaF(orig_alpha)
 
         # 应用沉浸强度：折减 alpha
         if self._cyber_immersive:
