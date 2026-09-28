@@ -130,6 +130,19 @@ alias:
     transient: "@brand.magenta"
     syndicate: "@brand.yellow"
 
+  # ---- 半透明表面色阶（跨组件共享，集中维护，避免同一 rgba 被多处手写）----
+  # 基色：E3F2FD = accent.primary 系；B3E5FC = accent.secondary 系
+  # components 用 "@surface_fill.xxx" 引用；改透明度只需在此改一处
+  surface_fill:
+    control:     "rgba(227, 242, 253, 0.35)"  # 控件基础表面（实心按钮/输入框/开关/进度轨道/复选/单选）
+    control_hi:  "rgba(227, 242, 253, 0.40)"  # 稍强表面（下拉/滑块轨道/滚动条滑块）
+    faint:       "rgba(227, 242, 253, 0.20)"  # 微弱表面（ghost hover/滚动条轨道）
+    low:         "rgba(227, 242, 253, 0.30)"  # 低亮表面（ghost pressed/面板）
+    strong:      "rgba(227, 242, 253, 0.55)"  # 强表面（实心按钮按下/对话框底）
+    edge:        "rgba(227, 242, 253, 0.60)"  # 亮边缘（实心按钮 hover 边框/滚动块 hover）
+    accent_edge: "rgba(179, 229, 252, 0.40)"  # secondary 边缘（描边按钮边框/对话框边框）
+    accent_soft: "rgba(179, 229, 252, 0.25)"  # secondary 微弱表面（描边 hover/列表项 hover）
+
 # ═══════════════════════════════════════════════════
 #  Layer 3: 语义令牌（Semantic Tokens）
 #  面向全应用的全局语义角色，任何组件都可以引用。
@@ -176,7 +189,7 @@ components:
   # ---- 按钮 (CyberButton) ----
   button:
     solid:
-      fill:         "rgba(227, 242, 253, 0.35)"    # 玻璃质感：35% 极浅冰蓝
+      fill:         "@surface_fill.control"    # 玻璃质感：35% 极浅冰蓝
       text:         "@text.primary"
       border:       "rgba(227, 242, 253, 0.50)"    # 细边框
       corner_size:  8
@@ -185,7 +198,7 @@ components:
     outlined:
       fill:         "transparent"
       text:         "@accent.secondary"
-      border:       "rgba(179, 229, 252, 0.40)"    # 细边框
+      border:       "@surface_fill.accent_edge"    # 细边框
       corner_size:  8
       glow_size:    0
       glow_opacity: 0
@@ -196,15 +209,15 @@ components:
       corner_size:  8
       glow_size:    0
     ghost_hover:
-      fill:         "rgba(227, 242, 253, 0.20)"
+      fill:         "@surface_fill.faint"
       text:         "@text.primary"
       border:       "@border.subtle"
     solid_hover:
       fill:         "rgba(227, 242, 253, 0.45)"    # hover 稍深
       text:         "@text.primary"
-      border:       "rgba(227, 242, 253, 0.60)"
+      border:       "@surface_fill.edge"
     solid_pressed:
-      fill:         "rgba(227, 242, 253, 0.55)"    # pressed 更深
+      fill:         "@surface_fill.strong"    # pressed 更深
       text:         "@text.primary"
       border:       "rgba(227, 242, 253, 0.70)"
     outlined_pressed:
@@ -212,17 +225,17 @@ components:
       text:         "@accent.secondary"
       border:       "rgba(179, 229, 252, 0.50)"
     outlined_hover:
-      fill:         "rgba(179, 229, 252, 0.25)"
+      fill:         "@surface_fill.accent_soft"
       text:         "@accent.secondary"
       border:       "rgba(179, 229, 252, 0.45)"
     ghost_pressed:
-      fill:         "rgba(227, 242, 253, 0.30)"
+      fill:         "@surface_fill.low"
       text:         "@text.primary"
       border:       "@border.default"
 
   # ---- 面板容器 (CyberPanel) ----
   panel:
-    bg:            "rgba(227, 242, 253, 0.30)"      # 玻璃质感：30% 极浅冰蓝
+    bg:            "@surface_fill.low"      # 玻璃质感：30% 极浅冰蓝
     bg_opacity:    0.30
     border:        "@border.default"
     border_width:  1
@@ -241,9 +254,9 @@ components:
 
   # ---- 对话框 (CyberDialog) ----
   dialog:
-    bg:             "rgba(227, 242, 253, 0.55)"     # 稍深，确保可读性
+    bg:             "@surface_fill.strong"     # 稍深，确保可读性
     bg_opacity:     0.55
-    border:         "rgba(179, 229, 252, 0.40)"    # 细边框
+    border:         "@surface_fill.accent_edge"    # 细边框
     border_width:   1
     corner_size:    14
     shadow_blur:    40                            # 柔和阴影
@@ -262,7 +275,7 @@ components:
 
   # ---- 输入框 (CyberLineEdit) ----
   input:
-    bg:            "rgba(227, 242, 253, 0.35)"      # 稍深，突出输入区
+    bg:            "@surface_fill.control"      # 稍深，突出输入区
     text:          "@text.primary"
     placeholder:   "@text.tertiary"
     border:        "@border.default"
@@ -271,7 +284,7 @@ components:
 
   # ---- 下拉框 (CyberComboBox) ----
   combo_box:
-    bg:            "rgba(227, 242, 253, 0.40)"      # 玻璃质感：40% 极浅冰蓝
+    bg:            "@surface_fill.control_hi"      # 玻璃质感：40% 极浅冰蓝
     text:          "@text.primary"
     border:        "@border.default"
     border_focus:  "@accent.primary"
@@ -279,7 +292,7 @@ components:
 
   # ---- 开关 (CyberToggleSwitch) ----
   toggle:
-    track_bg:      "rgba(227, 242, 253, 0.35)"      # 玻璃质感：35% 极浅冰蓝
+    track_bg:      "@surface_fill.control"      # 玻璃质感：35% 极浅冰蓝
     track_border:  "@border.default"
     thumb_bg:      "@accent.primary"
     thumb_border:  "@accent.secondary"
@@ -287,7 +300,7 @@ components:
 
   # ---- 滑块 (CyberSlider) ----
   slider:
-    track_bg:      "rgba(227, 242, 253, 0.40)"      # 稍深，突出滑块区
+    track_bg:      "@surface_fill.control_hi"      # 稍深，突出滑块区
     track_border:  "@border.subtle"
     fill:          "@accent.primary"
     thumb_bg:      "@accent.secondary"
@@ -296,7 +309,7 @@ components:
 
   # ---- 进度条 (CyberProgressBar) ----
   progress:
-    track_bg:      "rgba(227, 242, 253, 0.35)"
+    track_bg:      "@surface_fill.control"
     track_border:  "@border.subtle"
     fill_gradient: "@gradient.progress"
     corner_size:   4
@@ -305,7 +318,7 @@ components:
   # ---- 列表项 (CyberListItem) ----
   list_item:
     bg_normal:     "transparent"
-    bg_hover:      "rgba(179, 229, 252, 0.25)"
+    bg_hover:      "@surface_fill.accent_soft"
     bg_selected:   "@accent.primary"
     text_normal:   "@text.primary"
     text_selected: "@bg.base"
@@ -337,15 +350,15 @@ components:
 
   # ---- 滚动条 (ScrollBar) ----
   scrollbar:
-    track_bg:      "rgba(227, 242, 253, 0.20)"      # 玻璃质感：20% 极浅冰蓝
-    thumb_bg:      "rgba(227, 242, 253, 0.40)"     # 玻璃质感：40% 极浅冰蓝
-    thumb_hover:   "rgba(227, 242, 253, 0.60)"     # hover 稍深
+    track_bg:      "@surface_fill.faint"      # 玻璃质感：20% 极浅冰蓝
+    thumb_bg:      "@surface_fill.control_hi"     # 玻璃质感：40% 极浅冰蓝
+    thumb_hover:   "@surface_fill.edge"     # hover 稍深
     thumb_pressed: "rgba(227, 242, 253, 0.80)"     # pressed 更深
     corner_size:   4
 
   # ---- 复选框 (CheckBox) ----
   checkbox:
-    bg:            "rgba(227, 242, 253, 0.35)"      # 玻璃质感：35% 极浅冰蓝
+    bg:            "@surface_fill.control"      # 玻璃质感：35% 极浅冰蓝
     border:        "@border.default"
     border_focus:  "@accent.primary"
     check_color:   "@accent.primary"
@@ -353,7 +366,7 @@ components:
 
   # ---- 单选框 (RadioButton) ----
   radio:
-    bg:            "rgba(227, 242, 253, 0.35)"      # 玻璃质感：35% 极浅冰蓝
+    bg:            "@surface_fill.control"      # 玻璃质感：35% 极浅冰蓝
     border:        "@border.default"
     border_focus:  "@accent.primary"
     check_color:   "@accent.primary"
