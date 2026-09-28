@@ -46,7 +46,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QStackedWidget, QScrollArea, QFrame, QLabel, QApplication,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QPropertyAnimation, QEasingCurve, QTimer
 from PySide6.QtGui import QFont, QPainter
 
 from core.tokens.manager import TokenManager
@@ -703,12 +703,76 @@ class AppShell(QMainWindow):
     # ══════════════════════════════════
 
     def _on_theme_changed(self, preset_name: str) -> None:
-        """ThemeManager.theme_changed 信号槽:触发全局主题刷新。
+        """ThemeManager.theme_changed 信号槽:交叉溶解过渡到新主题。
 
         所有页面的 on_theme_change 会重放 _style 登记的 QSS 配方;
         自绘控件(CyberWidgetMixin)在下次 paintEvent 自动用新 token。
         """
+        self._begin_theme_crossfade()
         self.refresh_theme()
+        self._play_theme_crossfade()
+
+    # ── 主题切换交叉溶解(旧界面截图渐隐,新主题溶入) ──
+    _THEME_FADE_MS = 260
+
+    def _begin_theme_crossfade(self) -> None:
+        """抓取当前(旧主题)窗口截图,盖在整个界面上作为渐隐遮罩。
+
+        时序: theme_changed 发出时 token 已加载但 UI 尚未重绘,
+        此时 grab() 捕获的仍是旧主题外观;随后 refresh_theme() 在
+        遮罩底下瞬间完成重绘风暴,用户全程只看到这张静态截图。
+        """
+        self._cancel_theme_crossfade()  # 连点切换:先清掉上一场动画
+        if not self.isVisible():
+            return
+        from core.widgets.fade_overlay import FadeOverlay
+        overlay = FadeOverlay(self.grab(), self)
+        overlay.setGeometry(self.rect())
+        overlay.show()
+        overlay.raise_()
+        self._theme_fade_overlay = overlay
+
+    def _play_theme_crossfade(self) -> None:
+        """旧截图渐隐 → 新主题界面溶入,结束后销毁遮罩。"""
+        overlay = getattr(self, "_theme_fade_overlay", None)
+        if overlay is None:
+            return
+        anim = QPropertyAnimation(overlay, b"opacity", self)
+        anim.setDuration(self._THEME_FADE_MS)
+        anim.setStartValue(1.0)
+        anim.setEndValue(0.0)
+        anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        anim.finished.connect(self._cancel_theme_crossfade)
+        anim.start(QPropertyAnimation.DeletionPolicy.KeepWhenStopped)
+        self._theme_fade_anim = anim
+        # 兜底: 动画定时器在繁忙事件循环里可能被饿死(实测 currentTime 停滞),
+        # 超时强制收尾;只对本场动画生效,不打断后来开始的新一场
+        QTimer.singleShot(
+            self._THEME_FADE_MS + 200,
+            lambda a=anim: self._cancel_theme_crossfade(a),
+        )
+
+    def _cancel_theme_crossfade(self, only_anim=None) -> None:
+        """销毁渐隐遮罩(动画自然结束回调 / 新一场切换打断上一场)。
+
+        Args:
+            only_anim: 仅当当前动画是该对象时才取消(兜底定时器专用,
+                       防止误杀后来开始的新一场);None 表示无条件取消。
+
+        注意: stop() 不会触发 finished 信号,打断旧动画不会递归重入。
+        """
+        anim = getattr(self, "_theme_fade_anim", None)
+        if only_anim is not None and anim is not only_anim:
+            return
+        anim = getattr(self, "_theme_fade_anim", None)
+        if anim is not None:
+            anim.stop()
+            self._theme_fade_anim = None
+        overlay = getattr(self, "_theme_fade_overlay", None)
+        if overlay is not None:
+            overlay.hide()
+            overlay.deleteLater()
+            self._theme_fade_overlay = None
 
     def refresh_theme(self) -> None:
         """刷新整个应用的主题（切换 token 预设后调用）。
