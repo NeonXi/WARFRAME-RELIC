@@ -1,13 +1,23 @@
 # WARFRAME-RELIC UI 框架设计方案 (Design System Specification)
 
-> 版本: 1.0 | 日期: 2026-06-09
+> 版本: 2.0 | 更新: 2026-09-29
 > 目标: 基于科幻切角（Chamfered）风格，从零构建可维护、可扩展的 UI 框架
+>
+> **阅读指引**：
+> - 想理解**设计理念与 Token 分层** → 阅读全文（§1 起）
+> - 想理解**当前代码里主题如何加载/切换/刷新** → 直接看
+>   [§1.6 当前主题运行时架构（权威实现说明）](#16-当前主题运行时架构权威实现说明)
+> - 想**动手改一个颜色** → 看
+>   [§1.7 改色实战手册](#17-改色实战手册)，预设文件头部也有「改色速查索引」
+> - 文档矛盾时以 `.trae/rules/开发规范.md` 为准，其次本文档
 
 ---
 
 ## 目录
 
 1. [设计原则](#1-设计原则)
+   - **1.6 [当前主题运行时架构（权威实现说明）](#16-当前主题运行时架构权威实现说明)** ← 主题加载/切换/刷新
+   - **1.7 [改色实战手册](#17-改色实战手册)** ← 动手改颜色先看这里
 2. [颜色系统 — Design Token 架构](#2-颜色系统--design-token-架构)
 3. [空间与尺寸系统 — Design Space](#3-空间与尺寸系统--design-space)
 4. [模块深度层级 — UI 架构分层](#4-模块深度层级--ui-架构分层)
@@ -172,7 +182,220 @@
 
 ---
 
+## 1.6 当前主题运行时架构（权威实现说明）
+
+> 本节描述**当前代码中的真实实现**（2026-09 落地），是主题加载、切换、刷新的权威说明。
+> 与下方 §2 起的"设计理念"章节冲突时，以本节和源码为准。
+
+### 1.6.1 核心组件与文件清单
+
+| 文件 | 层 | 职责 |
+|---|---|---|
+| [core/theme_manager.py](file:///d:/MyProgram/WARFRAME-RELIC/core/theme_manager.py) | L1 桥接（QObject 单例） | **唯一主题切换入口**；加载预设、持久化、发射 `theme_changed` |
+| [core/tokens/manager.py](file:///d:/MyProgram/WARFRAME-RELIC/core/tokens/manager.py) | L-Infrastructure | `TokenManager` 单例；`load_preset()` 读 YAML、`get()/get_qcolor()` 取 token |
+| [core/tokens/resolver.py](file:///d:/MyProgram/WARFRAME-RELIC/core/tokens/resolver.py) | L-Infrastructure | `TokenResolver`；递归解析 `@引用` 与颜色函数，结果缓存 |
+| [core/tokens/color_utils.py](file:///d:/MyProgram/WARFRAME-RELIC/core/tokens/color_utils.py) | L-Infrastructure | 颜色解析/转换：hex/rgba、`lighten/darken/opacity/mix` |
+| [data/presets/cyberpunk.yaml](file:///d:/MyProgram/WARFRAME-RELIC/data/presets/cyberpunk.yaml) | 预设 | 赛博朋克全部颜色/尺寸/文案 |
+| [data/presets/glassmorphism.yaml](file:///d:/MyProgram/WARFRAME-RELIC/data/presets/glassmorphism.yaml) | 预设 | 玻璃拟态全部颜色/尺寸/文案 |
+| [core/app_shell.py](file:///d:/MyProgram/WARFRAME-RELIC/core/app_shell.py) | L0 外壳 | 订阅 `theme_changed`，驱动整窗刷新与切换渐隐动画 |
+| [core/pages/base_page.py](file:///d:/MyProgram/WARFRAME-RELIC/core/pages/base_page.py) | L2 基类 | `_style()` 登记 QSS 配方，`on_theme_change()` 重放 |
+| [core/widgets/base.py](file:///d:/MyProgram/WARFRAME-RELIC/core/widgets/base.py) | L4/L5 基类 | `CyberWidgetMixin`：取色、沉浸解析、主题订阅钩子 |
+| [core/widgets/immersive.py](file:///d:/MyProgram/WARFRAME-RELIC/core/widgets/immersive.py) | L4 纯函数 | 沉浸底色覆写/alpha 折减的唯一实现 |
+| [core/immersive_controller.py](file:///d:/MyProgram/WARFRAME-RELIC/core/immersive_controller.py) | L1 桥接 | 沉浸开关/强度/底色的编排与广播 |
+| [core/services/ui_prefs.py](file:///d:/MyProgram/WARFRAME-RELIC/core/services/ui_prefs.py) | L-Service | 持久化用户偏好（含 `theme_preset` 键） |
+| [core/widgets/fade_overlay.py](file:///d:/MyProgram/WARFRAME-RELIC/core/widgets/fade_overlay.py) | L4 | 主题切换时整窗交叉溶解遮罩 |
+
+### 1.6.2 启动流程
+
+```
+AppShell.__init__
+  └─ _setup_window()
+       └─ ThemeManager.instance().apply_on_startup()
+            ├─ 从 ui_prefs.json 读 "theme_preset"（core/services/ui_prefs.py）
+            ├─ TokenManager.instance().load_preset(保存的预设名)
+            │     └─ 读 data/presets/<name>.yaml → 新建 TokenResolver
+            └─ 读取失败/文件缺失 → 回退 "cyberpunk"
+```
+
+- 启动时**不发射** `theme_changed`（界面首次构建本就用当前 token，无需重放）。
+- `TokenResolver` 只持有当前预设数据，**无跨预设 fallback**，缓存随预设切换清空。
+
+### 1.6.3 运行时切换流程（唯一入口）
+
+```
+ThemePage._on_preset_clicked(name)
+  └─ ThemeManager.instance().switch_preset(name)
+       ├─ TokenManager.load_preset(name)           # 换整包 token
+       ├─ ui_prefs 持久化新预设名                   # 下次启动自动恢复
+       └─ emit theme_changed(name)                 # 全局广播
+            ├─ AppShell._on_theme_changed
+            │     ├─ grab() 旧界面截图 → FadeOverlay 盖满窗口
+            │     ├─ refresh_theme()               # 驱动 §1.6.4 三类刷新
+            │     └─ FadeOverlay 260ms 渐隐         # 新主题溶入
+            └─ 所有订阅方（widgets/dialog/panel）各自刷新
+```
+
+**铁律**：除 `ThemeManager` 外，任何模块**禁止**自行调
+`TokenManager.load_preset()` + `save_theme_preset()` 组合。启动走
+`apply_on_startup()`，切换走 `switch_preset()`。
+
+切换动画时长由 `app_shell.py` 的 `_THEME_FADE_MS` 控制（默认 260ms）。
+连点切换时，新一场会先取消上一场，全程最多一个遮罩；并有兜底定时器防止动画被刷新风暴"饿死"。
+
+### 1.6.4 控件响应主题的三类策略
+
+切换预设后，不同控件通过不同机制拿到新颜色：
+
+| 类别 | 机制 | 代表 |
+|---|---|---|
+| **A. 自绘控件** | `paintEvent` 每次绘制时实时读 token，重绘即变色，天然响应 | button、card、panel、toggle 等所有 `CyberWidgetMixin` 子类的自绘部分 |
+| **B. 页面层 QSS 配方** | `PageBase._style()` 把样式配方存到 `widget._cyber_style_props`；`on_theme_change()` 用当前 token **重放**配方。`raw=` 传 callable（lambda），重放时重新求值 | 复选框、滑块、进度条、提示框、列表等 QSS |
+| **C. widgets 内联 QSS** | 订阅 `theme_changed`，重写 `cyber_refresh_style()` 重建 QSS/palette | card、line_edit、combo_box、pixel_font_editor、manual_update_dialog、proxy_dialog、log_viewer |
+
+**`CyberWidgetMixin` 提供的统一钩子**（见 [base.py](file:///d:/MyProgram/WARFRAME-RELIC/core/widgets/base.py)）：
+
+```python
+_cyber_subscribe_theme()
+    # 子类 __init__ 末尾调用：订阅 ThemeManager.theme_changed
+
+cyber_refresh_style()
+    # Mixin 上的空实现；子类按需重写以重建 QSS/palette（C 类）
+```
+
+另有一个**可选方法**（不在 Mixin 上，由需要的控件各自定义）：
+
+```python
+cyber_refresh_immersive_style()
+    # 沉浸开关/强度/底色变化时，ImmersiveStyleController 用 hasattr 检测后调用。
+    # 已实现：pixel_font_editor、combo_box、log_viewer、
+    # cd_assist_page、triggers_page
+```
+
+### 1.6.5 沉浸底色系统（Immersive）
+
+"沉浸"指让控件表面色随壁纸/底色风格化，包含三个可配置项（`immersive_controller.py`）：
+
+| 配置 | 含义 |
+|---|---|
+| 沉浸开关 | 开启后控件底色参与覆写 |
+| 沉浸强度（0-100） | 折减表面 alpha：强度越大，表面越透、越能露出壁纸 |
+| 沉浸底色：**主题色 / 纯黑** | 二选一，覆写表面 RGB |
+
+底色 token：
+
+| 预设 | 主题色基准 | 纯黑覆写色（`surface.overlay`） |
+|---|---|---|
+| cyberpunk | `surface.base` 深紫黑 | `#000000` 纯黑 |
+| glassmorphism | `surface.base` `#0D47A1` 深蓝 | `#0A1428` 近黑深蓝 |
+
+**覆写原则**：`immersive.override_rgb()` **只改 RGB 不改 alpha**；
+alpha 折减统一在玻璃绘制路径（`_draw_glass_bg`）和沉浸解析路径处理。
+禁止在业务代码里手写"覆写 RGB + 折减 alpha"逻辑（开发规范自查卡第 13 条）。
+
+玻璃拟态下，`_draw_glass_bg()` 内部统一执行 RGB 覆写 + 强度折减，
+通过 `override_bg` 参数区分：
+
+| `override_bg` | 适用 | 行为 |
+|---|---|---|
+| `True`（默认） | 容器表面（卡片/输入框/开关关闭态等） | RGB 随沉浸底色切换 |
+| `False` | 强调色（按钮、开关开启态） | 保持品牌强调色，不被染黑 |
+
+### 1.6.6 预设独立性与真实颜色数量
+
+两套预设是**两个完全独立的 YAML 文件**，互不引用、无共享兜底：
+
+- `load_preset()` 只加载当前文件；`resolver` 只在当前数据中查找
+- 改一个预设的任何颜色，另一个预设不受影响
+
+**关于"100 多个颜色"的澄清**（以 cyberpunk 为例实测）：
+
+| 统计项 | 数量 |
+|---|---|
+| YAML 叶子 token 总数（含 space/copy） | 581 |
+| 颜色相关 token | 172 |
+| └ 纯引用别名 `@xxx` | 93 |
+| └ 混在颜色层的数字（corner_size 等） | 27 |
+| **└ 解析引用后的物理独立颜色值** | **27** |
+
+即真正能看到的颜色只有 **27 个**（glass 为 44，其中大量是同色相透明度变体）。
+其余 100 多个是语义"角色名"——这正是 Token 架构价值：
+改一个 `raw.brand.yellow`，所有引用处自动跟随；而每个
+`components.*` 又是独立入口，可单独调整某控件而不动全局。
+
+### 1.6.7 已知"死 token"（改了无效）
+
+glassmorphism 的 `components.slider.* / checkbox.* / radio.* / scrollbar.*`
+（31 个子键）**没有任何代码消费**：
+
+| 死分组 | 实际生效的颜色来源 |
+|---|---|
+| `components.slider.*` | `components.progress.track_bg` + `accent.*`（theme_page.py 滑块 QSS） |
+| `components.checkbox.*` | `border.emphasis` / `accent.secondary`（toggles_page.py、theme_page.py） |
+| `components.radio.*` | `border.*` / `accent.*` |
+| `components.scrollbar.*` | app_shell.py / log_viewer.py / proxy_dialog.py 各自构建，取短 token |
+
+这些分组在 YAML 中已用 `⚠ 死 token` 注释块标记。保留仅为未来自定义预留；
+**改这些值不会产生任何界面变化**。cyberpunk 从未定义它们，功能完全正常。
+
+---
+
+## 1.7 改色实战手册
+
+> 改色总原则：**先判断"想改多大范围"，再决定改哪一层。**
+
+### 场景 1：想全局换一个色相（如品牌黄整体偏橙）
+
+1. 打开对应预设 `data/presets/<preset>.yaml`
+2. 改 `raw.brand.yellow` 的值
+3. 所有引用 `alias.accent.primary` → `components.*` 的地方自动跟随
+4. 无需改代码；重启或在主题页切换一次即可看到效果
+
+### 场景 2：只想让某一种控件变色（如只改按钮、不改标题）
+
+1. 在 YAML 中定位 `components.<控件>.*`（文件头「改色速查索引」可查）
+2. 直接改该 token 值（不再是 `@引用`，而是写死的新颜色）
+3. 只影响该控件，其它引用上游 token 的元素不变
+
+### 场景 3：玻璃风想统一调整所有控件表面的透明度
+
+1. 改 `alias.surface_fill.*` 对应档位（8 档已在注释中标明用途）
+2. 所有引用该档的控件自动跟随
+3. 注意：`components.card.bg` 目前是独立字面量，不在 surface_fill 内，需单独改
+
+### 场景 4：调整沉浸模式默认底色
+
+| 诉求 | 修改点 |
+|---|---|
+| 改"主题色"底色 | `raw.surface.base` |
+| 改"纯黑"底色 | `raw.surface.overlay`（glass 现为 `#0A1428`） |
+
+### 场景 5：改后没生效？排查顺序
+
+```
+1. 改的是不是 §1.6.7 的死 token？（slider/checkbox/radio/scrollbar 分组）
+2. 是自绘控件 → 确认该控件 paintEvent 是否真的读了这个 token
+3. 是 QSS 控件 → 确认走的是 _style(raw=callable)，切换主题时才会重放
+4. 改完当前主题没触发重绘 → 切换一次预设或重启
+5. 确认改的是"当前使用的预设"文件（主题页可查当前预设名）
+```
+
+### 颜色格式注意
+
+| 格式 | 说明 |
+|---|---|
+| `#RRGGBB` | 标准 6 位 hex |
+| `#AARRGGBB` | `rgba()` 字面量经归一化后的 8 位格式（**alpha 在前**），QColor/QSS 通用 |
+| `#RRGGBBAA` | `opacity()` 函数返回格式（**alpha 在后**），与上者字节序相反，勿混用 |
+| `rgba(r,g,b,a)` | 预设内书写半透明色推荐格式，解析器自动归一化 |
+
+---
+
+
+
 ## 2. 颜色系统 — Design Token 架构
+
+> 以下 §2 起为**设计理念层**的完整阐述（历史版本内容）；
+> 当前真实运行架构以 [§1.6](#16-当前主题运行时架构权威实现说明) 为准。
 
 ### 2.1 四层 Token 模型详解
 

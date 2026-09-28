@@ -17,6 +17,38 @@
 #   opacity(c, a)     — 设置透明度 a ∈ [0,1]
 #   mix(a, b, w)      — 混合两色，权重 w ∈ [0,1]
 # ============================================================
+#
+# ┌──────────────────────────────────────────────────────────────┐
+# │ 改色速查索引（先找 UI 位置 → 再定位 token → 在此文件改值）     │
+# └──────────────────────────────────────────────────────────────┘
+#
+# 【玻璃底色类】（本主题核心:半透明冰蓝）
+#   窗口最深底色(沉浸主题色基准) → raw.surface.base   = #0D47A1
+#   沉浸「纯黑」底色             → raw.surface.overlay = #0A1428
+#   跨组件半透明表面色阶          → alias.surface_fill.*（8 档,见下方）
+#
+# 【品牌色类】（玻璃风全部用低饱和浅色）
+#   主强调(极浅冰蓝)  → raw.brand.yellow  / alias.accent.primary
+#   次强调(淡青)      → raw.brand.cyan    / alias.accent.secondary
+#   特殊标记(淡紫)    → raw.brand.magenta / alias.accent.tertiary
+#   警告橙 / 危险粉红 / 成功淡绿 → alias.semantic.*
+#
+# 【具体控件 → components token】
+#   按钮三态+各状态    → components.button.*    控件: core/widgets/button.py
+#   面板底色/标题栏    → components.panel.*     控件: core/widgets/panel.py
+#   卡片底色/边框      → components.card.*      控件: core/widgets/card.py
+#   输入框            → components.input.*     控件: core/widgets/line_edit.py
+#   下拉框            → components.combo_box.* 控件: core/widgets/combo_box.py
+#   开关              → components.toggle.*    控件: core/widgets/toggle_switch.py
+#   进度条            → components.progress.*  控件: core/widgets/progress_bar.py
+#   列表行            → components.list_item.*
+#   徽章              → components.label.badge_bg
+#
+# 【改色原则】
+#   想"所有控件表面统一变透明度" → 改 alias.surface_fill.*（一处,全局跟随）
+#   想"只让某控件变色"          → 改 components.该控件.*
+#   想"切换沉浸默认底色"        → 改 raw.surface.base(主题色)/overlay(纯黑)
+# ============================================================
 
 _meta:
   name: "glassmorphism"
@@ -187,6 +219,8 @@ semantic:
 # ═══════════════════════════════════════════════════
 components:
   # ---- 按钮 (CyberButton) ----
+  # 消费方: core/widgets/button.py
+  # solid=实心 / outlined=描边 / ghost=幽灵；*_hover/*_pressed 为状态覆盖
   button:
     solid:
       fill:         "@surface_fill.control"    # 玻璃质感：35% 极浅冰蓝
@@ -234,6 +268,7 @@ components:
       border:       "@border.default"
 
   # ---- 面板容器 (CyberPanel) ----
+  # 消费方: core/widgets/panel.py；title_bar 面板标题，corner_decor 角落装饰
   panel:
     bg:            "@surface_fill.low"      # 玻璃质感：30% 极浅冰蓝
     bg_opacity:    0.30
@@ -253,6 +288,7 @@ components:
       thickness:   2
 
   # ---- 对话框 (CyberDialog) ----
+  # 消费方: manual_update_dialog.py / proxy_dialog.py 等
   dialog:
     bg:             "@surface_fill.strong"     # 稍深，确保可读性
     bg_opacity:     0.55
@@ -265,6 +301,7 @@ components:
     body_text:      "@text.secondary"
 
   # ---- 卡片 (CyberCard) ----
+  # 消费方: core/widgets/card.py
   card:
     bg:            "rgba(227, 242, 253, 0.25)"      # 玻璃质感：25% 极浅冰蓝
     border:        "@border.default"
@@ -274,6 +311,7 @@ components:
     padding_v:     12
 
   # ---- 输入框 (CyberLineEdit) ----
+  # 消费方: core/widgets/line_edit.py
   input:
     bg:            "@surface_fill.control"      # 稍深，突出输入区
     text:          "@text.primary"
@@ -283,6 +321,7 @@ components:
     corner_size:   6
 
   # ---- 下拉框 (CyberComboBox) ----
+  # 消费方: core/widgets/combo_box.py
   combo_box:
     bg:            "@surface_fill.control_hi"      # 玻璃质感：40% 极浅冰蓝
     text:          "@text.primary"
@@ -291,6 +330,7 @@ components:
     corner_size:   6
 
   # ---- 开关 (CyberToggleSwitch) ----
+  # 消费方: core/widgets/toggle_switch.py；thumb_* 是圆形滑块
   toggle:
     track_bg:      "@surface_fill.control"      # 玻璃质感：35% 极浅冰蓝
     track_border:  "@border.default"
@@ -298,7 +338,12 @@ components:
     thumb_border:  "@accent.secondary"
     corner_size:   4
 
-  # ---- 滑块 (CyberSlider) ----
+  # ┌─ 滑块 (原生 QSlider) ──────────────────────────────────────┐
+  # │ ⚠ 死 token：以下 components.slider.* 没有任何代码消费。     │
+  # │ 实际滑块 QSS 用的是 components.progress.track_bg 与        │
+  # │ accent.*（见 theme_page.py）。保留仅为未来自定义预留，      │
+  # │ 改这里不会产生任何界面变化。                               │
+  # └────────────────────────────────────────────────────────────┘
   slider:
     track_bg:      "@surface_fill.control_hi"      # 稍深，突出滑块区
     track_border:  "@border.subtle"
@@ -308,6 +353,7 @@ components:
     corner_size:   4
 
   # ---- 进度条 (CyberProgressBar) ----
+  # 消费方: core/widgets/progress_bar.py；滑块轨道也复用 track_bg
   progress:
     track_bg:      "@surface_fill.control"
     track_border:  "@border.subtle"
@@ -316,6 +362,7 @@ components:
     text:          "@text.primary"
 
   # ---- 列表项 (CyberListItem) ----
+  # 消费方: 各页面结果列表行
   list_item:
     bg_normal:     "transparent"
     bg_hover:      "@surface_fill.accent_soft"
@@ -333,6 +380,7 @@ components:
     badge_corner: 4
 
   # ---- 覆盖层 (Overlay) ----
+  # 消费方: core/region_selector.py；数组 [R, G, B(, A)]
   overlay:
     bg_rgba:       [227, 242, 253, 180]             # 极浅冰蓝半透明
     selection:     [227, 242, 253, 120]
@@ -348,7 +396,11 @@ components:
     item_selected_text: "@bg.base"
     divider:         "@border.subtle"
 
-  # ---- 滚动条 (ScrollBar) ----
+  # ┌─ 滚动条 ──────────────────────────────────────────────────┐
+  # │ ⚠ 死 token：components.scrollbar.* 没有任何代码消费。      │
+  # │ 滚动条 QSS 在 app_shell.py / log_viewer.py / proxy_dialog │
+  # │ 里各自构建，颜色取自短 token，不读本分组。改这里无效。     │
+  # └────────────────────────────────────────────────────────────┘
   scrollbar:
     track_bg:      "@surface_fill.faint"      # 玻璃质感：20% 极浅冰蓝
     thumb_bg:      "@surface_fill.control_hi"     # 玻璃质感：40% 极浅冰蓝
@@ -356,7 +408,11 @@ components:
     thumb_pressed: "rgba(227, 242, 253, 0.80)"     # pressed 更深
     corner_size:   4
 
-  # ---- 复选框 (CheckBox) ----
+  # ┌─ 复选框 ──────────────────────────────────────────────────┐
+  # │ ⚠ 死 token：components.checkbox.* 没有任何代码消费。       │
+  # │ 复选框 QSS（toggles_page.py / theme_page.py）用的是        │
+  # │ border.emphasis / accent.secondary 等短 token。改这里无效。│
+  # └────────────────────────────────────────────────────────────┘
   checkbox:
     bg:            "@surface_fill.control"      # 玻璃质感：35% 极浅冰蓝
     border:        "@border.default"
@@ -364,7 +420,11 @@ components:
     check_color:   "@accent.primary"
     corner_size:   4
 
-  # ---- 单选框 (RadioButton) ----
+  # ┌─ 单选框 ──────────────────────────────────────────────────┐
+  # │ ⚠ 死 token：components.radio.* 没有任何代码消费。          │
+  # │ 单选框 QSS 用的是 border.* / accent.* 等短 token。         │
+  # │ 改这里不会产生界面变化。                                  │
+  # └────────────────────────────────────────────────────────────┘
   radio:
     bg:            "@surface_fill.control"      # 玻璃质感：35% 极浅冰蓝
     border:        "@border.default"

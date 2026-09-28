@@ -14,6 +14,38 @@
 # See Also:
 #   ui-framework-design.md §2 颜色系统 — Design Token 架构
 # ============================================================
+#
+# ┌──────────────────────────────────────────────────────────────┐
+# │ 改色速查索引（先找 UI 位置 → 再定位 token → 在此文件改值）     │
+# └──────────────────────────────────────────────────────────────┘
+#
+# 【全局底色类】
+#   窗口最底层背景       → raw.surface.base   / alias.bg.base
+#   卡片/弹窗底色        → raw.surface.raised / alias.bg.raised
+#   遮罩纯黑底           → raw.surface.overlay / alias.bg.overlay
+#
+# 【品牌霓虹色类】（改一色，全局同色元素自动跟随）
+#   品牌黄(主强调/标题)  → raw.brand.yellow   / alias.accent.primary
+#   品牌青(链接/次要)    → raw.brand.cyan     / alias.accent.secondary
+#   品牌品红(特殊标记)  → raw.brand.magenta  / alias.accent.tertiary
+#   警告橙 / 危险红 / 成功绿 → alias.semantic.*
+#
+# 【具体控件 → components token】
+#   按钮三态(solid/outlined/ghost)  → components.button.*   控件: core/widgets/button.py
+#   面板底色/标题栏/角饰            → components.panel.*    控件: core/widgets/panel.py
+#   卡片底色/边框                  → components.card.*     控件: core/widgets/card.py
+#   输入框底色/文字/聚焦边框        → components.input.*    控件: core/widgets/line_edit.py
+#   下拉框底色/边框                → components.combo_box.* 控件: core/widgets/combo_box.py
+#   开关轨道/滑块                  → components.toggle.*   控件: core/widgets/toggle_switch.py
+#   进度条轨道                    → components.progress.* 控件: core/widgets/progress_bar.py
+#   列表行底色/选中色              → components.list_item.*
+#   徽章底色                      → components.label.badge_bg
+#   左侧导航标签                  → space.nav.* (颜色在 bg/bar/text 子键) 绘制: core/widgets/base.py
+#
+# 【改色原则】
+#   想"全局换一个色相" → 改 raw.*（自动向上传播）
+#   想"只让某控件变色" → 改 components.该控件.*（不影响别处）
+# ============================================================
 
 _meta:
   name: "cyberpunk"
@@ -171,6 +203,9 @@ semantic:
 # ═══════════════════════════════════════════════════
 components:
   # ---- 按钮 (CyberButton) ----
+  # 消费方: core/widgets/button.py
+  # solid=实心主按钮 / outlined=描边次按钮 / ghost=幽灵弱按钮
+  # *_hover/*_pressed 为各变体的悬停/按下状态覆盖
   button:
     solid:
       fill:         "@accent.primary"
@@ -218,6 +253,7 @@ components:
       border:       "#FFE600"
 
   # ---- 面板容器 (CyberPanel) ----
+  # 消费方: core/widgets/panel.py；title_bar 是面板顶部标题，corner_decor 是角落装饰线
   panel:
     bg:            "@bg.raised"
     bg_opacity:    0.92
@@ -237,6 +273,7 @@ components:
       thickness:   2
 
   # ---- 对话框 (CyberDialog) ----
+  # 消费方: core/widgets/manual_update_dialog.py、proxy_dialog.py 等对话框
   dialog:
     bg:             "@bg.raised"
     bg_opacity:     0.96
@@ -249,6 +286,7 @@ components:
     body_text:      "@text.secondary"
 
   # ---- 卡片 (CyberCard) ----
+  # 消费方: core/widgets/card.py；页面中每个独立信息块的底色
   card:
     bg:            "lighten(@bg.raised, 3%)"
     border:        "@border.default"
@@ -258,6 +296,7 @@ components:
     padding_v:     12
 
   # ---- 输入框 (CyberLineEdit) ----
+  # 消费方: core/widgets/line_edit.py；text=输入文字，placeholder=占位提示，border_focus=聚焦时边框
   input:
     bg:            "darken(@bg.raised, 2%)"
     text:          "@accent.secondary"
@@ -267,6 +306,7 @@ components:
     corner_size:   6
 
   # ---- 进度条 (CyberProgressBar) ----
+  # 消费方: core/widgets/progress_bar.py；同时滑块轨道 QSS 也复用 track_bg
   progress:
     track_bg:      "darken(@bg.base, 5%)"
     track_border:  "@border.subtle"
@@ -275,6 +315,7 @@ components:
     text:          "@text.primary"
 
   # ---- 列表项 (CyberListItem) ----
+  # 消费方: 各页面的结果列表行；bg_selected=选中行底色，text_selected=选中行文字(反色)
   list_item:
     bg_normal:     "transparent"
     bg_hover:      "opacity(@accent.secondary, 8%)"
@@ -285,6 +326,7 @@ components:
     corner_size:   6
 
   # ---- 标签 / 徽章 (CyberLabel / Badge) ----
+  # 消费方: core/widgets/ 各控件的说明文字；badge_* 是小圆角徽章
   label:
     text:        "@text.secondary"
     badge_bg:    "@accent.secondary"
@@ -292,12 +334,14 @@ components:
     badge_corner: 4
 
   # ---- 覆盖层 (Overlay) ----
+  # 消费方: core/region_selector.py 框选/标注遮罩；数组格式 [R, G, B(, A)]
   overlay:
     bg_rgba:       [8, 8, 26, 230]
     selection:     [20, 2, 40, 120]
     panel_overlay: [5, 5, 20]
 
   # ---- 导航栏 (Navigation) ----
+  # 消费方: core/app_shell.py 的左侧导航项（旧式平铺导航,与 space.nav 二选一）
   nav:
     item_bg:         "opacity(@bg.raised, 70%)"
     item_text:       "@text.tertiary"
