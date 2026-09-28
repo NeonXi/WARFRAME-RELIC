@@ -621,17 +621,12 @@ class PixelFontEditorPanel(QFrame):
             self._preview_label.update()
 
     def _refresh_button_styles(self) -> None:
-        """重建字母按钮和位置按钮的 QSS(按当前选中态)。"""
-        selected = getattr(self, "_selected_letter", self._current_char)
-        for btn in self.findChildren(QPushButton):
-            text = btn.text()
-            if len(text) == 1 and text in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                btn.setStyleSheet(self._letter_style(active=(text == selected)))
-        # 位置按钮(若存在)
-        pos_btns = getattr(self, "_position_buttons", [])
-        selected_pos = getattr(self, "_selected_position", -1)
-        for i, btn in enumerate(pos_btns):
-            btn.setStyleSheet(self._position_style(active=(i == selected_pos)))
+        """重建字母按钮 QSS(按当前选中字母)。
+
+        位置按钮只存在于 LetterPickerDialog(对话框有自己的刷新逻辑),
+        本面板只有字母按钮,直接复用 _highlight_active_button。
+        """
+        self._highlight_active_button()
 
     # ── UI 构建 ──
 
