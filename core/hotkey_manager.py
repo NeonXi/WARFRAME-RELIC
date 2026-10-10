@@ -38,7 +38,13 @@ from PySide6.QtCore import QAbstractNativeEventFilter
 from core.hotkey_config import load_hotkeys, DEFAULT_HOTKEYS
 
 # Windows API
-_user32 = ctypes.windll.user32
+# use_last_error=True: 注册失败时 ctypes.get_last_error() 才能拿到可靠的
+# Win32 错误码（如 1409 ERROR_HOTKEY_ALREADY_REGISTERED）
+_user32 = ctypes.WinDLL("user32", use_last_error=True)
+_user32.RegisterHotKey.argtypes = [wintypes.HWND, ctypes.c_int, wintypes.UINT, wintypes.UINT]
+_user32.RegisterHotKey.restype = wintypes.BOOL
+_user32.UnregisterHotKey.argtypes = [wintypes.HWND, ctypes.c_int]
+_user32.UnregisterHotKey.restype = wintypes.BOOL
 
 # 修饰键常量
 MOD_ALT = 0x0001
@@ -46,6 +52,18 @@ MOD_CONTROL = 0x0002
 MOD_SHIFT = 0x0004
 MOD_WIN = 0x0008
 MOD_NOREPEAT = 0x4000
+
+# 走 RegisterHotKey 全局注册的功能（顺序即状态报告/诊断 UI 的展示顺序）。
+# 注意: cd_1..cd_4 不走此路线（WH_KEYBOARD_LL 观察者钩子，不独占按键）
+REGISTERED_ACTIONS = ("select", "fullscreen", "eye_mask", "bring_to_front")
+
+# ── 注册状态报告原因码（get_status_report / probe_candidate 共用）──
+REASON_OK = "ok"                # 注册成功 / 组合空闲
+REASON_OCCUPIED = "occupied"    # 1409: 被系统中其他程序占用
+REASON_INTERNAL = "internal"    # 与本软件另一个功能的快捷键冲突
+REASON_INVALID = "invalid"      # 组合非法或无法解析
+REASON_FAILED = "failed"        # 其他注册失败
+REASON_UNKNOWN = "unknown"      # 尚未注册/未知
 
 # 修饰键名 → 常量
 _MOD_NAME_TO_FLAG = {
@@ -128,6 +146,11 @@ class HotkeyManager(QAbstractNativeEventFilter):
         # 反向映射: {hotkey_id: action}
         self._registered = {}
 
+        # 最近一次注册使用的配置 {action: hotkey_str}（预检内部冲突用）
+        self._current_hotkeys: dict[str, str] = {}
+        # 最近一次注册的状态报告 {action: {action, hotkey, ok, reason, error_code}}
+        self._last_report: dict[str, dict] = {}
+
         # 防重入保护
         self._last_action_time = 0
 
@@ -189,6 +212,103 @@ class HotkeyManager(QAbstractNativeEventFilter):
         """紧急重置：用硬编码默认值重新注册所有快捷键。"""
         self._register(dict(DEFAULT_HOTKEYS))
 
+    # ================================================================
+    # 占用诊断（UI「重新检测」/ 改键预检入口）
+    # ================================================================
+
+    def get_status_report(self) -> list[dict]:
+        """返回各全局热键最近一次注册的状态报告（纯数据，供 UI 渲染）。
+
+        每项: {action, hotkey, ok, reason, error_code}
+        reason ∈ ok/occupied/internal/invalid/failed/unknown
+        无副作用：只读最近一次注册结果，不注销、不重注册。
+        """
+        report = []
+        for action in REGISTERED_ACTIONS:
+            item = self._last_report.get(action)
+            if item is None:
+                item = {
+                    "action": action,
+                    "hotkey": self._current_hotkeys.get(action, DEFAULT_HOTKEYS.get(action, "")),
+                    "ok": False,
+                    "reason": REASON_UNKNOWN,
+                    "error_code": None,
+                }
+            report.append(item)
+        return report
+
+    def probe_candidate(self, hk_str: str, exclude_action: str | None = None) -> dict:
+        """预检某个热键组合当前是否可用（不改动现有注册状态）。
+
+        判定顺序:
+          1. 与 exclude_action 自身当前组合相同（用户没改）→ ok
+          2. 与本软件其他已注册功能组合相同 → internal（内部冲突）
+          3. Win32 临时 ID 试探注册: 成功立即注销 → ok;
+             1409 → occupied（外部程序占用）; 其他 → failed
+
+        Args:
+            hk_str: 热键字符串，如 "ctrl+h"
+            exclude_action: 正在修改的 action，其现有组合不算冲突
+
+        返回: {ok, reason, hotkey, conflict_action, error_code}
+        """
+        raw = hk_str or ""
+        result = {
+            "ok": False, "reason": REASON_INVALID, "hotkey": raw.strip().lower(),
+            "conflict_action": None, "error_code": None,
+        }
+
+        hk = raw.strip().lower()
+        if not hk:
+            return result
+
+        # 1. 与自身当前组合相同 → 没改，可用
+        if exclude_action and self._current_hotkeys.get(exclude_action) == hk:
+            result["ok"] = True
+            result["reason"] = REASON_OK
+            return result
+
+        # 2. 与本软件其他走 RegisterHotKey 的功能撞键
+        for action in REGISTERED_ACTIONS:
+            if action == exclude_action:
+                continue
+            if self._current_hotkeys.get(action) == hk:
+                result["reason"] = REASON_INTERNAL
+                result["conflict_action"] = action
+                return result
+
+        # 3. 解析键名
+        mod, vk = _parse_hotkey(hk)
+        if vk == 0:
+            return result
+
+        # 4. 选取一个不与任何已持有 ID 冲突的临时 ID
+        used_ids = set(self._hotkey_ids.values())
+        probe_id = next((i for i in range(0x7000, 0x8000) if i not in used_ids), None)
+        if probe_id is None:
+            result["reason"] = REASON_FAILED
+            return result
+
+        try:
+            ok, err = self._raw_register(probe_id, mod, vk)
+            if ok:
+                _user32.UnregisterHotKey(None, probe_id)
+                result.update(ok=True, reason=REASON_OK, error_code=0)
+            elif err == 1409:
+                result.update(reason=REASON_OCCUPIED, error_code=err)
+            else:
+                result.update(reason=REASON_FAILED, error_code=err)
+        except Exception as e:
+            print(f"[热键] 探测异常 {hk}: {e}", flush=True)
+            result["reason"] = REASON_FAILED
+        finally:
+            # 兜底：无论成功失败都确保临时 ID 不残留
+            try:
+                _user32.UnregisterHotKey(None, probe_id)
+            except Exception:
+                pass
+        return result
+
     def clear(self):
         """注销所有热键。"""
         for hk_id in self._hotkey_ids.values():
@@ -218,9 +338,43 @@ class HotkeyManager(QAbstractNativeEventFilter):
     # 内部实现
     # ================================================================
 
+    def _alloc_hotkey_id(self, action: str) -> int:
+        """业务热键 ID：action 哈希取低 15 位（进程内稳定即可）。
+
+        注意：MOD_NOREPEAT 属于修饰键标志，必须放在 RegisterHotKey 的
+        fsModifiers 参数（见 _raw_register），不能拼进 ID。
+        """
+        return hash(action) & 0x7FFF
+
+    def _raw_register(self, hk_id: int, mod: int, vk: int) -> tuple[bool, int]:
+        """单次 RegisterHotKey（自动附加 MOD_NOREPEAT：长按不连发）。
+
+        Returns:
+            (是否成功, Win32 错误码)；成功时错误码为 0。
+        """
+        ctypes.set_last_error(0)
+        ok = bool(_user32.RegisterHotKey(None, hk_id, mod | MOD_NOREPEAT, vk))
+        return ok, (0 if ok else ctypes.get_last_error())
+
+    @staticmethod
+    def _make_report(action: str, hotkey: str, ok: bool,
+                     reason: str, error_code: int | None = None) -> dict:
+        return {
+            "action": action,
+            "hotkey": hotkey,
+            "ok": ok,
+            "reason": reason,
+            "error_code": error_code,
+        }
+
     def _register(self, hotkeys: dict):
-        """注册热键（使用 RegisterHotKey 替代 keyboard.add_hotkey）。"""
+        """注册热键（使用 RegisterHotKey 替代 keyboard.add_hotkey）。
+
+        注册结果逐键写入 self._last_report，供 get_status_report()/UI 诊断。
+        """
         print(f"[热键] ===== 开始注册热键: {hotkeys} =====", flush=True)
+        self._current_hotkeys = dict(hotkeys)
+        report: dict[str, dict] = {}
 
         # 第一步：注销所有旧热键
         for hk_id in self._hotkey_ids.values():
@@ -238,28 +392,18 @@ class HotkeyManager(QAbstractNativeEventFilter):
         #   和系统的核心输入键,一旦注册会全游戏抢键
         #   WH_KEYBOARD_LL 是"观察者"模式,默认 CallNextHookEx 放行,只用于通知
         #   → 既能触发 CD 倒计时,又不影响游戏/系统的 1/2/3/4 输入
-        action_map = {
-            "select": "select", "fullscreen": "fullscreen",
-            "eye_mask": "eye_mask",
-            "bring_to_front": "bring_to_front",  # CTRL+B 窗口置顶
-            # cd_1..cd_4: 跳过 RegisterHotKey,由 LowLevelHotkeyHook 处理
-        }
-
         success_count = 0
-        for action, action_name in action_map.items():
+        for action in REGISTERED_ACTIONS:
             hk_str = hotkeys.get(action, DEFAULT_HOTKEYS[action])
 
             if not hk_str:
                 print(f"[热键] [x] 跳过空热键: {action} -> ''", flush=True)
+                report[action] = self._make_report(action, "", False, REASON_INVALID)
                 continue
-            # 允许无 modifier 的单键(cd_1..cd_4 默认就是 "1".."4"),
-            # 但至少要有 1 个非空键名
+            # 允许无 modifier 的单键,但带 '+' 时必须至少一个合法 modifier
             if '+' in hk_str:
-                # 有 modifier:必须至少一个合法 modifier
                 parts = hk_str.split('+')
-                if any(p.strip() in _MOD_NAME_TO_FLAG for p in parts[:-1]):
-                    pass  # 合法
-                else:
+                if not any(p.strip() in _MOD_NAME_TO_FLAG for p in parts[:-1]):
                     print(f"[热键] [x] 跳过非法热键: {action} -> '{hk_str}'", flush=True)
                     self._log(f"快捷键 {action} 格式非法，使用默认值", "warn", "hotkeys")
                     hk_str = DEFAULT_HOTKEYS[action]
@@ -267,51 +411,84 @@ class HotkeyManager(QAbstractNativeEventFilter):
             mod, vk = _parse_hotkey(hk_str)
             if vk == 0:
                 print(f"[热键] [x] 无法解析: {action} -> '{hk_str}'", flush=True)
+                report[action] = self._make_report(action, hk_str, False, REASON_INVALID)
                 continue
 
-            # 生成唯一 ID（避免 hash 冲突）
-            hk_id = (hash(action) & 0x7FFF) | MOD_NOREPEAT
+            hk_id = self._alloc_hotkey_id(action)
+            final_ok = False
+            final_err = 0
 
+            # 主尝试：最多 3 轮，每轮「直接注册 + 先注销再注册」
             for attempt in range(3):
                 try:
-                    if _user32.RegisterHotKey(None, hk_id, mod, vk):
+                    ok, err = self._raw_register(hk_id, mod, vk)
+                    if ok:
+                        final_ok = True
                         self._hotkey_ids[action] = hk_id
                         self._registered[hk_id] = action
-                        print(f"[热键] [ok] {hk_str} 注册成功 ({action_name}) [第{attempt + 1}次]", flush=True)
+                        print(f"[热键] [ok] {hk_str} 注册成功 ({action}) [第{attempt + 1}次]",
+                              flush=True)
                         success_count += 1
                         break
-                    else:
-                        # 尝试先注销再注册
-                        _user32.UnregisterHotKey(None, hk_id)
-                        if _user32.RegisterHotKey(None, hk_id, mod, vk):
-                            self._hotkey_ids[action] = hk_id
-                            self._registered[hk_id] = action
-                            print(f"[热键] [ok] {hk_str} 注册成功 ({action_name}) [第{attempt + 1}次/重试]", flush=True)
-                            success_count += 1
-                            break
+                    # 尝试先注销再注册
+                    _user32.UnregisterHotKey(None, hk_id)
+                    ok2, err2 = self._raw_register(hk_id, mod, vk)
+                    if ok2:
+                        final_ok = True
+                        self._hotkey_ids[action] = hk_id
+                        self._registered[hk_id] = action
+                        print(f"[热键] [ok] {hk_str} 注册成功 ({action}) [第{attempt + 1}次/重试]",
+                              flush=True)
+                        success_count += 1
+                        break
+                    final_err = err2 or err
+                    print(f"[热键] [!] {hk_str} 注册失败 (第{attempt + 1}/3次) 错误码={final_err}",
+                          flush=True)
+                    if attempt < 2:
+                        time.sleep(0.05)
                 except Exception as e:
-                    print(f"[热键] [!] {hk_str} 注册失败 (第{attempt + 1}/3次): {e}", flush=True)
+                    print(f"[热键] [!] {hk_str} 注册异常 (第{attempt + 1}/3次): {e}", flush=True)
                     if attempt < 2:
                         time.sleep(0.05)
 
-            if action not in self._hotkey_ids:
-                self._log(f"[x] 快捷键 {hk_str} ({action_name}) 注册失败，尝试回退默认值",
-                         "error", "hotkeys")
+            # 回退默认值（默认组合与当前相同则不再重复尝试）
+            if not final_ok:
+                self._log(f"快捷键 {hk_str} ({action}) 注册失败，尝试回退默认值",
+                          "error", "hotkeys")
                 fallback = DEFAULT_HOTKEYS[action]
-                mod2, vk2 = _parse_hotkey(fallback)
-                if vk2 != 0:
-                    try:
-                        hk_id2 = (hash(action) & 0x7FFF) | MOD_NOREPEAT
-                        _user32.UnregisterHotKey(None, hk_id2)
-                        if _user32.RegisterHotKey(None, hk_id2, mod2, vk2):
-                            self._hotkey_ids[action] = hk_id2
-                            self._registered[hk_id2] = action
-                            print(f"[热键] [ok] 回退默认: {fallback} ({action_name})", flush=True)
-                            success_count += 1
-                    except Exception as e2:
-                        print(f"[热键] [x] 回退也失败: {fallback} - {e2}", flush=True)
+                if fallback != hk_str:
+                    mod2, vk2 = _parse_hotkey(fallback)
+                    if vk2 != 0:
+                        try:
+                            _user32.UnregisterHotKey(None, hk_id)
+                            ok3, err3 = self._raw_register(hk_id, mod2, vk2)
+                            if ok3:
+                                final_ok = True
+                                hk_str = fallback
+                                self._hotkey_ids[action] = hk_id
+                                self._registered[hk_id] = action
+                                print(f"[热键] [ok] 回退默认: {fallback} ({action})", flush=True)
+                                success_count += 1
+                            else:
+                                final_err = err3
+                        except Exception as e2:
+                            print(f"[热键] [x] 回退也失败: {fallback} - {e2}", flush=True)
 
-        print(f"[热键] ===== 注册完成: {success_count}/{len(action_map)} 成功 =====", flush=True)
+            if final_ok:
+                report[action] = self._make_report(action, hk_str, True, REASON_OK)
+            else:
+                reason = REASON_OCCUPIED if final_err == 1409 else REASON_FAILED
+                report[action] = self._make_report(
+                    action, hk_str, False, reason, final_err or None)
+                if final_err == 1409:
+                    self._log(
+                        f"快捷键 {hk_str}（{action}）已被其他程序占用，注册失败，按下将无反应；"
+                        f"请在「功能开关」页改键或关闭占用程序后重新检测",
+                        "error", "hotkeys")
+
+        self._last_report = report
+        print(f"[热键] ===== 注册完成: {success_count}/{len(REGISTERED_ACTIONS)} 成功 =====",
+              flush=True)
 
         # 健康检查
         self.health_check()

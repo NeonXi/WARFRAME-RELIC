@@ -14,6 +14,8 @@
     "ocr_recognizing":         "正在识别文字...",
     "db_not_ready":            "数据库未就绪，请稍后再试",
     "no_features_enabled":     "未启用任何功能",
+    "no_relics_detected":      "未检测到遗物",
+    "no_items_detected":       "未检测到物品",
     "selection_cancelled":     "已取消选择",
     "relic_vaulted":           "入库",
     "relic_available":         "出库",
@@ -21,7 +23,14 @@
     "no_text_detected":        "未能识别文字",
     "translate_failed":        "翻译失败",
     "selection_status_idle":   "",
+    "selection_status_pressed":   "框选起点 ({x}, {y})，按住拖动",
+    "selection_status_dragging":  "框选区域 {w} × {h}，松开确认",
     "selection_status_released": "",
+    "fullscreen_info":         "区域截图 {w}×{h} · 正在识别…",
+    "annotations_shown":       "已标注 {count} 个遗物",
+    "item_no_match_fmt":       "未匹配物品：{ocr_text}",
+    "item_no_price_fmt":       "{display_name}　暂无价格数据",
+    "item_price_detail_fmt":   "{display_name}　均价 {weighted}｜最低 {sell_min}｜中位 {sell_median}",
     "mode_selected":           "已选择功能: {mode}",
     "relic_no_parts_info":     "【{name}】无数据",
     "region_saved":            "区域已保存: ({l},{t})-({r},{b}) {w}x{h}"
@@ -30,7 +39,27 @@
   "hotkey": {
     "label_select":     "区域选择",
     "label_fullscreen": "全屏捕获",
-    "label_eye_mask":   "护眼遮罩"
+    "label_eye_mask":   "护眼遮罩",
+    "label_bring_to_front": "窗口置顶"
+  },
+
+  "hotkeys": {
+    "card_binding":     "快捷键绑定",
+    "label_select":     "区域选择",
+    "label_fullscreen": "全屏捕获",
+    "label_eye_mask":   "护眼遮罩",
+    "label_bring_to_front": "窗口置顶",
+    "btn_recheck":      "重新检测",
+    "check_hint":       "检测快捷键是否被其他程序占用",
+    "checking":         "正在检测…",
+    "status_ok":        "已就绪，按下可正常触发",
+    "status_occupied":  "已被其他程序占用，按下将无反应",
+    "status_internal":  "与本软件「{name}」使用了相同快捷键",
+    "status_invalid":   "快捷键格式无效",
+    "status_failed":    "注册失败（错误码 {code}），请重试或更换组合",
+    "status_unknown":   "尚未检测",
+    "occupied_guide":   "以下快捷键存在异常，按下可能无反应：{items}。可关闭占用程序（常见：OBS/录屏软件、输入法、QQ 等）后点击「重新检测」，或直接改为其他组合。",
+    "tip":              "提示：修改快捷键后请确认不与其他软件冲突，部分修改需要重启应用生效。支持的修饰键：Ctrl / Alt / Shift / Win"
   },
 
   "nav": {

@@ -738,6 +738,40 @@ class ScreenshotPipelineService:
         """紧急重置快捷键。"""
         self._hotkey_mgr.force_reset()
 
+    # ════════════════════════════════════
+    #  快捷键占用诊断（UI 状态灯/重新检测/改键预检）
+    # ════════════════════════════════════
+
+    def get_hotkey_status(self) -> list[dict]:
+        """读取各全局快捷键最近一次注册状态（纯数据，无副作用）。
+
+        供功能开关页 on_enter 静默刷新状态灯。
+        每项: {action, hotkey, ok, reason, error_code}
+        """
+        if not self._hotkey_mgr:
+            return []
+        return self._hotkey_mgr.get_status_report()
+
+    def recheck_hotkeys(self) -> list[dict]:
+        """按磁盘当前配置注销重注册一次，返回最新状态报告（纯数据）。
+
+        供「重新检测」按钮：毫秒级注销窗口，可重新发现外部占用解除/出现。
+        """
+        if not self._hotkey_mgr:
+            return []
+        self._hotkey_mgr.on_config_changed(load_hotkeys())
+        return self._hotkey_mgr.get_status_report()
+
+    def probe_hotkey_candidate(self, hk_str: str, action: str) -> dict:
+        """改键预检：探测某组合是否被外部占用/与本软件其他功能冲突（纯数据）。
+
+        不改动现有注册状态，探测用临时 ID 注册后立即注销。
+        """
+        if not self._hotkey_mgr:
+            return {"ok": False, "reason": "failed", "hotkey": hk_str,
+                    "conflict_action": None, "error_code": None}
+        return self._hotkey_mgr.probe_candidate(hk_str, exclude_action=action)
+
     def reload_db(self):
         """重新加载数据库。"""
         if self._relic_db:

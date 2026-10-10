@@ -86,6 +86,9 @@ def _build_hotkey_defs() -> list[tuple[str, str, str]]:
 
 _HOTKEY_DEFS = _build_hotkey_defs()
 
+# 走 RegisterHotKey 全局注册、需要占用诊断的功能（cd_1..cd_4 走低级钩子，不独占按键）
+from core.hotkey_manager import REGISTERED_ACTIONS as _REGISTERED_ACTIONS
+
 
 # 注意: 原 _HotkeyCaptureEdit 内嵌类已迁移到 core/widgets/hotkey_capture_edit.py
 # 原因: §6.5 禁止 Page 内嵌自定义控件
@@ -107,6 +110,11 @@ class TogglesPage(PageBase):
         # 快捷键数据
         self._hotkeys_data: dict[str, str] = {}
         self._hotkey_edits: dict[str, HotkeyCaptureEdit] = {}
+        # 快捷键占用诊断：状态灯 {action: QLabel}、红色诊断条、重新检测按钮
+        self._hotkey_status_dots: dict[str, QLabel] = {}
+        self._hk_warn_frame: Optional[QFrame] = None
+        self._hk_warn_label: Optional[QLabel] = None
+        self._recheck_btn: Optional[CyberButton] = None
 
         # 辅助触发器数据
         self._triggers_data: list[dict] = []
@@ -232,7 +240,7 @@ class TogglesPage(PageBase):
             pass
 
     def _apply_hotkeys(self) -> None:
-        """保存快捷键并通知管线重注册。"""
+        """保存快捷键并通知管线重注册，随后刷新占用诊断状态。"""
         if not self._save_hotkeys():
             return
         try:
@@ -241,6 +249,8 @@ class TogglesPage(PageBase):
                 shell.pipeline.reregister_hotkeys()
         except Exception:
             pass
+        # 以重注册的真实结果刷新状态灯（被占用/冲突即使保存也如实标红）
+        self._refresh_hotkey_status()
 
     def _apply_triggers(self) -> None:
         """保存触发器状态并通知引擎热重载。"""
@@ -339,11 +349,55 @@ class TogglesPage(PageBase):
         )
         hk_layout.setSpacing(self._spacing("sm", 10))
 
+        # ── 检测条：说明 + 「重新检测」按钮 ──
+        check_row = QHBoxLayout()
+        check_row.setSpacing(self._spacing("sm", 8))
+        check_hint = QLabel(self._copy("hotkeys.check_hint", "检测快捷键是否被其他程序占用"))
+        self._style(check_hint, color="text.tertiary", font_size="xs")
+        check_row.addWidget(check_hint, stretch=1)
+
+        self._recheck_btn = CyberButton(
+            text=self._copy("hotkeys.btn_recheck", "重新检测"), variant="ghost")
+        self._recheck_btn.setFixedWidth(88)
+        self._recheck_btn.clicked.connect(self._on_recheck_clicked)
+        check_row.addWidget(self._recheck_btn)
+        hk_layout.addLayout(check_row)
+
         for action_key, label_token, default_val in _HOTKEY_DEFS:
             row = self._build_hotkey_row(action_key, label_token, default_val)
             hk_layout.addLayout(row)
 
         layout.addWidget(hk_card)
+
+        # ── 占用/异常诊断条（默认隐藏，检测到异常项时显示）──
+        self._hk_warn_frame = QFrame()
+
+        def _warn_frame_qss():
+            c = TokenManager.instance().get_qcolor("brand.red")
+            return (
+                f"QFrame {{"
+                f"  background-color: rgba({c.red()}, {c.green()}, {c.blue()}, 0.06);"
+                f"  border: 1px solid rgba({c.red()}, {c.green()}, {c.blue()}, 0.25);"
+                f"  border-radius: {self._spacing('corner.xs', 4)}px;"
+                f"  padding: {self._spacing('spacing.sm', 8)}px;"
+                f"}}"
+            )
+        self._style(self._hk_warn_frame, raw=_warn_frame_qss)
+        warn_layout = QHBoxLayout(self._hk_warn_frame)
+        warn_layout.setContentsMargins(12, 8, 12, 8)
+
+        warn_icon = QLabel("!")
+        self._style(warn_icon, color="brand.red", font_size="md", font_weight="bold")
+        warn_icon.setFixedWidth(20)
+        warn_layout.addWidget(warn_icon)
+
+        self._hk_warn_label = QLabel("")
+        self._style(self._hk_warn_label, color="brand.red", font_size="xs")
+        self._hk_warn_label.setWordWrap(True)
+        warn_layout.addWidget(self._hk_warn_label, stretch=1)
+
+        self._hk_warn_frame.hide()
+        layout.addWidget(self._hk_warn_frame)
 
         # ── 提示 ──
         tip_frame = QFrame()
@@ -462,6 +516,16 @@ class TogglesPage(PageBase):
         self._hotkey_edits[action_key] = key_edit
         row.addWidget(key_edit)
 
+        # 状态灯：仅全局注册键需要占用诊断；cd_1..cd_4 走低级钩子不独占按键
+        if action_key in _REGISTERED_ACTIONS:
+            dot = QLabel("●")
+            self._style(dot, color="neutral.dark", font_size="micro")
+            dot.setFixedWidth(20)
+            dot.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            dot.setToolTip(self._copy("hotkeys.status_unknown", "尚未检测"))
+            self._hotkey_status_dots[action_key] = dot
+            row.addWidget(dot)
+
         reset_btn = CyberButton(text=self._copy("common.reset", "重置"), variant="ghost")
         reset_btn.setFixedWidth(50)
         reset_btn.clicked.connect(lambda checked, k=action_key, dv=default_val: self._reset_hotkey(k, dv))
@@ -483,6 +547,115 @@ class TogglesPage(PageBase):
             edit.value = default_val
         self._hotkeys_data[action_key] = default_val
         self._apply_hotkeys()
+
+    # ════════════════════════════════════
+    #  快捷键占用诊断（状态灯 / 重新检测）
+    # ════════════════════════════════════
+
+    def _action_display_name(self, action: str) -> str:
+        """快捷键功能的中文名（与卡片各行 label 同源文案）。"""
+        return self._copy(f"hotkeys.label_{action}", action)
+
+    @staticmethod
+    def _format_hotkey(hk_str: str) -> str:
+        """ctrl+h → CTRL + H 展示形式（复用捕获输入框的格式化）。"""
+        return HotkeyCaptureEdit._format_display(hk_str or "")
+
+    def _set_hotkey_dot(self, action: str, item: dict):
+        """按注册报告项刷新单个状态灯颜色与悬浮说明。"""
+        dot = self._hotkey_status_dots.get(action)
+        if dot is None:
+            return
+
+        reason = item.get("reason", "unknown")
+        if item.get("ok"):
+            color = "brand.green"
+            tip = self._copy("hotkeys.status_ok", "已就绪，按下可正常触发")
+        elif reason == "occupied":
+            color = "brand.red"
+            tip = self._copy("hotkeys.status_occupied", "已被其他程序占用，按下将无反应")
+        elif reason == "internal":
+            conflict = self._action_display_name(item.get("conflict_action") or "")
+            color = "brand.red"
+            tip = self._copy("hotkeys.status_internal",
+                             "与本软件「{name}」使用了相同快捷键", name=conflict)
+        elif reason == "invalid":
+            color = "brand.red"
+            tip = self._copy("hotkeys.status_invalid", "快捷键格式无效")
+        elif reason == "failed":
+            color = "brand.red"
+            tip = self._copy("hotkeys.status_failed",
+                             "注册失败（错误码 {code}），请重试或更换组合",
+                             code=item.get("error_code"))
+        else:
+            color = "neutral.dark"
+            tip = self._copy("hotkeys.status_unknown", "尚未检测")
+
+        self._style(dot, color=color, font_size="micro")
+        dot.setToolTip(tip)
+
+    def _refresh_hotkey_status(self, report: Optional[list[dict]] = None):
+        """按状态报告刷新全部状态灯与红色诊断条；report 为 None 时向管线拉取。"""
+        if report is None:
+            report = self._pull_hotkey_status()
+        if not report:
+            return
+
+        bad_items: list[dict] = []
+        for item in report:
+            action = item.get("action")
+            if action in self._hotkey_status_dots:
+                self._set_hotkey_dot(action, item)
+            if not item.get("ok") and item.get("reason") not in (None, "unknown"):
+                bad_items.append(item)
+
+        if self._hk_warn_frame is None or self._hk_warn_label is None:
+            return
+
+        if bad_items:
+            names = "、".join(
+                f"{self._action_display_name(it.get('action'))} "
+                f"{self._format_hotkey(it.get('hotkey') or '')}"
+                for it in bad_items
+            )
+            guide = self._copy(
+                "hotkeys.occupied_guide",
+                "以下快捷键存在异常，按下可能无反应：{items}。可关闭占用程序（常见：OBS/录屏软件、输入法、QQ 等）后点击「重新检测」，或直接改为其他组合。",
+                items=names,
+            )
+            self._hk_warn_label.setText(guide)
+            self._hk_warn_frame.show()
+        else:
+            self._hk_warn_label.setText("")
+            self._hk_warn_frame.hide()
+
+    def _pull_hotkey_status(self) -> Optional[list[dict]]:
+        """从截图管线读取最近一次注册状态（无管线/异常时返回 None）。"""
+        try:
+            shell = self._get_shell()
+            if shell and shell.pipeline:
+                return shell.pipeline.get_hotkey_status()
+        except Exception as e:
+            print(f"[TogglesPage] 读取快捷键状态失败: {e}", flush=True)
+        return None
+
+    def _on_recheck_clicked(self):
+        """「重新检测」按钮：注销重注册并按最新结果刷新灯与诊断条。"""
+        try:
+            shell = self._get_shell()
+            if not shell or not shell.pipeline:
+                return
+            if self._recheck_btn is not None:
+                self._recheck_btn.setEnabled(False)
+                self._recheck_btn.setText(self._copy("hotkeys.checking", "正在检测…"))
+            report = shell.pipeline.recheck_hotkeys()
+            self._refresh_hotkey_status(report)
+        except Exception as e:
+            print(f"[TogglesPage] 重新检测快捷键失败: {e}", flush=True)
+        finally:
+            if self._recheck_btn is not None:
+                self._recheck_btn.setEnabled(True)
+                self._recheck_btn.setText(self._copy("hotkeys.btn_recheck", "重新检测"))
 
     # ════════════════════════════════════
     #  辅助触发器开关区域
@@ -758,6 +931,10 @@ class TogglesPage(PageBase):
 
         # ★ 从磁盘重新加载触发器数据，重建整个触发器开关区域
         self._populate_triggers_section()
+
+        # 静默刷新快捷键占用诊断（只读数，不触发重注册）
+        self._refresh_hotkey_status()
+
         print(f"[TogglesPage] on_enter() 完成, 复选框数={len(self._trigger_checkboxes)}", flush=True)
 
     def _get_shell(self):
@@ -779,10 +956,11 @@ class TogglesPage(PageBase):
             pass
 
     def _resume_hotkeys(self):
-        """恢复全局热键（退出捕获模式时调用）。"""
+        """恢复全局热键（退出捕获模式时调用），并刷新诊断状态。"""
         try:
             shell = self._get_shell()
             if shell and shell.pipeline and shell.pipeline._hotkey_mgr:
                 shell.pipeline._hotkey_mgr.register_initial()
         except Exception:
             pass
+        self._refresh_hotkey_status()
