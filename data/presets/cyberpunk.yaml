@@ -466,9 +466,10 @@ space:
     inner_pad:          16     # 文字内边距
     font_size:          11     # 标签文字大小
     border:             "@accent.secondary"   # 边框颜色(cyan)
+    border_selected:    "@accent.primary"     # 选中态边框颜色(品牌黄)
     bg:                 "#0A1628"             # 背景色(深蓝黑)
     bar:                "@accent.secondary"   # 竖条颜色
-    bar_selected:       "@accent.secondary"   # 选中态竖条颜色
+    bar_selected:       "@accent.primary"     # 选中态竖条颜色(品牌黄)
     text:               "@text.primary"       # 文字颜色
     # 选中态反色虚影（外围发光/扩散效果）
     glow:

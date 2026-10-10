@@ -538,9 +538,10 @@ space:
     inner_pad:          16
     font_size:          11
     border:             "@accent.secondary"
+    border_selected:    "@accent.primary"     # 选中态边框颜色(主题主色)
     bg:                 "rgba(209, 232, 248, 0.25)"   # 玻璃质感：25% 淡冰蓝
     bar:                "@accent.secondary"
-    bar_selected:       "@accent.secondary"
+    bar_selected:       "@accent.primary"     # 选中态竖条颜色(主题主色)
     text:               "@text.primary"
     glow:
       enabled: false          # 玻璃风无发光

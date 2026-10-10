@@ -739,6 +739,8 @@ class CyberWidgetMixin:
         # 这些兜底仅在 token 缺失时生效,正常 token 加载后会被覆盖
         from core.theme_proxy import LIGHT_TEXT, CYBER_CYAN
         border_color_str = tm.get("nav.border") or str(CYBER_CYAN)
+        # 选中态边框色：token 缺省时回落普通边框色（保持旧行为）
+        border_selected_color_str = tm.get("nav.border_selected") or border_color_str
         bg_color_str = tm.get("nav.bg") or str(LIGHT_TEXT)
         bar_color_str = tm.get("nav.bar") or str(CYBER_CYAN)
         bar_selected_color_str = tm.get("nav.bar_selected") or str(CYBER_CYAN)
@@ -749,10 +751,14 @@ class CyberWidgetMixin:
         glow_alpha = float(tm.get("space.nav.glow.alpha", 0.25))
 
         border_color = QColor(border_color_str)
+        border_sel_color = QColor(border_selected_color_str)
         bg_color = self._cyber_resolve_nav_bg_color(bg_color_str)
         bar_color = QColor(bar_color_str)
         bar_sel_color = QColor(bar_selected_color_str)
         text_color = QColor(text_color_str)
+
+        # 当前状态实际使用的边框色：选中态走主题主色（赛博朋克=品牌黄）
+        active_border_color = border_sel_color if selected else border_color
 
         r = QRectF(self.rect())
         # 装饰线宽度固定不变（选中态只改变颜色/透明度）
@@ -775,7 +781,7 @@ class CyberWidgetMixin:
             _pre_main_path.lineTo(QPointF(_main_rect.left(), _main_rect.bottom()))
             _pre_main_path.closeSubpath()
 
-            ghost_color = QColor(border_color)
+            ghost_color = QColor(active_border_color)
             ghost_color.setAlphaF(glow_alpha)
 
             # 竖条虚影（仅向左/上/下扩展，不向右侵入间隙）
@@ -846,7 +852,7 @@ class CyberWidgetMixin:
             glass_bg.setAlphaF(self._cyber_immersive_alpha(glass_bg.alphaF()))
             painter.fillPath(main_path, QBrush(glass_bg))
             # 细边框（玻璃模式）
-            border_pen = QPen(border_color, 1.0)
+            border_pen = QPen(active_border_color, 1.0)
             painter.setPen(border_pen)
             painter.drawPath(main_path)
         else:
@@ -869,11 +875,11 @@ class CyberWidgetMixin:
 
             # ── 3. 边框描边（选中+hover 增强发光）──
             if selected and hover:
-                glow_pen = QPen(QColor(border_color), 2.5)
+                glow_pen = QPen(QColor(active_border_color), 2.5)
                 glow_pen.setJoinStyle(Qt.PenJoinStyle.MiterJoin)
                 painter.setPen(glow_pen)
             else:
-                border_pen = QPen(border_color, 1.5)
+                border_pen = QPen(active_border_color, 1.5)
                 painter.setPen(border_pen)
             painter.drawPath(main_path)
             painter.drawPath(bar_path)
