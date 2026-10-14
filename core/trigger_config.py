@@ -115,44 +115,110 @@ DEFAULT_TRIGGERS = [
 ]
 
 
+# ============================================================
+# 配置文件结构
+# ============================================================
+#
+# 新格式（对象）::
+#
+#     {
+#       "triggers":   [ {触发器}, ... ],
+#       "scrlk_gate": false        # ScrLK 快捷总控开关（运行时门控）
+#     }
+#
+# 旧格式（纯数组 ``[ {触发器}, ... ]``）仍然完整兼容：读取时直接使用，
+# 首次保存时自动迁移为新格式。
+
+TRIGGERS_KEY = "triggers"
+SCRLK_GATE_KEY = "scrlk_gate"
+
+
 def _config_path() -> str:
     """获取触发器配置文件路径(打包/开发环境自适应,见 core.paths)。"""
     from core.paths import ensure_user_file
     return str(ensure_user_file("triggers.json"))
 
 
+def _read_raw_config():
+    """读取配置文件原始 JSON。
+
+    Returns:
+        dict / list / None。文件不存在或损坏时返回 None。
+    """
+    path = _config_path()
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
 def load_triggers() -> list[dict]:
     """加载触发器列表。
+
+    兼容两种文件结构：旧版纯数组、新版对象（取 ``triggers`` 字段）。
 
     Returns:
         触发器 dict 列表，每个包含 name/enabled/trigger_input/delay_ms/actions。
         文件不存在或损坏时返回默认值。
     """
-    path = _config_path()
-    if not os.path.exists(path):
-        return _deep_copy_defaults()
+    data = _read_raw_config()
 
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if isinstance(data, list):
-            return [_validate_trigger(t) for t in data]
-        return _deep_copy_defaults()
-    except (json.JSONDecodeError, Exception):
-        return _deep_copy_defaults()
+    # 旧格式：顶层就是数组
+    if isinstance(data, list):
+        return [_validate_trigger(t) for t in data]
+
+    # 新格式：{"triggers": [...], "scrlk_gate": bool}
+    if isinstance(data, dict):
+        items = data.get(TRIGGERS_KEY)
+        if isinstance(items, list):
+            return [_validate_trigger(t) for t in items]
+
+    return _deep_copy_defaults()
+
+
+def load_scrlk_gate() -> bool:
+    """读取 ScrLK 快捷总控开关状态。
+
+    仅当字段存在时取其布尔值；字段缺失（旧文件/新文件未写入）一律按
+    False 处理，不用短路默认值以免覆盖用户显式选择。
+    """
+    data = _read_raw_config()
+    if isinstance(data, dict):
+        return bool(data.get(SCRLK_GATE_KEY, False))
+    return False
 
 
 def save_triggers(triggers: list[dict]) -> bool:
     """保存触发器列表到文件（原子写入，防止数据丢失）。
 
+    保留同文件中已有的 ``scrlk_gate`` 字段（读—合并—写），
+    旧版纯数组文件首次保存即自动迁移为新结构。
+
     Args:
-        triggers: 完整的触发器列表（会覆盖文件）。
+        triggers: 完整的触发器列表（会覆盖文件中的触发器部分）。
     """
+    return _write_config(triggers, load_scrlk_gate())
+
+
+def save_scrlk_gate(enabled: bool) -> bool:
+    """只更新 ScrLK 快捷总控开关，保留现有触发器列表不动。"""
+    return _write_config(load_triggers(), bool(enabled))
+
+
+def _write_config(triggers: list[dict], scrlk_gate: bool) -> bool:
+    """以新结构原子写入完整配置。"""
     path = _config_path()
+    payload = {
+        TRIGGERS_KEY: triggers,
+        SCRLK_GATE_KEY: bool(scrlk_gate),
+    }
     tmp = path + ".tmp"
     try:
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(triggers, f, indent=2, ensure_ascii=False)
+            json.dump(payload, f, indent=2, ensure_ascii=False)
         os.replace(tmp, path)  # 原子替换（Windows 上若目标存在则替换）
         return True
     except Exception:

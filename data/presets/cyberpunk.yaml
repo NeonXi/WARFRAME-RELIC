@@ -764,6 +764,12 @@ copy:
     status_engine_stopped: "触发器引擎未运行"
     confirm_delete: "确认删除"
     confirm_delete_body: "确定要删除触发器 \"{name}\" 吗？"
+    # ScrLK 快捷总控（运行时门控，不影响各触发器自身开关）
+    scrlk_gate_title: "ScrLK 快捷总控"
+    scrlk_gate_desc: "启用后，你已开启的触发器仅在 ScrLK（Scroll Lock）灯亮时生效，灯灭时全部暂停"
+    scrlk_state_on: "ScrLK 灯亮 · 生效中"
+    scrlk_state_off: "ScrLK 灯灭 · 已暂停"
+    scrlk_state_disabled: "总控未启用"
 
   # ---- 功能开关页 ----
   toggles:

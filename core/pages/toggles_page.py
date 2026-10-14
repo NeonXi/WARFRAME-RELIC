@@ -121,6 +121,11 @@ class TogglesPage(PageBase):
         self._trigger_checkboxes: list[tuple[CyberToggleSwitch, int]] = []  # (toggle_switch, index_in_list)
         self._triggers_layout: Optional[QVBoxLayout] = None  # 触发器卡片的内容布局引用
 
+        # ScrLK 快捷总控（与触发器页共享同一个 TriggerManager 信号源）
+        self._scrlk_gate_switch: Optional[CyberToggleSwitch] = None
+        self._scrlk_state_label: Optional[QLabel] = None
+        self._scrlk_gate_bound = False
+
         # ★ 必须在 PageBase.__init__ 之前加载数据，
         #   因为 PageBase 内部会调用 build_content() 构建UI
         self._load_toggles()
@@ -678,6 +683,9 @@ class TogglesPage(PageBase):
         )
         card_layout.setSpacing(self._spacing("sm", 10))
 
+        # ★ ScrLK 快捷总控行（固定区域，不随 on_enter 重建触发器列表）
+        card_layout.addLayout(self._build_scrlk_gate_row())
+
         # ★ 内层布局：存放触发器行，on_enter 时清理重建
         self._triggers_layout = QVBoxLayout()
         self._triggers_layout.setContentsMargins(0, 0, 0, 0)
@@ -685,6 +693,7 @@ class TogglesPage(PageBase):
         card_layout.addLayout(self._triggers_layout)
 
         self._populate_triggers_section()
+        self._ensure_scrlk_gate_bound()
 
         # ── 底部：前往详细配置按钮（不在内层布局中，不会被清理）──
         goto_btn = CyberButton(
@@ -696,6 +705,114 @@ class TogglesPage(PageBase):
         card_layout.addWidget(goto_btn)
 
         parent_layout.addWidget(card)
+
+    # ════════════════════════════════════
+    #  ScrLK 快捷总控（与触发器页共享引擎信号，双向同步）
+    # ════════════════════════════════════
+
+    def _get_trigger_manager(self):
+        """获取 TriggerManager 实例（不存在/未就绪时返回 None）。"""
+        shell = self._get_shell()
+        if shell and hasattr(shell, "trigger_manager") and shell.trigger_manager:
+            return shell.trigger_manager
+        return None
+
+    def _build_scrlk_gate_row(self) -> QHBoxLayout:
+        """构建 ScrLK 快捷总控行：[ON/OFF 开关] 标题+说明 … [实时灯态]。"""
+        row = QHBoxLayout()
+        row.setSpacing(self._spacing("sm", 10))
+
+        # ── ON/OFF 切角开关 ──
+        self._scrlk_gate_switch = CyberToggleSwitch("", checked=False, on_off=True)
+        row.addWidget(self._scrlk_gate_switch)
+
+        # ── 标题 + 说明（纵向） ──
+        text_col = QVBoxLayout()
+        text_col.setContentsMargins(0, 0, 0, 0)
+        text_col.setSpacing(0)
+
+        gate_title = QLabel(
+            self._copy("triggers.scrlk_gate_title", "ScrLK 快捷总控")
+        )
+        self._style(gate_title, color="text.primary", font_size="sm_md",
+                    font_weight="bold")
+        text_col.addWidget(gate_title)
+
+        gate_desc = QLabel(self._copy(
+            "triggers.scrlk_gate_desc",
+            "启用后，你已开启的触发器仅在 ScrLK（Scroll Lock）灯亮时生效，灯灭时全部暂停",
+        ))
+        self._style(gate_desc, color="text.tertiary", font_size="xs")
+        gate_desc.setWordWrap(True)
+        text_col.addWidget(gate_desc)
+
+        row.addLayout(text_col, stretch=1)
+
+        # ── 实时灯态标签（自然高度，与开关在布局内垂直居中对齐） ──
+        self._scrlk_state_label = QLabel("")
+        row.addWidget(self._scrlk_state_label)
+
+        return row
+
+    def _ensure_scrlk_gate_bound(self) -> None:
+        """幂等绑定引擎信号并同步一次 UI（外壳未就绪时跳过，on_enter 补连）。"""
+        mgr = self._get_trigger_manager()
+        if mgr is None or self._scrlk_gate_switch is None:
+            return
+        if not self._scrlk_gate_bound:
+            self._scrlk_gate_switch.toggled.connect(
+                self._on_scrlk_gate_switch_toggled
+            )
+            mgr.scrlk_gate_changed.connect(self._on_scrlk_gate_changed)
+            mgr.scrlk_state_changed.connect(self._on_scrlk_light_changed)
+            self._scrlk_gate_bound = True
+        self._sync_scrlk_gate_ui()
+
+    def _on_scrlk_gate_switch_toggled(self, checked: bool) -> None:
+        """本页拨动总控 → 引擎（持久化 + 装/卸钩子 + 广播同步触发器页）。"""
+        mgr = self._get_trigger_manager()
+        if mgr is None:
+            return
+        mgr.set_scrlk_gate(checked)
+        self._sync_scrlk_gate_ui()
+
+    def _on_scrlk_gate_changed(self, enabled: bool) -> None:
+        """引擎门控变化（可能来自触发器页）→ 静默回写本页开关。"""
+        sw = self._scrlk_gate_switch
+        if sw is not None:
+            sw.blockSignals(True)
+            sw.setChecked(bool(enabled))
+            sw.blockSignals(False)
+        self._sync_scrlk_gate_ui()
+
+    def _on_scrlk_light_changed(self, _on: bool) -> None:
+        """ScrLK 物理灯态变化 → 刷新灯态标签。"""
+        self._sync_scrlk_gate_ui()
+
+    def _sync_scrlk_gate_ui(self) -> None:
+        """按引擎当前状态刷新开关位置与灯态标签文案/颜色。"""
+        if self._scrlk_gate_switch is None or self._scrlk_state_label is None:
+            return
+        mgr = self._get_trigger_manager()
+        if mgr is None:
+            return
+
+        self._scrlk_gate_switch.blockSignals(True)
+        self._scrlk_gate_switch.setChecked(mgr.scrlk_gate_enabled)
+        self._scrlk_gate_switch.blockSignals(False)
+
+        if not mgr.scrlk_gate_enabled:
+            text = self._copy("triggers.scrlk_state_disabled", "总控未启用")
+            color = "text.tertiary"
+        elif mgr.scrlk_light_on:
+            text = self._copy("triggers.scrlk_state_on", "ScrLK 灯亮 · 生效中")
+            color = "brand.green"
+        else:
+            text = self._copy("triggers.scrlk_state_off", "ScrLK 灯灭 · 已暂停")
+            color = "brand.red"
+        self._style(self._scrlk_state_label, color=color, font_size="sm_md",
+                    font_weight="bold")
+        self._scrlk_state_label.setText(text)
 
     def _goto_triggers_page(self):
         """导航到触发器配置页面。"""
@@ -931,6 +1048,9 @@ class TogglesPage(PageBase):
 
         # ★ 从磁盘重新加载触发器数据，重建整个触发器开关区域
         self._populate_triggers_section()
+
+        # ScrLK 总控：首次进页时引擎才就绪，这里补连信号并同步灯态
+        self._ensure_scrlk_gate_bound()
 
         # 静默刷新快捷键占用诊断（只读数，不触发重注册）
         self._refresh_hotkey_status()

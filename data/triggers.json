@@ -1,77 +1,101 @@
-[
-  {
-    "name": "GAUSS枪架",
-    "enabled": false,
-    "trigger_input": {
-      "type": "mouse",
-      "button": "left_press"
+{
+  "triggers": [
+    {
+      "name": "GAUSS枪架",
+      "enabled": true,
+      "trigger_input": {
+        "type": "mouse",
+        "button": "left_press",
+        "key": ""
+      },
+      "delay_ms": 10,
+      "actions": [
+        {
+          "type": "key",
+          "value": "3"
+        }
+      ]
     },
-    "delay_ms": 10,
-    "actions": [
-      {
-        "type": "key",
-        "value": "3"
-      }
-    ]
-  },
-  {
-    "name": "女枪开镜自动4",
-    "enabled": false,
-    "trigger_input": {
-      "type": "mouse",
-      "button": "right_press"
+    {
+      "name": "女枪开镜自动4",
+      "enabled": false,
+      "trigger_input": {
+        "type": "mouse",
+        "button": "right_press",
+        "key": ""
+      },
+      "delay_ms": 10,
+      "actions": [
+        {
+          "type": "key",
+          "value": "4"
+        }
+      ]
     },
-    "delay_ms": 10,
-    "actions": [
-      {
-        "type": "key",
-        "value": "4"
-      }
-    ]
-  },
-  {
-    "name": "女枪开镜自动4.2",
-    "enabled": false,
-    "trigger_input": {
-      "type": "mouse",
-      "button": "right_release"
+    {
+      "name": "女枪开镜自动4.2",
+      "enabled": false,
+      "trigger_input": {
+        "type": "mouse",
+        "button": "right_release",
+        "key": ""
+      },
+      "delay_ms": 10,
+      "actions": [
+        {
+          "type": "key",
+          "value": "4"
+        }
+      ]
     },
-    "delay_ms": 10,
-    "actions": [
-      {
-        "type": "key",
-        "value": "4"
-      }
-    ]
-  },
-  {
-    "name": "锁诺拉",
-    "enabled": false,
-    "trigger_input": {
-      "type": "mouse",
-      "button": "right_press"
+    {
+      "name": "锁诺拉",
+      "enabled": false,
+      "trigger_input": {
+        "type": "mouse",
+        "button": "right_press",
+        "key": ""
+      },
+      "delay_ms": 10,
+      "actions": [
+        {
+          "type": "mouse_move",
+          "value": "1604, 963"
+        }
+      ]
     },
-    "delay_ms": 10,
-    "actions": [
-      {
-        "type": "mouse_move",
-        "value": "1604, 963"
-      }
-    ]
-  },
-  {
-    "name": "EY自动破解器",
-    "enabled": false,
-    "trigger_input": {
-      "type": "keyboard",
-      "key": "e"
+    {
+      "name": "EY自动破解器",
+      "enabled": false,
+      "trigger_input": {
+        "type": "keyboard",
+        "button": "right_press",
+        "key": "e"
+      },
+      "delay_ms": 10,
+      "actions": [
+        {
+          "type": "key",
+          "value": "y"
+        }
+      ]
     },
-    "delay_ms": 10,
-    "actions": [
-      {
-        "type": "key",
-        "value": "y"
-      }
-    ]
-  }
-]
+    {
+      "name": "猫鞭自动续移植4",
+      "enabled": false,
+      "trigger_input": {
+        "type": "mouse",
+        "button": "side2_press",
+        "key": ""
+      },
+      "delay_ms": 500,
+      "actions": [
+        {
+          "type": "key",
+          "value": "4"
+        }
+      ]
+    }
+  ],
+  "scrlk_gate": false
+}

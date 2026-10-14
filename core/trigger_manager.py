@@ -7,6 +7,8 @@
 - 延迟执行响应动作(按键、鼠标点击、鼠标移动)
 - 防抖保护 + 线程安全
 - 支持运行时热重载(reload)
+- ScrLK 快捷总控:门控开启时,所有用户已启用的触发器仅在
+  ScrLK(Scroll Lock)灯亮时生效(运行时门控,不改子开关配置)
 
 架构设计:
 - TriggerManager 是单例式引擎,由 AppCore 在后台加载完成后创建并启动
@@ -68,9 +70,20 @@ _user32.keybd_event.restype = None
 _user32.MapVirtualKeyW.argtypes = [wintypes.UINT, wintypes.UINT]
 _user32.MapVirtualKeyW.restype = wintypes.UINT
 
-# CallNextHookEx 需要显式声明 argtypes，否则 64-bit lParam 会溢出
+# CallNextHookEx 需要显式声明 argtypes，否则 64-bit 下 lParam 会溢出
 _user32.CallNextHookEx.argtypes = [wintypes.HHOOK, ctypes.c_int, wintypes.WPARAM, wintypes.LPARAM]
 _user32.CallNextHookEx.restype = ctypes.c_longlong
+
+# SetTimer / KillTimer — 键盘钩子线程内轮询 ScrLK(Scroll Lock) 灯态
+# hWnd=NULL + nIDEvent=0：定时器消息直接投递到调用线程的消息队列
+_user32.SetTimer.argtypes = [wintypes.HWND, ctypes.c_size_t, wintypes.UINT, ctypes.c_void_p]
+_user32.SetTimer.restype = ctypes.c_size_t
+_user32.KillTimer.argtypes = [wintypes.HWND, ctypes.c_size_t]
+_user32.KillTimer.restype = wintypes.BOOL
+
+# GetKeyState — 读取按键状态；对 ScrLK 这类切换键，低位(bit0)=灯亮
+_user32.GetKeyState.argtypes = [ctypes.c_int]
+_user32.GetKeyState.restype = ctypes.c_short
 
 # mouse_event 常量
 _MOUSEEVENTF_LEFTDOWN = 0x0002
@@ -265,6 +278,23 @@ class _MouseHookThread:
 _WH_KEYBOARD_LL = 13
 _WM_KEYDOWN = 0x0100
 _WM_SYSKEYDOWN = 0x0104
+_WM_TIMER = 0x0113
+
+# ScrLK(Scroll Lock) 虚拟键码与灯态轮询间隔
+_VK_SCROLL = 0x91
+_SCRLK_POLL_MS = 200
+
+
+def _read_scroll_lock_on() -> bool:
+    """读取 ScrLK(Scroll Lock) 灯的系统开关态。
+
+    GetKeyState 返回值低位(bit0)=1 表示切换键处于「亮」状态
+    （CapsLock/NumLock/ScrollLock 同机制）。任何异常都按「灭」降级。
+    """
+    try:
+        return bool(_user32.GetKeyState(_VK_SCROLL) & 0x0001)
+    except Exception:
+        return False
 
 # 键盘动作常量 (keybd_event)
 _KEYEVENTF_KEYUP = 0x0002
@@ -334,14 +364,21 @@ class _KeyboardHookThread:
     """用 WH_KEYBOARD_LL 实现的低级键盘钩子，运行在独立守护线程。
 
     替代 keyboard.hook()，避免 keyboard 库创建/销毁隐藏窗口导致的闪窗。
+
+    额外职责（可选）：通过 200ms Win32 定时器轮询 ScrLK 灯态，变化时
+    回调 ``on_scrlk_change(bool)``，供 ScrLK 快捷总控门控使用。
     """
 
-    def __init__(self, callback):
+    def __init__(self, callback, on_scrlk_change=None):
         self._callback = callback
+        # ScrLK 灯态变化回调（钩子线程内调用）：on_scrlk_change(bool)
+        self._on_scrlk_change = on_scrlk_change
         self._hook_handle = None
         self._thread = None
         self._running = False
         self._cb_ref = None
+        self._timer_id = 0          # 0 = 未创建定时器
+        self._last_scrlk = False    # 上次轮询到的灯态
 
     def start(self):
         """启动 hook 监听线程(鼠标/键盘共用此模式,幂等,已运行则直接返回)。"""
@@ -373,12 +410,30 @@ class _KeyboardHookThread:
             self._running = False
             return
 
+        # ScrLK 灯态轮询定时器（hWnd=None → 消息投递到本线程队列）
+        if self._on_scrlk_change is not None:
+            self._last_scrlk = _read_scroll_lock_on()
+            self._timer_id = _user32.SetTimer(
+                None, 0, _SCRLK_POLL_MS, None
+            )
+
         msg = wintypes.MSG()
         while self._running:
             ret = _user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
             if ret == 0 or msg.message == _WM_QUIT:
                 break
+            if msg.message == _WM_TIMER and self._on_scrlk_change is not None:
+                on = _read_scroll_lock_on()
+                if on != self._last_scrlk:
+                    self._last_scrlk = on
+                    try:
+                        self._on_scrlk_change(on)
+                    except Exception:
+                        pass
 
+        if self._timer_id:
+            _user32.KillTimer(None, self._timer_id)
+            self._timer_id = 0
         if self._hook_handle:
             _user32.UnhookWindowsHookEx(self._hook_handle)
             self._hook_handle = None
@@ -451,8 +506,12 @@ def _send_key(key_str: str):
         _user32.keybd_event(0x11, 0, _KEYEVENTF_KEYUP, 0)
 
 
+from PySide6.QtCore import QObject, Signal
+
 from core.trigger_config import (
     load_triggers,
+    load_scrlk_gate,
+    save_scrlk_gate,
     MOUSE_BUTTON_VALUES,
     ACTION_TYPE_VALUES,
 )
@@ -489,7 +548,7 @@ for _k, _v in _MOUSE_BUTTON_MAP.items():
     _HOOK_BUTTON_TO_CONFIG[_k] = _k  # 也支持直接用 left/right
 
 
-class TriggerManager:
+class TriggerManager(QObject):
     """辅助触发器引擎。
 
     用法::
@@ -498,7 +557,17 @@ class TriggerManager:
         mgr.start()          # 注册钩子
         mgr.reload()         # 配置变更后重新加载
         mgr.stop()           # 注销钩子
+
+    信号(均在主线程投递,UI 可直接连接):
+        scrlk_gate_changed(bool)  — ScrLK 快捷总控开关被拨动
+        scrlk_state_changed(bool) — ScrLK 物理灯态变化(True=亮)
     """
+
+    # ── ScrLK 快捷总控 ──
+    # 门控开关变化(用户在 UI 拨动总控)
+    scrlk_gate_changed = Signal(bool)
+    # ScrLK 物理灯态变化(键盘钩子线程发射,Qt 自动跨线程投递到主线程)
+    scrlk_state_changed = Signal(bool)
 
     # ── 防抖间隔（同一触发器两次触发的最小间隔，秒，随机化以模拟人类操作）──
     DEBOUNCE_INTERVAL_MIN = 0.15
@@ -509,6 +578,7 @@ class TriggerManager:
         Args:
             log_func: 日志回调，签名 log_func(msg: str, log_type: str, source: str)
         """
+        QObject.__init__(self)
         self._log = log_func
         self._triggers: list[dict] = []
         self._lock = threading.Lock()
@@ -522,11 +592,68 @@ class TriggerManager:
         self._kb_hook_thread = None                          # WH_KEYBOARD_LL 钩子线程
         self._event_index: dict[str, list[dict]] = {}        # 事件索引: event_value → [trigger, ...]
 
+        # ScrLK 快捷总控运行时状态
+        self._scrlk_gate_enabled = load_scrlk_gate()         # 总控开关（持久化）
+        self._scrlk_state_on = _read_scroll_lock_on()        # ScrLK 灯当前亮/灭（只读实时值）
+
         # 加载初始配置
         self._triggers = load_triggers()
         self._build_index()
         _log(f"INIT | triggers={len(self._triggers)} | "
-             f"index_keys={list(self._event_index.keys())}", "INIT")
+             f"index_keys={list(self._event_index.keys())} | "
+             f"scrlk_gate={self._scrlk_gate_enabled} | "
+             f"scrlk_light={'ON' if self._scrlk_state_on else 'OFF'}", "INIT")
+
+    # ================================================================
+    # ScrLK 快捷总控
+    # ================================================================
+
+    @property
+    def scrlk_gate_enabled(self) -> bool:
+        """ScrLK 快捷总控是否开启（用户配置，持久化）。"""
+        return self._scrlk_gate_enabled
+
+    @property
+    def scrlk_light_on(self) -> bool:
+        """ScrLK 灯当前是否亮（实时只读值，供 UI 显示）。"""
+        return self._scrlk_state_on
+
+    def set_scrlk_gate(self, enabled: bool):
+        """开启/关闭 ScrLK 快捷总控（UI 唯一入口）。
+
+        - 只改运行时门控并持久化，绝不触碰各触发器自身的 enabled；
+        - 开启时确保键盘钩子安装（用于轮询灯态），关闭时按原规则决定钩子去留；
+        - 状态不变则直接返回，避免重复发信号/写盘。
+        """
+        enabled = bool(enabled)
+        if enabled == self._scrlk_gate_enabled:
+            return
+        self._scrlk_gate_enabled = enabled
+        save_scrlk_gate(enabled)
+        if self._running:
+            self._reload_hooks()
+        self.scrlk_gate_changed.emit(enabled)
+        _log(f"set_scrlk_gate({enabled}) | light="
+             f"{'ON' if self._scrlk_state_on else 'OFF'}", "GATE")
+        self._log(
+            "ok",
+            f"ScrLK 快捷总控已{'开启' if enabled else '关闭'}",
+            "TriggerManager",
+        )
+
+    def _on_scrlk_light_changed(self, on: bool):
+        """键盘钩子线程回调：ScrLK 灯态变化时更新缓存并发信号。
+
+        在钩子线程执行；本 QObject 亲和于主线程，AutoConnection 会把
+        scrlk_state_changed 以队列方式投递到 UI 线程，线程安全。
+        """
+        on = bool(on)
+        if on == self._scrlk_state_on:
+            return
+        self._scrlk_state_on = on
+        self.scrlk_state_changed.emit(on)
+        _log(f"ScrLK light → {'ON (触发器放行)' if on else 'OFF (触发器暂停)'}",
+             "GATE")
 
     def set_ui_focus_check(self, callback):
         """设置 UI 焦点检查回调。"""
@@ -612,7 +739,9 @@ class TriggerManager:
             t.get("enabled") and t.get("trigger_input", {}).get("type") == "mouse"
             for t in self._triggers
         )
-        need_kb = any(
+        # 键盘钩子额外服务于 ScrLK 门控的灯态轮询：门控开启时即使没有
+        # 键盘类触发器也要保持安装
+        need_kb = self._scrlk_gate_enabled or any(
             t.get("enabled") and t.get("trigger_input", {}).get("type") == "keyboard"
             for t in self._triggers
         )
@@ -637,7 +766,10 @@ class TriggerManager:
 
         if need_kb and not self._has_kb_hook:
             try:
-                self._kb_hook_thread = _KeyboardHookThread(self._on_keyboard_event)
+                self._kb_hook_thread = _KeyboardHookThread(
+                    self._on_keyboard_event,
+                    on_scrlk_change=self._on_scrlk_light_changed,
+                )
                 self._kb_hook_thread.start()
                 self._has_kb_hook = True
             except Exception as e:
@@ -705,6 +837,11 @@ class TriggerManager:
         """
         with self._lock:
             now = time.time()
+
+            # ★ ScrLK 快捷总控（唯一运行时门禁）：门控开启且灯灭 → 全部暂停。
+            #   只影响执行，不修改任何触发器自身的 enabled 配置。
+            if self._scrlk_gate_enabled and not self._scrlk_state_on:
+                return
 
             # ★ 重载冷却期：reload 后 800ms 内不处理事件（防止 UI 操作时误触发）
             cooldown = now - self._last_reload_time
