@@ -69,6 +69,7 @@ NAV_ITEMS = [
     ("prices",      "价格数据"),
     ("theme",       "主题换肤"),
     ("about",       "关于作者"),
+    ("license",     "加密验证"),
 ]
 
 # 页面类映射（懒导入，避免循环依赖）
@@ -83,6 +84,7 @@ _PAGE_CLASS_MAP = {
     "worldstate":  "core.pages.worldstate_page:WorldstatePage",
     "theme":       "core.pages.theme_page:ThemePage",
     "about":       "core.pages.about_page:AboutPage",
+    "license":     "core.pages.license_page:LicensePage",
 }
 
 
@@ -106,11 +108,19 @@ class NavTab(QFrame, CyberWidgetMixin):
         self._nav_label = label
         self._selected = False
         self._hover = False
+        self._locked = False   # 授权锁定：未激活时除验证页外的标签全部锁定
         self.setMouseTracking(True)
         self.setFixedHeight(TokenManager.instance().space("nav.item_height", 36))
 
     def set_selected(self, selected: bool):
         self._selected = selected
+        self.update()
+
+    def set_locked(self, locked: bool):
+        """授权门控锁定/解锁。锁定时不响应点击与 hover，绘制整体淡化。"""
+        self._locked = bool(locked)
+        if self._locked:
+            self._hover = False
         self.update()
 
     @property
@@ -120,6 +130,8 @@ class NavTab(QFrame, CyberWidgetMixin):
     # ---- 事件 ----
 
     def enterEvent(self, event):
+        if self._locked:
+            return
         self._hover = True
         self.update()
 
@@ -128,7 +140,7 @@ class NavTab(QFrame, CyberWidgetMixin):
         self.update()
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton and not self._locked:
             self.clicked.emit(self._nav_id)
 
     # ---- 绘制 ----
@@ -136,8 +148,12 @@ class NavTab(QFrame, CyberWidgetMixin):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        # 锁定态整体淡化（视觉禁用；真正的拦截在 mousePressEvent
+        # 与 AppShell._switch_to 守卫，双保险）
+        if self._locked:
+            painter.setOpacity(0.35)
         # hover 时视觉放大 1.08 倍，不改变实际布局大小
-        if self._hover:
+        elif self._hover:
             cx, cy = self.width() / 2, self.height() / 2
             painter.translate(cx, cy)
             painter.scale(1.04, 1.04)
@@ -185,6 +201,10 @@ class AppShell(QMainWindow):
         # ── 辅助触发器引擎 ──
         self._trigger_manager = self._create_trigger_manager()
 
+        # ── 离线机器绑定授权（单例；是否强制锁定见 _is_nav_locked） ──
+        from core.services.license_service import LicenseService
+        self._license_svc = LicenseService.instance()
+
         self._setup_window()
         self._register_fonts()
 
@@ -197,7 +217,7 @@ class AppShell(QMainWindow):
             self._start_pipeline()
             # CD 辅助的低层键盘钩子(WH_KEYBOARD_LL,放行不拦截)
             self._start_cd_assist_hook()
-            self._switch_to(NAV_ITEMS[0][0])
+            self._switch_to(self._startup_page_id())
 
     # ══════════════════════════════════
     #  窗口设置
@@ -275,7 +295,7 @@ class AppShell(QMainWindow):
         # CD 辅助的低层键盘钩子(WH_KEYBOARD_LL,放行不拦截)
         self._start_cd_assist_hook()
         self._register_pages()
-        self._switch_to(NAV_ITEMS[0][0])
+        self._switch_to(self._startup_page_id())
         print(f"[Splash] UI 构建完成, 页面数={len(self._pages)}", flush=True)
 
         # 2. 显示主窗口（此时 UI 已完整构建，窗口尺寸正确）
@@ -609,6 +629,9 @@ class AppShell(QMainWindow):
 
         print(f"[AppShell] 页面注册完成: {list(self._pages.keys())}", flush=True)
 
+        # 授权门控：打包环境未激活时锁定除验证页外的全部导航标签
+        self._apply_nav_lock()
+
     def _create_page(self, nav_id: str):
         """通过懒导入创建页面实例。
 
@@ -643,6 +666,44 @@ class AppShell(QMainWindow):
             return PlaceholderErrorPage(nav_id=nav_id, error=err_msg)
 
     # ══════════════════════════════════
+    #  离线授权门控
+    # ══════════════════════════════════
+
+    LICENSE_PAGE_ID = "license"
+
+    def _is_nav_locked(self) -> bool:
+        """是否处于授权锁定态：仅打包环境 + 未激活时锁定。
+
+        开发环境（dev.py 直接运行）一律旁路，不影响日常开发。
+        """
+        from core.paths import is_frozen
+        return bool(is_frozen() and not self._license_svc.licensed)
+
+    def _startup_page_id(self) -> str:
+        """启动落地页：锁定时强制进入加密验证页，否则进第一个功能页。"""
+        return (
+            self.LICENSE_PAGE_ID
+            if self._is_nav_locked()
+            else NAV_ITEMS[0][0]
+        )
+
+    def _apply_nav_lock(self) -> None:
+        """按当前授权状态刷新所有导航标签的锁定视觉/点击拦截。"""
+        locked = self._is_nav_locked()
+        for tab in self._nav_tabs:
+            tab.set_locked(locked and tab.nav_id != self.LICENSE_PAGE_ID)
+
+    def on_license_activated(self) -> None:
+        """加密验证页激活成功回调：解锁全部导航并跳转首个功能页。"""
+        self._license_svc.reload()
+        if not self._license_svc.licensed:
+            return
+        for tab in self._nav_tabs:
+            tab.set_locked(False)
+        print("[AppShell] 授权通过，导航已全部解锁", flush=True)
+        self._switch_to(NAV_ITEMS[0][0])
+
+    # ══════════════════════════════════
     #  导航切换
     # ══════════════════════════════════
 
@@ -653,6 +714,12 @@ class AppShell(QMainWindow):
     def _switch_to(self, nav_id: str):
         """切换到指定页面。"""
         from core.services.cd_debug_log import log as _dbg
+
+        # ★ 授权门控唯一硬守卫：锁定态任何来源的跳转都强制落到验证页
+        # （导航按钮已视觉锁定+拦截点击，这里兜底代码调用等其他入口）
+        if self._is_nav_locked() and nav_id != self.LICENSE_PAGE_ID:
+            nav_id = self.LICENSE_PAGE_ID
+
         if nav_id == self._current_id:
             return
         _dbg("shell", f"_switch_to: {self._current_id or '∅'} → {nav_id}")

@@ -117,6 +117,7 @@ _REQUIRED_PACKAGES: list[tuple[str, str]] = [
     ("PIL", "Pillow"),
     ("cv2", "opencv-python"),
     ("rapidocr_onnxruntime", "rapidocr-onnxruntime"),
+    ("cryptography", "cryptography"),
 ]
 
 

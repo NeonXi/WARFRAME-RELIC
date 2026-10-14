@@ -524,6 +524,7 @@ copy:
     preset: "语言预设"
     reset: "紧急重置"
     about: "关于作者"
+    license: "加密验证"
 
   # ---- 数据总览页 ----
   status:
@@ -770,6 +771,25 @@ copy:
     scrlk_state_on: "ScrLK 灯亮 · 生效中"
     scrlk_state_off: "ScrLK 灯灭 · 已暂停"
     scrlk_state_disabled: "总控未启用"
+
+  # ---- 加密验证页（离线机器绑定授权）----
+  license:
+    title: "加密验证"
+    dev_banner: "开发模式：授权门控已旁路，其他页面可正常访问（打包后才会锁定）"
+    unact_desc: "本软件已绑定本机使用，请按以下步骤完成激活（无需联网）：\n1. 复制下方「本机机器码」发送给软件作者；\n2. 将作者回复的激活码整段粘贴到输入框；\n3. 点击「激活」，通过后全部功能自动解锁。"
+    machine_label: "本机机器码"
+    btn_copy: "复制"
+    copied: "已复制"
+    code_label: "激活码"
+    code_placeholder: "粘贴作者回复的激活码（整段，含横杠也可）"
+    btn_activate: "激 活"
+    locked_hint: "激活通过前，其他功能页面处于锁定状态。"
+    err_bad_format: "激活码格式不正确（应为 103 位字符），请确认整段复制、无遗漏。"
+    err_invalid: "激活码无效，或与本机机器码不匹配。请核对机器码后重新向作者索取。"
+    err_fp: "无法读取本机硬件信息（系统 ID / 硬盘序列号），请在本机直接运行本软件。"
+    done_title: "✓ 已授权，软件已激活"
+    done_desc: "全部功能已解锁，可正常使用。激活信息已保存在本机。"
+    done_notice: "提示：重装系统或更换系统硬盘后机器码会变化，届时需重新联系作者获取激活码。"
 
   # ---- 功能开关页 ----
   toggles:

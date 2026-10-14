@@ -86,5 +86,10 @@ data/logs/
 data/wm_items_cache.json
 data/worldstate_cache.json
 
+# License: 本机激活凭证 + 作者签发工具与私钥，绝不入库/进包
+data/license.dat
+tools/
+/激活码生成命令.txt
+
 nul
 
