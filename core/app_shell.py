@@ -67,10 +67,15 @@ NAV_ITEMS = [
     ("cd_assist",   "CD辅助显示"),
     ("eye_mask",    "护眼遮罩"),
     ("prices",      "价格数据"),
+    ("sites",       "常用网站"),
     ("theme",       "主题换肤"),
     ("about",       "关于作者"),
     ("license",     "加密验证"),
 ]
+
+# 固定在导航底部、不参与用户自定义排序的页面 id
+# （加密验证是授权功能入口，位置语义固定，排序卡片中不显示）
+_NAV_BOTTOM_FIXED: tuple[str, ...] = ("license",)
 
 # 页面类映射（懒导入，避免循环依赖）
 _PAGE_CLASS_MAP = {
@@ -81,6 +86,7 @@ _PAGE_CLASS_MAP = {
     "cd_assist":   "core.pages.cd_assist_page:CdAssistPage",
     "eye_mask":    "core.pages.eye_mask_page:EyeMaskPage",
     "prices":      "core.pages.prices_page:PricesPage",
+    "sites":       "core.pages.sites_page:SitesPage",
     "worldstate":  "core.pages.worldstate_page:WorldstatePage",
     "theme":       "core.pages.theme_page:ThemePage",
     "about":       "core.pages.about_page:AboutPage",
@@ -204,6 +210,10 @@ class AppShell(QMainWindow):
         # ── 离线机器绑定授权（单例；是否强制锁定见 _is_nav_locked） ──
         from core.services.license_service import LicenseService
         self._license_svc = LicenseService.instance()
+
+        # ── 导航顺序（必须在 _build_ui/_register_pages 之前就绪）──
+        # 用户自定义顺序只作用于功能页，固定页（加密验证）始终追加在底部
+        self._init_nav_items()
 
         self._setup_window()
         self._register_fonts()
@@ -565,13 +575,18 @@ class AppShell(QMainWindow):
 
         layout.addSpacing(self._tm.space("spacing.md", 12))
 
-        # 导航标签列表
+        # 导航标签列表（顺序来自 ui_prefs.nav_order，见 _init_nav_items）
         self._nav_tabs: list[NavTab] = []
-        for nav_id, label in NAV_ITEMS:
+        self._nav_tab_map: dict[str, NavTab] = {}
+        # 第一个 tab 在布局中的索引（头部：品牌标题/分隔线/间距之后），
+        # 运行时重排用 insertWidget 以此为基准移动，固定页始终排在最后
+        self._nav_tab_start_index = layout.count()
+        for nav_id, label in self._ordered_nav_items:
             tab = NavTab(nav_id, label)
             tab.clicked.connect(self._on_nav_clicked)
             layout.addWidget(tab)
             self._nav_tabs.append(tab)
+            self._nav_tab_map[nav_id] = tab
 
         layout.addStretch()
 
@@ -583,8 +598,8 @@ class AppShell(QMainWindow):
 
     def _register_pages(self):
         """注册所有页面到内容栈。"""
-        print(f"[AppShell] 开始注册页面 (共 {len(NAV_ITEMS)} 个)...", flush=True)
-        for nav_id, _label in NAV_ITEMS:
+        print(f"[AppShell] 开始注册页面 (共 {len(self._ordered_nav_items)} 个)...", flush=True)
+        for nav_id, _label in self._ordered_nav_items:
             page = self._create_page(nav_id)
             if page is not None:
                 page.set_app_shell(self)
@@ -666,6 +681,104 @@ class AppShell(QMainWindow):
             return PlaceholderErrorPage(nav_id=nav_id, error=err_msg)
 
     # ══════════════════════════════════
+    #  导航标签自定义排序
+    # ══════════════════════════════════
+
+    def _init_nav_items(self) -> None:
+        """构建运行时导航顺序（功能页按用户偏好 + 固定页恒在底部）。
+
+        - 可排序项：NAV_ITEMS 中除 _NAV_BOTTOM_FIXED 外的全部页面，
+          顺序取自 ui_prefs.nav_order（缺失/损坏由 service 层容错校正）
+        - 固定项：加密验证等，永远追加在可排序项之后
+        必须在 _build_ui() / _register_pages() 之前调用。
+        """
+        label_map = dict(NAV_ITEMS)
+        reorderable = [
+            (nid, lbl) for nid, lbl in NAV_ITEMS
+            if nid not in _NAV_BOTTOM_FIXED
+        ]
+        fixed = [
+            (nid, lbl) for nid, lbl in NAV_ITEMS
+            if nid in _NAV_BOTTOM_FIXED
+        ]
+        try:
+            from core.services.ui_prefs import load_nav_order
+            ordered_ids = load_nav_order([nid for nid, _ in reorderable])
+        except Exception:
+            ordered_ids = [nid for nid, _ in reorderable]
+        self._reorderable_items = [(nid, label_map[nid]) for nid in ordered_ids]
+        self._fixed_items = fixed
+        self._ordered_nav_items = self._reorderable_items + self._fixed_items
+
+    def get_reorderable_nav_items(self) -> list[tuple[str, str]]:
+        """返回可排序导航项 [(id, 显示名), ...]（当前顺序），供主题页使用。"""
+        return list(self._reorderable_items)
+
+    def get_default_nav_order(self) -> list[str]:
+        """返回代码内置的默认导航 id 顺序（恢复默认按钮用）。"""
+        return [
+            nid for nid, _ in NAV_ITEMS
+            if nid not in _NAV_BOTTOM_FIXED
+        ]
+
+    def apply_nav_order(self, ordered_ids: list[str]) -> bool:
+        """应用新的功能页顺序：校验 → 持久化 → 运行时重排。
+
+        校验规则：入参必须与当前可排序 id 集合完全一致且无重复，
+        否则拒绝（防止 UI 数据错误导致导航缺页）。固定页不受影响。
+
+        Returns:
+            True=已应用；False=入参非法，导航保持原样。
+        """
+        current_ids = [nid for nid, _ in self._reorderable_items]
+        if (
+            not isinstance(ordered_ids, list)
+            or len(ordered_ids) != len(current_ids)
+            or len(set(ordered_ids)) != len(ordered_ids)
+            or set(ordered_ids) != set(current_ids)
+        ):
+            print(
+                f"[AppShell] 导航顺序被拒绝: {ordered_ids!r} 与当前集合不一致",
+                flush=True,
+            )
+            return False
+
+        label_map = dict(NAV_ITEMS)
+        self._reorderable_items = [(nid, label_map[nid]) for nid in ordered_ids]
+        self._ordered_nav_items = self._reorderable_items + self._fixed_items
+        self._relayout_nav_tabs()
+
+        try:
+            from core.services.ui_prefs import save_nav_order
+            save_nav_order(ordered_ids)
+        except Exception:
+            # 内存重排已生效，仅本次会话有效；不阻断用户操作
+            print("[AppShell] 导航顺序写盘失败（仅本次会话生效）", flush=True)
+        return True
+
+    def reset_nav_order(self) -> bool:
+        """恢复内置默认导航顺序。"""
+        return self.apply_nav_order(self.get_default_nav_order())
+
+    def _relayout_nav_tabs(self) -> None:
+        """按 self._ordered_nav_items 原地移动已有 NavTab（不重建控件）。
+
+        QBoxLayout.insertWidget 对已由本布局管理的 widget 会先移出再插入，
+        因此 widget 不销毁、连接信号不丢，只改变纵向位置。
+        固定页在循环中自然排在可排序页之后。
+        """
+        layout = self._nav_container.layout()
+        for i, (nav_id, _label) in enumerate(self._ordered_nav_items):
+            tab = self._nav_tab_map.get(nav_id)
+            if tab is not None:
+                layout.insertWidget(self._nav_tab_start_index + i, tab)
+        # _nav_tabs 顺序同步（选中态/锁定态遍历依赖列表顺序）
+        self._nav_tabs = [
+            self._nav_tab_map[nav_id]
+            for nav_id, _ in self._ordered_nav_items
+        ]
+
+    # ══════════════════════════════════
     #  离线授权门控
     # ══════════════════════════════════
 
@@ -680,11 +793,11 @@ class AppShell(QMainWindow):
         return bool(is_frozen() and not self._license_svc.licensed)
 
     def _startup_page_id(self) -> str:
-        """启动落地页：锁定时强制进入加密验证页，否则进第一个功能页。"""
+        """启动落地页：锁定时强制进入加密验证页，否则进用户排序后的第一个页。"""
         return (
             self.LICENSE_PAGE_ID
             if self._is_nav_locked()
-            else NAV_ITEMS[0][0]
+            else self._ordered_nav_items[0][0]
         )
 
     def _apply_nav_lock(self) -> None:
@@ -701,7 +814,7 @@ class AppShell(QMainWindow):
         for tab in self._nav_tabs:
             tab.set_locked(False)
         print("[AppShell] 授权通过，导航已全部解锁", flush=True)
-        self._switch_to(NAV_ITEMS[0][0])
+        self._switch_to(self._ordered_nav_items[0][0])
 
     # ══════════════════════════════════
     #  导航切换

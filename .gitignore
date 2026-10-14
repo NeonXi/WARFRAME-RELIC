@@ -85,6 +85,8 @@ upx.exe
 data/logs/
 data/wm_items_cache.json
 data/worldstate_cache.json
+# 用户收藏的常用网站（运行时生成，首启缺省回退内置两项）
+data/sites.json
 
 # License: 本机激活凭证 + 作者签发工具与私钥，绝不入库/进包
 data/license.dat

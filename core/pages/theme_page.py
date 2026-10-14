@@ -75,6 +75,9 @@ class ThemePage(PageBase):
         # 沉浸底色预设切换按钮(主题色 / 纯黑)
         self._imm_color_theme_btn: CyberButton | None = None
         self._imm_color_black_btn: CyberButton | None = None
+        # 导航排序卡片（行容器在 on_enter 中填充，build_content 时 shell 尚未注入）
+        self._nav_order_rows_layout: QVBoxLayout | None = None
+        self._nav_order_ids: list[str] = []
 
         self._wheel_filter = _NoWheelFilter()  # 无 parent,在 super().__init__ 之前创建
         super().__init__()
@@ -339,6 +342,11 @@ class ThemePage(PageBase):
 
         layout.addWidget(bg_card)
 
+        # ══════════════════════════════════
+        #  导航标签排序卡片（背景图片之后、启动设置之前）
+        # ══════════════════════════════════
+        layout.addWidget(self._build_nav_order_card())
+
         # ── 启动设置 ──
         startup_card = CyberCard(title=self._copy("theme.card_startup", "启动设置"))
         startup_layout = startup_card.content_layout()
@@ -414,6 +422,131 @@ class ThemePage(PageBase):
         layout.addStretch()
 
         return container
+
+    # ════════════════════════════════════
+    #  导航标签排序卡片
+    # ════════════════════════════════════
+
+    def _build_nav_order_card(self) -> CyberCard:
+        """构建导航排序卡片：说明 + 标签行容器 + 恢复默认按钮。
+
+        行内容在 on_enter 时才填充：PageBase.__init__→build_content
+        发生在 set_app_shell 之前，此时拿不到 AppShell 的导航数据。
+        """
+        card = CyberCard(title=self._copy("theme.card_nav_order", "导航排序"))
+        cl = card.content_layout()
+        cl.setContentsMargins(16, 16, 16, 16)
+        cl.setSpacing(self._spacing("sm", 8))
+
+        tip = QLabel(self._copy(
+            "theme.tip_nav_order",
+            "调整左侧导航标签的显示顺序，点击即时生效并自动保存；"
+            "「加密验证」固定显示在底部。",
+        ))
+        self._style(tip, color="text.tertiary", font_size="micro")
+        tip.setWordWrap(True)
+        cl.addWidget(tip)
+
+        self._nav_order_rows_layout = QVBoxLayout()
+        self._nav_order_rows_layout.setSpacing(self._spacing("xs", 4) + 4)
+        cl.addLayout(self._nav_order_rows_layout)
+
+        reset_row = QHBoxLayout()
+        reset_row.addStretch()
+        reset_btn = CyberButton(
+            text=self._copy("theme.btn_nav_reset", "恢复默认顺序"),
+            variant="outlined",
+        )
+        # CyberButton 自绘粗体字（6 个中文 advance≈78px），sizeHint 按默认
+        # 字体算会偏窄导致文字顶到切角；固定 128（与加密页激活按钮同宽），
+        # 两侧各留 25px 容纳切角+呼吸留白
+        reset_btn.setFixedWidth(128)
+        reset_btn.clicked.connect(self._reset_nav_order)
+        reset_row.addWidget(reset_btn)
+        cl.addLayout(reset_row)
+        return card
+
+    def _rebuild_nav_order_rows(self) -> None:
+        """按 AppShell 当前导航顺序重建全部排序行。
+
+        进入页面 / 每次移动 / 恢复默认后调用；行数固定（功能页数量级），
+        直接整体重建比逐行搬移更简单可靠。
+        """
+        if self._nav_order_rows_layout is None:
+            return
+        # 清空旧行（每行是独立 QWidget，删 widget 即可连带其内部布局）
+        while self._nav_order_rows_layout.count():
+            item = self._nav_order_rows_layout.takeAt(0)
+            old = item.widget()
+            if old is not None:
+                old.deleteLater()
+
+        if self._app_shell is None:
+            return
+        items = self._app_shell.get_reorderable_nav_items()
+        self._nav_order_ids = [nav_id for nav_id, _ in items]
+        total = len(items)
+        for i, (nav_id, label) in enumerate(items):
+            self._nav_order_rows_layout.addWidget(
+                self._make_nav_order_row(i, total, nav_id, label)
+            )
+
+    def _make_nav_order_row(
+        self, index: int, total: int, nav_id: str, label: str
+    ) -> QWidget:
+        """构建单行：序号 + 标签名 + 上移/下移按钮。"""
+        row_widget = QWidget()
+        row = QHBoxLayout(row_widget)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(self._spacing("sm", 8))
+
+        idx_lbl = QLabel(f"{index + 1:02d}")
+        self._style(
+            idx_lbl, color="text.tertiary", font_size="sm",
+            raw="font-family: monospace;",
+        )
+        idx_lbl.setFixedWidth(24)
+        row.addWidget(idx_lbl)
+
+        name_lbl = QLabel(label)
+        self._style(name_lbl, color="text.primary", font_size="sm_md")
+        row.addWidget(name_lbl)
+        row.addStretch()
+
+        # 小尺寸幽灵按钮：宽 40、高取 height.btn_sm(28)，均为 4 的倍数
+        btn_h = self._tm.space("height.btn_sm", 28)
+        up_btn = CyberButton("↑", variant="ghost")
+        up_btn.setFixedSize(40, btn_h)
+        up_btn.setEnabled(index > 0)
+        up_btn.setToolTip(self._copy("theme.tip_move_up", "上移"))
+        up_btn.clicked.connect(lambda: self._move_nav_item(index, -1))
+
+        down_btn = CyberButton("↓", variant="ghost")
+        down_btn.setFixedSize(40, btn_h)
+        down_btn.setEnabled(index < total - 1)
+        down_btn.setToolTip(self._copy("theme.tip_move_down", "下移"))
+        down_btn.clicked.connect(lambda: self._move_nav_item(index, 1))
+
+        row.addWidget(up_btn)
+        row.addWidget(down_btn)
+        return row_widget
+
+    def _move_nav_item(self, index: int, delta: int) -> None:
+        """上移(-1)/下移(+1)一个位置：交 AppShell 校验、持久化并重排。"""
+        if self._app_shell is None:
+            return
+        target = index + delta
+        ids = list(self._nav_order_ids)
+        if not (0 <= target < len(ids)):
+            return
+        ids[index], ids[target] = ids[target], ids[index]
+        if self._app_shell.apply_nav_order(ids):
+            self._rebuild_nav_order_rows()
+
+    def _reset_nav_order(self) -> None:
+        """恢复内置默认顺序。"""
+        if self._app_shell is not None and self._app_shell.reset_nav_order():
+            self._rebuild_nav_order_rows()
 
     # ════════════════════════════════════
     #  背景图卡片辅助
@@ -634,6 +767,9 @@ class ThemePage(PageBase):
         用 blockSignals 包住 setValue,避免 on_enter 的同步触发
         _on_opacity_changed(否则会把刚读出来的值再写一次,虽然内容相同)。
         """
+        # 每次进入都按 AppShell 最新顺序重建排序行（成本仅 10 个小控件）
+        self._rebuild_nav_order_rows()
+
         try:
             from core.services.ui_prefs import load_window_opacity
             saved = load_window_opacity()

@@ -30,6 +30,7 @@ _MAX_OPACITY: int = 100
 _KEY_OPACITY: str = "window_opacity"
 _KEY_BACKGROUND: str = "background"
 _KEY_THEME_PRESET: str = "theme_preset"
+_KEY_NAV_ORDER: str = "nav_order"
 
 # 背景图配置默认值
 # source: data/backgrounds/ 下保存的原图文件名(空串=未设置)
@@ -193,6 +194,53 @@ def save_theme_preset(name: str) -> bool:
     """
     data = _read_all()
     data[_KEY_THEME_PRESET] = str(name)
+    return _write_all(data)
+
+
+# ── 导航标签排序 ──
+#
+# 说明：
+#   - 只存"可由用户排序"的导航 id；固定在底部的页面（如加密验证）
+#     不在此列，由调用方（app_shell）自行追加。
+#   - 本模块是纯偏好层，不知道合法 id 集合，因此 load 时由调用方
+#     传入 default_ids 作为校正基准。
+
+def load_nav_order(default_ids: list[str]) -> list[str]:
+    """读取导航标签顺序。
+
+    以 ``default_ids`` 为基准做容错校正，任何异常/历史数据都能收敛：
+      - 文件/字段缺失 → 返回 default_ids 的副本
+      - 丢弃非字符串项、未知 id、重复项（只保留首次出现）
+      - 自动补全遗漏的 id（新增功能页时追加到末尾，保持旧顺序不动）
+
+    Args:
+        default_ids: 调用方认定的完整合法 id 有序列表（即默认顺序）。
+    """
+    raw = _read_all().get(_KEY_NAV_ORDER)
+    if not isinstance(raw, list):
+        return list(default_ids)
+
+    valid = set(default_ids)
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        if not isinstance(item, str):
+            continue
+        if item in valid and item not in seen:
+            ordered.append(item)
+            seen.add(item)
+    # 补全新增/遗漏项（按默认顺序），保证返回集合与 default_ids 完全一致
+    for nid in default_ids:
+        if nid not in seen:
+            ordered.append(nid)
+            seen.add(nid)
+    return ordered
+
+
+def save_nav_order(ids: list[str]) -> bool:
+    """保存导航标签顺序（合并写入，不影响其它字段）。失败返回 False。"""
+    data = _read_all()
+    data[_KEY_NAV_ORDER] = [str(nid) for nid in ids]
     return _write_all(data)
 
 
