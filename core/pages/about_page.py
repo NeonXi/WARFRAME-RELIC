@@ -28,6 +28,7 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QFont, QDesktopServices
 
 from core.pages.base_page import PageBase
+from core.constants import APP_BUILD_DATE, APP_VERSION
 from core.widgets.button import CyberButton
 from core.widgets.card import CyberCard
 from core.fonts import FONT_ACCENT, FONT_DISPLAY
@@ -133,7 +134,7 @@ class AboutPage(PageBase):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
-        subtitle = QLabel("遗物数据查询工具 · Cyberpunk UI")
+        subtitle = QLabel("Warframe 遗物识别与数据辅助工具 · Cyberpunk UI")
         subtitle.setFont(QFont(FONT_DISPLAY, 13))
         self._style(subtitle, color="text.tertiary", padding=("0", "0", "4px", "0"))
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -199,13 +200,15 @@ class AboutPage(PageBase):
         ver_layout.setSpacing(8)
 
         ver_layout.addLayout(
-            self._make_info_row("版本号", "v4.0.0 (Build 20260927)"))
+            self._make_info_row("版本号", f"v{APP_VERSION} (Build {APP_BUILD_DATE})"))
+        ver_layout.addLayout(
+            self._make_info_row("运行环境", "Python 3.12 · PySide6 6.11 · Qt 6"))
         ver_layout.addLayout(
             self._make_info_row("UI 架构", "Token 主题系统 + ThemeManager 信号驱动"))
         ver_layout.addLayout(
-            self._make_info_row("运行环境", "Python 3.12 · PySide6 6.11 · Qt6"))
+            self._make_info_row("数据来源", "官方 worldState API · warframe.market · 社区数据源"))
         ver_layout.addLayout(
-            self._make_info_row("数据来源", "Warframe 官方 API + 社区贡献"))
+            self._make_info_row("本地数据", "SQLite：物品 / 遗物 / 掉落 / 市场（约 2 万物品、3 千遗物）"))
 
         layout.addWidget(ver_card)
 
@@ -218,14 +221,18 @@ class AboutPage(PageBase):
         proj_layout.setSpacing(self._spacing("md", 12))
 
         desc = QLabel(
-            "WARFRAME RELIC 是一款面向 Warframe 玩家的遗物数据查询工具。\n\n"
+            "WARFRAME RELIC 是一款面向 Warframe 玩家的桌面辅助工具，"
+            "把「识别、查数据、做辅助」三件事收进同一个窗口。\n\n"
             "主要功能：\n"
-            "• 遗物内含物品与掉落概率查询\n"
-            "• Prime 部件市场价格参考\n"
-            "• 掉落来源追踪（任务、赏金、突击等）\n"
-            "• 游戏内截图 OCR 自动识别遗物\n"
-            "• 拼音搜索\n"
-            "• Token 驱动的多主题可换肤 UI（赛博朋克 / 玻璃拟态）"
+            "• 遗物识别：框选 / 区域截图 OCR，自动标注入库出库状态与可开部件\n"
+            "• 物品查询：中英互译、拼音搜索、掉落来源（任务 / 赏金 / 突击 / 集团 / 蓝图）\n"
+            "• 价格参考：对接 warframe.market 实时挂单，网络不佳时降级本地缓存\n"
+            "• 一线战报：虚空裂缝实时列表，启动预热 + 离线可看上次数据\n"
+            "• 辅助触发器：鼠标 / 键盘触发 → 按键 / 点击 / 移动动作链，支持 ScrLK 一键总控\n"
+            "• CD 辅助：技能 1~4 冷却悬浮显示\n"
+            "• 护眼遮罩 / 窗口置顶 / 快捷键占用诊断\n"
+            "• 外观与工具：双主题换肤、导航排序、自定义背景、常用网站收藏\n"
+            "• 离线机器绑定授权（Ed25519 验签，无需联网）"
         )
         desc.setStyleSheet(
             f"color: {text_secondary}; "
@@ -251,28 +258,29 @@ class AboutPage(PageBase):
         # 技术栈按类别组织：每类一个标题行 + 若干条目
         tech_groups = [
             ("UI / 框架", [
-                ("PySide6 6.11", "Qt6 Python 绑定，UI 渲染引擎"),
-                ("ThemeManager", "统一主题切换架构，信号驱动全应用刷新"),
-                ("Token 系统", "YAML 驱动的多主题配置（赛博朋克 / 玻璃拟态）"),
+                ("PySide6 6.11", "Qt 6 Python 绑定，全部界面与自绘控件"),
+                ("ThemeManager", "统一主题切换入口，信号驱动全应用刷新"),
+                ("Token 系统", "YAML 驱动的主题配置（赛博朋克 / 玻璃拟态）"),
                 ("自定义控件", "CyberButton / CyberCard / CyberLineEdit 等，\n继承原生 Qt + Mixin 自绘"),
                 ("内嵌字体", "Iceberg / Monoton / 阿里巴巴普惠体"),
             ]),
             ("OCR / 图像", [
-                ("RapidOCR", "ONNX Runtime 驱动的 OCR 识别引擎"),
-                ("OpenCV", "图像预处理与裁剪"),
-                ("dxcam", "基于 DirectX DDA 的高性能屏幕捕获"),
-                ("Pillow", "图像加载与缩放"),
-                ("NumPy", "矩阵运算与像素数据处理"),
+                ("RapidOCR", "ONNX Runtime 驱动的文字识别引擎"),
+                ("OpenCV 4.13", "图像预处理、色彩过滤与裁剪"),
+                ("dxcam", "DirectX DDA 高性能屏幕捕获"),
+                ("Pillow 12", "图像加载与缩放"),
+                ("NumPy 2.x", "矩阵运算与像素数据处理"),
             ]),
-            ("数据 / 搜索", [
-                ("SQLite", "本地数据库（遗物 / 物品 / 市场价格）"),
+            ("数据 / 网络", [
+                ("SQLite", "本地库：物品 / 遗物 / 掉落 / 市场（约 2 万物品）"),
                 ("pypinyin", "中文拼音模糊搜索"),
-                ("PyYAML", "主题 Token 解析引擎"),
-                ("requests", "Warframe 官方 API / 社区市场数据拉取"),
+                ("PyYAML 6", "主题 Token 解析"),
+                ("requests", "worldState / warframe.market 数据拉取"),
             ]),
-            ("系统 / 打包", [
-                ("Win32 API", "全局热键钩子、悬浮窗透明穿透（ctypes）"),
-                ("PyInstaller", "EXE 一键打包分发（--windowed / --noupx）"),
+            ("系统 / 安全", [
+                ("Win32 API", "全局热键、低级键鼠钩子、悬浮窗穿透（ctypes 直调）"),
+                ("cryptography", "Ed25519 离线授权验签（机器码绑定）"),
+                ("PyInstaller", "EXE 打包分发（--windowed / --noupx）"),
             ]),
         ]
 
