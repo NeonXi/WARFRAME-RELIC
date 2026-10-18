@@ -110,6 +110,9 @@ class TogglesPage(PageBase):
         # 快捷键数据
         self._hotkeys_data: dict[str, str] = {}
         self._hotkey_edits: dict[str, HotkeyCaptureEdit] = {}
+        # 各快捷键启用/禁用状态（用户可单独关闭某个快捷键）
+        self._hotkey_enabled: dict[str, bool] = {}
+        self._hotkey_toggles: dict[str, CyberToggleSwitch] = {}
         # 快捷键占用诊断：状态灯 {action: QLabel}、红色诊断条、重新检测按钮
         self._hotkey_status_dots: dict[str, QLabel] = {}
         self._hk_warn_frame: Optional[QFrame] = None
@@ -175,18 +178,22 @@ class TogglesPage(PageBase):
             return False
 
     def _load_hotkeys(self) -> None:
-        """加载快捷键配置。"""
+        """加载快捷键配置（含按键字符串 + 各快捷键启用状态）。"""
         try:
-            from core.hotkey_config import load_hotkeys, DEFAULT_HOTKEYS
+            from core.hotkey_config import (
+                load_hotkeys, load_hotkey_enabled, DEFAULT_HOTKEYS,
+            )
             raw = load_hotkeys()
             # 只取本页关心的 action（按 _HOTKEY_DEFS 过滤）
             self._hotkeys_data = {
                 k: raw.get(k, DEFAULT_HOTKEYS.get(k, ""))
                 for k, _, _ in _HOTKEY_DEFS
             }
+            self._hotkey_enabled = load_hotkey_enabled()
         except Exception as e:
             print(f"[TogglesPage] 加载热键失败: {e}", flush=True)
             self._hotkeys_data = {k: d for k, _, d in _HOTKEY_DEFS}
+            self._hotkey_enabled = {k: True for k, _, _ in _HOTKEY_DEFS}
 
     def _save_hotkeys(self) -> bool:
         """保存快捷键配置。"""
@@ -255,6 +262,41 @@ class TogglesPage(PageBase):
         except Exception:
             pass
         # 以重注册的真实结果刷新状态灯（被占用/冲突即使保存也如实标红）
+        self._refresh_hotkey_status()
+
+    def _save_hotkey_enabled(self) -> bool:
+        """保存各快捷键启用状态到 hotkeys.json。"""
+        try:
+            from core.hotkey_config import save_hotkey_enabled
+            return save_hotkey_enabled(self._hotkey_enabled)
+        except Exception as e:
+            print(f"[TogglesPage] 保存快捷键启用状态失败: {e}", flush=True)
+            return False
+
+    def _apply_hotkey_enabled(self) -> None:
+        """保存启用状态并让运行时生效。
+
+        - RegisterHotKey 路线（select/fullscreen/eye_mask/bring_to_front）：
+          重注册热键，被禁用的 action 不会被注册。
+        - 低层钩子路线（cd_1..cd_4）：重建 vk→skill 映射，被禁用的技能
+          从映射中移除，按键不再触发倒计时。
+        """
+        if not self._save_hotkey_enabled():
+            return
+        # 1. 全局注册类快捷键：重注册（内部会跳过 disabled 的 action）
+        try:
+            shell = self._get_shell()
+            if shell and shell.pipeline:
+                shell.pipeline.reregister_hotkeys()
+        except Exception:
+            pass
+        # 2. CD 辅助快捷键：重建钩子映射
+        try:
+            from core.services.cd_assist_service import CdAssistService
+            CdAssistService.instance().rebuild_hotkey_mapping()
+        except Exception:
+            pass
+        # 3. 刷新状态灯（disabled 的项会显示灰色「已禁用」）
         self._refresh_hotkey_status()
 
     def _apply_triggers(self) -> None:
@@ -536,6 +578,15 @@ class TogglesPage(PageBase):
         reset_btn.clicked.connect(lambda checked, k=action_key, dv=default_val: self._reset_hotkey(k, dv))
         row.addWidget(reset_btn)
 
+        # ── 启用/禁用开关（ON/OFF 模式）──
+        current_enabled = self._hotkey_enabled.get(action_key, True)
+        enable_switch = CyberToggleSwitch("", checked=current_enabled, on_off=True)
+        enable_switch.toggled.connect(
+            lambda checked, k=action_key: self._on_hotkey_enabled_toggled(k, checked)
+        )
+        self._hotkey_toggles[action_key] = enable_switch
+        row.addWidget(enable_switch)
+
         row.addStretch()
         return row
 
@@ -552,6 +603,12 @@ class TogglesPage(PageBase):
             edit.value = default_val
         self._hotkeys_data[action_key] = default_val
         self._apply_hotkeys()
+
+    def _on_hotkey_enabled_toggled(self, action_key: str, checked: bool) -> None:
+        """用户切换某快捷键的启用/禁用开关 — 即时保存 + 生效。"""
+        print(f"[TogglesPage] 快捷键 {action_key} 启用状态 → {checked}", flush=True)
+        self._hotkey_enabled[action_key] = checked
+        self._apply_hotkey_enabled()
 
     # ════════════════════════════════════
     #  快捷键占用诊断（状态灯 / 重新检测）
@@ -576,6 +633,9 @@ class TogglesPage(PageBase):
         if item.get("ok"):
             color = "brand.green"
             tip = self._copy("hotkeys.status_ok", "已就绪，按下可正常触发")
+        elif reason == "disabled":
+            color = "neutral.dark"
+            tip = self._copy("hotkeys.status_disabled", "已禁用，按下不会触发")
         elif reason == "occupied":
             color = "brand.red"
             tip = self._copy("hotkeys.status_occupied", "已被其他程序占用，按下将无反应")
@@ -611,7 +671,7 @@ class TogglesPage(PageBase):
             action = item.get("action")
             if action in self._hotkey_status_dots:
                 self._set_hotkey_dot(action, item)
-            if not item.get("ok") and item.get("reason") not in (None, "unknown"):
+            if not item.get("ok") and item.get("reason") not in (None, "unknown", "disabled"):
                 bad_items.append(item)
 
         if self._hk_warn_frame is None or self._hk_warn_label is None:
@@ -1045,6 +1105,13 @@ class TogglesPage(PageBase):
         for key, edit in self._hotkey_edits.items():
             val = self._hotkeys_data.get(key, "")
             edit.value = val
+
+        # 同步快捷键启用/禁用开关状态（从磁盘读取的最新值）
+        for key, sw in self._hotkey_toggles.items():
+            val = self._hotkey_enabled.get(key, True)
+            sw.blockSignals(True)
+            sw.setChecked(bool(val))
+            sw.blockSignals(False)
 
         # ★ 从磁盘重新加载触发器数据，重建整个触发器开关区域
         self._populate_triggers_section()

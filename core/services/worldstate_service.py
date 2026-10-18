@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 import time
 
@@ -56,6 +57,31 @@ _TIER_MAP: dict[str, tuple[str, str]] = {
 # 裂缝列表排序用的纪元顺序: 古 前 中 后 安魂 全能
 _TIER_ORDER: dict[str, int] = {
     "Lith": 0, "Meso": 1, "Neo": 2, "Axi": 3, "Requiem": 4, "Omnia": 5,
+}
+
+# ── 星球名: 英文 → 中文(节点 value 形如 "Galatea (Neptune)") ──
+_PLANET_MAP: dict[str, str] = {
+    "Mercury": "水星",
+    "Venus": "金星",
+    "Earth": "地球",
+    "Mars": "火星",
+    "Phobos": "火卫一",
+    "Deimos": "火卫二",
+    "Ceres": "谷神星",
+    "Jupiter": "木星",
+    "Europa": "欧罗巴",
+    "Saturn": "土星",
+    "Uranus": "天王星",
+    "Neptune": "海王星",
+    "Pluto": "冥王星",
+    "Sedna": "赛德娜",
+    "Eris": "阋神星",
+    "Lua": "月球",
+    "Void": "虚空",
+    "Kuva Fortress": "赤毒要塞",
+    "Zariman": "扎里曼",
+    "Duviri": "杜威",
+    "Veil": "面纱星",
 }
 
 # ── 任务类型: MT_XXX → 中文(未列出的回落英文原名) ──
@@ -208,7 +234,9 @@ class WorldstateService(QObject):
             )
 
             node_info = self._nodes.get(node_key, {})
-            node_name = node_info.get("value", node_key)
+            node_raw = node_info.get("value", node_key)
+            # 节点 value 形如 "Galatea (Neptune)":拆出节点名(英文保留) + 星球(译中文)
+            node_name, planet = self._split_node_planet(node_raw)
             faction = node_info.get("enemy", "")
 
             mt = str(m.get("MissionType", ""))
@@ -217,6 +245,7 @@ class WorldstateService(QObject):
             result.append({
                 "id": str(m.get("_id", {}).get("$oid", "")),
                 "node": node_name,
+                "planet": planet,
                 "faction": faction,
                 "mission": mission,
                 "tier_en": tier_en,
@@ -240,6 +269,21 @@ class WorldstateService(QObject):
             return ms // 1000
         except (TypeError, KeyError, ValueError):
             return 0
+
+    @staticmethod
+    def _split_node_planet(raw: str) -> tuple[str, str]:
+        """把 "Galatea (Neptune)" 拆成 (节点名, 星球中文名)。
+
+        节点名保留英文,星球名经 _PLANET_MAP 翻译为中文;
+        无括号或星球未收录时,星球回落英文名(保持原信息不丢)。
+        """
+        m = re.match(r"^(.+?)\s*\(([^)]+)\)\s*$", raw)
+        if not m:
+            return raw.strip(), ""
+        node_name = m.group(1).strip()
+        planet_en = m.group(2).strip()
+        planet_zh = _PLANET_MAP.get(planet_en, planet_en)
+        return node_name, planet_zh
 
     @staticmethod
     def _load_node_table() -> dict:

@@ -463,12 +463,41 @@ class CdAssistService(QObject):
             self._hook_bound = True
             _dbg("service", f"钩子绑定完成,50ms 轮询已启动 (enabled={self._enabled}, durations={[s.duration for s in self._skills]})", level="OK")
             print("[CdAssistService] 钩子绑定完成,开始监听 1/2/3/4 键", flush=True)
+            # 按当前启用状态初始化 vk→skill 映射（禁用的技能不进映射，钩子直接忽略其按键）
+            self.rebuild_hotkey_mapping()
             return True
         except Exception as e:
             _dbg("service", f"启动低层键盘钩子失败: {e}", level="ERR")
             print(f"[CdAssistService] 启动低层键盘钩子失败: {e}", flush=True)
             self._hook = None
             return False
+
+    def rebuild_hotkey_mapping(self) -> None:
+        """根据各技能的启用状态重建钩子 vk→skill 映射。
+
+        被禁用的技能从映射中移除，低层钩子不会再把对应按键放入队列，
+        从而完全不触发该技能的倒计时（同时不影响游戏内 1/2/3/4 的正常输入）。
+
+        钩子未绑定时仅记录，不报错（bind_to_app 会在启动后补调一次）。
+        """
+        try:
+            from core.hotkey_config import load_hotkey_enabled
+            enabled = load_hotkey_enabled()
+        except Exception as e:
+            _dbg("service", f"读取快捷键启用状态失败: {e}", level="WARN")
+            enabled = {}
+
+        actions = ("cd_1", "cd_2", "cd_3", "cd_4")
+        mapping: dict[int, int] = {}
+        for i, action in enumerate(actions):
+            if enabled.get(action, True):
+                mapping[0x31 + i] = i  # '1'..'4' → skill 0..3
+
+        if self._hook is not None:
+            self._hook.set_vk_to_skill(mapping)
+            _dbg("service", f"钩子映射已重建: {mapping}")
+        else:
+            _dbg("service", "钩子未绑定，跳过映射重建", level="WARN")
 
     def shutdown(self) -> None:
         """停止钩子 + 清理(应用退出时调用)。"""

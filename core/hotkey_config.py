@@ -47,6 +47,12 @@ DEFAULT_HOTKEYS = {
     "cd_4": "4",              # CD 辅助 技能 4
 }
 
+# 各快捷键默认启用状态（出厂默认全部启用）
+DEFAULT_HOTKEY_ENABLED = {k: True for k in DEFAULT_HOTKEYS}
+
+# hotkeys.json 中存放启用状态的子键名（与 action 名不冲突）
+_ENABLED_KEY = "enabled"
+
 # 可用的修饰键
 MODIFIERS = ["ctrl", "alt", "shift", "win"]
 
@@ -85,14 +91,65 @@ def load_hotkeys() -> Dict[str, str]:
         return dict(DEFAULT_HOTKEYS)
 
 
+def _read_config_raw() -> dict:
+    """读取 hotkeys.json 原始内容（损坏/不存在时返回空 dict）。"""
+    path = _config_path()
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (json.JSONDecodeError, Exception):
+        return {}
+
+
 def save_hotkeys(hotkeys: Dict[str, str]) -> bool:
-    """保存热键配置"""
+    """保存热键配置（保留已有的 enabled 子字段，避免覆盖启用状态）。"""
     path = _config_path()
     try:
+        existing = _read_config_raw()
+        enabled_saved = existing.get(_ENABLED_KEY, {})
         # 只保存非默认的键（精简文件）
         to_save = {k: v for k, v in hotkeys.items() if v != DEFAULT_HOTKEYS.get(k)}
+        if enabled_saved:
+            to_save[_ENABLED_KEY] = enabled_saved
         with open(path, "w", encoding="utf-8") as f:
             json.dump(to_save, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception:
+        return False
+
+
+def load_hotkey_enabled() -> Dict[str, bool]:
+    """加载各快捷键的启用状态。返回 {action: bool}，缺失时默认全部启用。
+
+    存储位置: hotkeys.json 的 "enabled" 子字段，与热键字符串同文件，
+    保证修改热键和切换启用状态不会互相覆盖。
+    """
+    result = dict(DEFAULT_HOTKEY_ENABLED)
+    data = _read_config_raw()
+    enabled = data.get(_ENABLED_KEY, {})
+    if isinstance(enabled, dict):
+        for key in DEFAULT_HOTKEYS:
+            if key in enabled:
+                result[key] = bool(enabled[key])
+    return result
+
+
+def save_hotkey_enabled(enabled: Dict[str, bool]) -> bool:
+    """保存各快捷键的启用状态（保留已有的热键字符串，避免覆盖按键配置）。"""
+    path = _config_path()
+    try:
+        existing = _read_config_raw()
+        # 保留热键字符串部分（只存非默认值，与 save_hotkeys 一致）
+        hotkeys_part = {
+            k: v for k, v in existing.items()
+            if k in DEFAULT_HOTKEYS and isinstance(v, str) and v != DEFAULT_HOTKEYS.get(k)
+        }
+        hotkeys_part[_ENABLED_KEY] = {k: bool(v) for k, v in enabled.items()}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(hotkeys_part, f, indent=2, ensure_ascii=False)
         return True
     except Exception:
         return False

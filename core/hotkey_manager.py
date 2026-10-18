@@ -35,7 +35,7 @@ from ctypes import wintypes
 
 from PySide6.QtCore import QAbstractNativeEventFilter
 
-from core.hotkey_config import load_hotkeys, DEFAULT_HOTKEYS
+from core.hotkey_config import load_hotkeys, load_hotkey_enabled, DEFAULT_HOTKEYS
 
 # Windows API
 # use_last_error=True: 注册失败时 ctypes.get_last_error() 才能拿到可靠的
@@ -63,6 +63,7 @@ REASON_OCCUPIED = "occupied"    # 1409: 被系统中其他程序占用
 REASON_INTERNAL = "internal"    # 与本软件另一个功能的快捷键冲突
 REASON_INVALID = "invalid"      # 组合非法或无法解析
 REASON_FAILED = "failed"        # 其他注册失败
+REASON_DISABLED = "disabled"    # 用户在功能开关页禁用了该快捷键
 REASON_UNKNOWN = "unknown"      # 尚未注册/未知
 
 # 修饰键名 → 常量
@@ -181,13 +182,22 @@ class HotkeyManager(QAbstractNativeEventFilter):
 
     def health_check(self) -> bool:
         """诊断快捷键健康状态。返回 True 表示一切正常。"""
+        enabled_map = load_hotkey_enabled()
+        # 若所有走 RegisterHotKey 的功能都被用户禁用，则没有已注册热键是正常的
+        any_enabled = any(enabled_map.get(a, True) for a in REGISTERED_ACTIONS)
         if not self._registered:
-            print("[快捷键诊断] [x] 警告：没有任何已注册的热键！", flush=True)
-            return False
+            if any_enabled:
+                print("[快捷键诊断] [x] 警告：没有任何已注册的热键！", flush=True)
+                return False
+            print("[快捷键诊断] [ok] 所有全局快捷键已被用户禁用", flush=True)
+            return True
 
         expected_actions = ["select", "fullscreen"]
         all_ok = True
         for action in expected_actions:
+            # 用户主动禁用的快捷键不算"缺失"
+            if not enabled_map.get(action, True):
+                continue
             hk_str = load_hotkeys().get(action, DEFAULT_HOTKEYS[action])
             if action not in self._hotkey_ids:
                 print(f"[快捷键诊断] [x] 缺失: {action} ({hk_str}) 未注册！", flush=True)
@@ -392,9 +402,16 @@ class HotkeyManager(QAbstractNativeEventFilter):
         #   和系统的核心输入键,一旦注册会全游戏抢键
         #   WH_KEYBOARD_LL 是"观察者"模式,默认 CallNextHookEx 放行,只用于通知
         #   → 既能触发 CD 倒计时,又不影响游戏/系统的 1/2/3/4 输入
+        enabled_map = load_hotkey_enabled()
         success_count = 0
         for action in REGISTERED_ACTIONS:
             hk_str = hotkeys.get(action, DEFAULT_HOTKEYS[action])
+
+            # 用户在功能开关页禁用了该快捷键 → 不注册,标记为 disabled
+            if not enabled_map.get(action, True):
+                print(f"[热键] [跳过] {action} 已被用户禁用", flush=True)
+                report[action] = self._make_report(action, hk_str, False, REASON_DISABLED)
+                continue
 
             if not hk_str:
                 print(f"[热键] [x] 跳过空热键: {action} -> ''", flush=True)

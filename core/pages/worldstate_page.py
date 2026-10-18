@@ -326,7 +326,7 @@ class WorldstatePage(PageBase):
             cells = [
                 f"{x['tier_zh']} {x['tier_en']}",
                 x["mission"],
-                x["node"],
+                f"{x['node']}({x['planet']})" if x.get("planet") else x["node"],
                 x["faction"],
                 "钢铁之路" if x["hard"] else "普通",
             ]

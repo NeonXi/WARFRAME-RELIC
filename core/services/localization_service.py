@@ -67,6 +67,7 @@ _PLANET_HARDCODED = {
     "Derelict": "遗迹",
     "Duviri": "双衍王境",
     "Höllvania": "霍瓦尼亚",
+    "Veil": "面纱",
     "Veil Proxima": "面纱比邻星",
     "Earth Proxima": "地球比邻星",
     "Saturn Proxima": "土星比邻星",
