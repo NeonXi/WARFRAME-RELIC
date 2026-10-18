@@ -33,6 +33,7 @@ from PySide6.QtGui import QPainter, QColor, QPaintEvent, QGuiApplication, QFont
 
 from core.logging_utils import log as _dbg
 from core.tokens.manager import TokenManager
+from core.fonts import FONT_DISPLAY
 
 
 # ── Win32 透明窗口常量 ──
@@ -138,7 +139,7 @@ class CdAssistOverlay(QWidget):
         """
         tm = TokenManager.instance()
         color_hex = tm.get("alias.text.primary")
-        f = QFont("Iceberg")
+        f = QFont(FONT_DISPLAY)
         f.setPointSize(DIGIT_FONT_PT)
         f.setBold(True)
         lbl.setFont(f)

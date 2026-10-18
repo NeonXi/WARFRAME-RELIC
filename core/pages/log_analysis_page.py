@@ -41,6 +41,7 @@ from core.widgets.button import CyberButton
 from core.services.log_parser_service import (
     LogParserService, LogAnalysisResult, ParseCancelled,
 )
+from core.fonts import FONT_DISPLAY
 
 
 # ── 日志解析工作线程(避免 25MB 日志阻塞 UI) ──
@@ -159,7 +160,7 @@ class LogAnalysisPage(PageBase):
 
         # 标题
         title = QLabel("游戏日志分析")
-        title.setFont(QFont("Iceberg", self._font_size("lg", 16)))
+        title.setFont(QFont(FONT_DISPLAY, self._font_size("lg", 16)))
         self._style(title, color="accent.primary")
         layout.addWidget(title)
 
@@ -325,7 +326,7 @@ class LogAnalysisPage(PageBase):
 
         type_text = m.mission_type_name
         type_lbl = QLabel(type_text)
-        type_lbl.setFont(QFont("Iceberg", self._font_size("xl", 20)))
+        type_lbl.setFont(QFont(FONT_DISPLAY, self._font_size("xl", 20)))
         self._style(type_lbl, color="accent.primary")
         title_row.addWidget(type_lbl)
 
@@ -365,7 +366,7 @@ class LogAnalysisPage(PageBase):
         dur_row.setSpacing(16)
         dur_text = f"{m.duration_min:g} 分钟"
         dur_lbl = QLabel(dur_text)
-        dur_lbl.setFont(QFont("Iceberg", self._font_size("lg_xl", 22)))
+        dur_lbl.setFont(QFont(FONT_DISPLAY, self._font_size("lg_xl", 22)))
         self._style(dur_lbl, color="accent.primary")
         dur_row.addWidget(dur_lbl)
         dur_row.addStretch()

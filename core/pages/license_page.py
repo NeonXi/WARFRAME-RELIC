@@ -32,6 +32,7 @@ from core.services.license_service import (
 from core.widgets.button import CyberButton
 from core.widgets.card import CyberCard
 from core.widgets.line_edit import CyberLineEdit
+from core.fonts import FONT_DISPLAY, FONT_MONO
 
 
 class LicensePage(PageBase):
@@ -71,7 +72,7 @@ class LicensePage(PageBase):
 
         # ── 标题 ──
         title = QLabel(self._copy("license.title", "加密验证"))
-        title.setFont(QFont("Iceberg", _fs("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, _fs("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         layout.addWidget(title)
 
@@ -150,7 +151,7 @@ class LicensePage(PageBase):
                 "license.code_placeholder", "粘贴作者回复的激活码（整段，含横杠也可）"
             )
         )
-        code_font = QFont("Consolas", self._font_size("sm", 12))
+        code_font = QFont(FONT_MONO, self._font_size("sm", 12))
         code_font.setStyleHint(QFont.StyleHint.Monospace)
         self._code_input.setFont(code_font)
         self._code_input.returnPressed.connect(self._on_activate_clicked)
@@ -199,7 +200,7 @@ class LicensePage(PageBase):
         layout.setSpacing(_sp("sm", 10))
 
         done_title = QLabel(self._copy("license.done_title", "✓ 已授权，软件已激活"))
-        done_title.setFont(QFont("Iceberg", self._font_size("xl", 20)))
+        done_title.setFont(QFont(FONT_DISPLAY, self._font_size("xl", 20)))
         self._style(done_title, color="brand.green", padding=("8px", "0"))
         done_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(done_title)
@@ -258,7 +259,7 @@ class LicensePage(PageBase):
 
         edit = CyberLineEdit()
         edit.setReadOnly(True)
-        mono = QFont("Consolas", self._font_size("md", 13))
+        mono = QFont(FONT_MONO, self._font_size("md", 13))
         mono.setStyleHint(QFont.StyleHint.Monospace)
         edit.setFont(mono)
 

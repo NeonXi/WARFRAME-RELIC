@@ -156,22 +156,74 @@
 **结论**：这条的产出不是「改了一行代码」，而是**把一条靠自觉的模糊规则变成了会失败的测试**。
 以后再有人往 Token 层顶层写 `import PySide6`，pytest 直接红。
 
-#### P1-3 尺寸魔数（非 4 倍数）
-| 文件 | 处数 | 典型 |
+#### P1-3 ✅ 已完成（2026-10-19）尺寸魔数（非 4 倍数）
+
+**改造原则：一律向上取整到 4 的倍数。**
+向下取整会让元素变紧，可能裁切文字（尤其 `setFixedWidth`）；向上最多 +2~4px，
+视觉几乎无感，且不会制造新的溢出。
+
+| 原值 | 新值 | 说明 |
 |---|---|---|
-| `core/widgets/pixel_font_editor.py` | 13 | `setFixedSize(22, 22)`、`setSpacing(6)` |
-| `core/pages/about_page.py` | 7 | `setSpacing(10/14)`、`setContentsMargins(18,…)` |
-| `core/pages/log_analysis_page.py` | 7 | `setSpacing(10/6/2)`、`setFixedWidth(90)` |
-| `core/widgets/manual_update_dialog.py` | 6 | `setSpacing(14)` |
-| 其它 5 个文件 | 15 | — |
+| 2 / 3 | 4 | spacing.xs |
+| 6 | 8 | spacing.sm |
+| 10 | 12 | spacing.md |
+| 14 | 16 | spacing.lg |
+| 18 | 20 | spacing.xl |
+| 22 / 30 | 24 / 32 | 图标/按钮尺寸 |
+| 50 / 70 / 90 | 52 / 72 / 92 | 固定宽高 |
 
-建议：在 `data/presets/cyberpunk.yaml` 的 spacing 档位里补 `2xs=2 / xs=4 / sm=8 / md=12 / lg=16 / xl=24`，
-统一走 `self._spacing(...)`；确实需要特例的（如图表轴宽）写成具名常量。
+**能走 token 的都走了 token**
+- 页面层（PageBase）：`self._spacing("md", 12)` 等，随预设缩放
+- 控件层（CyberWidgetMixin）：`self.space("spacing.md", 12)` 等
+- 纯 Qt 类（`_GridCell` / `LetterPickerDialog` / `PixelFontEditorPanel`）无 token 访问器，
+  取 4 倍数常量
 
-#### P1-4 字体名硬编码
-- `"Iceberg"` 出现在 `log_analysis_page.py`（3 处）、`license_page.py`（2 处）、`about_page.py`；
-  `"Consolas"` 出现在 `license_page.py`（2 处）。
-- 建议：`core/fonts.py` 已有注册逻辑，补 `FONT_DISPLAY` / `FONT_MONO` 常量供全项目引用。
+**覆盖范围**：11 个文件 48 处全部清零（about_page 7、log_analysis_page 7、
+pixel_font_editor 13、manual_update_dialog 6、status_page 4、triggers_page 3、
+theme_page 2、toggles_page 2、proxy_dialog 2、image_crop_dialog 1、stat_card 1）。
+
+**刻意保留的例外**
+- `pixel_font_editor.py` 的 `setSpacing(1)`：像素网格线间距，1px 是设计上必需的 hairline，
+  改成 4 会让字符格松散、破坏编辑器观感。已在此登记为已知例外。
+
+**验证**
+- 扫描：非 4 倍数尺寸 **48 → 0**
+- `compileall` 通过；`pytest` **154 passed**
+- 无头启动 13 页正常
+- 受影响的 5 个控件离屏实例化通过：ManualUpdateDialog / CyberProxyDialog /
+  CyberImageCropDialog / PixelFontEditorPanel / StatCard（高度实测 92）
+
+#### P1-4 ✅ 已完成（2026-10-19）字体名硬编码
+
+**实际清点**：`QFont("...")` 字面量共 **32 处 / 25 个文件**（比审计初估的 6 处多得多，
+因为 `"Iceberg"` 作为标题字体被几乎所有页面复制过）。
+
+**做法**
+- `core/fonts.py` 新增 5 个常量，作为全项目唯一来源：
+
+  | 常量 | 值 | 用途 |
+  |---|---|---|
+  | `FONT_DISPLAY` | Iceberg | 标题 / 强调（内嵌） |
+  | `FONT_ACCENT` | Monoton | 数字 / 大字号装饰（内嵌） |
+  | `FONT_UI` | Alibaba PuHuiTi 3 | 正文（内嵌） |
+  | `FONT_FALLBACK` | Microsoft YaHei | 内嵌字体不可用时的系统回退 |
+  | `FONT_MONO` | Consolas | 激活码 / 日志 / 坐标 |
+
+- 用 codemod 批量替换：AST 定位模块级最后一个 import 作为插入点，
+  **只处理 `#` 之前的代码部分**（避免误改注释），脚本幂等可重跑。
+- 25 个文件自动补 `from core.fonts import ...`，按实际使用裁剪，无冗余导入。
+
+**刻意保留**
+- QSS 里的 `font-family: Consolas, "Microsoft YaHei", monospace` 等 14 处**未动**。
+  它们是 CSS 回退栈（每个上下文的 fallback 顺序不同），不是 QFont family，
+  强行统一反而会改变缺字体时的渲染结果。
+
+**验证**
+- 残留字面量：**0**（仅 `fonts.py` 文档注释里的反例说明）
+- 未使用的常量导入：**0**
+- `compileall` + 109/109 模块导入通过；`pytest` **154 passed**；13 页启动正常
+
+**收益**：以后换标题字体、补字重、调整回退顺序，只改 `core/fonts.py` 一处。
 
 #### P1-5 `pixel_font_editor.py` 硬编码颜色 5 处
 - `#0F0F19`、`#00C8FF`、`#1E1E2D`、`#3C3C50` 等直接写在绘制代码里，切换主题不会跟随。
@@ -203,7 +255,7 @@
 
 1. **P0-1**（item_service 去重 + 日志）—— 影响面大但可用前后 JSON 对比验证，收益最高。
 2. **P1-1**（游戏词表去重）—— 纯常量搬家，零风险。
-3. **P1-3 / P1-4**（尺寸与字体收敛）—— 纯 UI 观感，可分批按页面做。
+3. **P1-3**（尺寸收敛）✅ 已完成；**P1-4**（字体名硬编码）✅ 已完成。
 4. ~~**P0-2**（解析可取消）~~ —— 已完成，见 §三 P0-2。
 5. **P2**（解析器规则表化）—— 建议在有真实 EE.log 样本时再做，配套单测。
 

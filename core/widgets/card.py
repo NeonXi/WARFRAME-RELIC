@@ -44,6 +44,7 @@ from PySide6.QtGui import (
 from PySide6.QtCore import Qt, QRectF
 
 from core.widgets.base import CyberWidgetMixin
+from core.fonts import FONT_DISPLAY
 
 
 class CyberCard(CyberWidgetMixin, QFrame):
@@ -75,7 +76,7 @@ class CyberCard(CyberWidgetMixin, QFrame):
                 font_size = self.space("font.xs", 11)
             except Exception:
                 font_size = 11
-            title_font = QFont("Iceberg", font_size)
+            title_font = QFont(FONT_DISPLAY, font_size)
             self._title_bar.setFont(title_font)
             self._layout.addWidget(self._title_bar)
         else:

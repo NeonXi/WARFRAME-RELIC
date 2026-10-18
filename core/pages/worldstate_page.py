@@ -27,6 +27,7 @@ from core.services.worldstate_service import WorldstateService
 from core.widgets.button import CyberButton
 from core.widgets.card import CyberCard
 from core.widgets.progress_bar import CyberProgressBar
+from core.fonts import FONT_DISPLAY
 
 
 # ── 纪元筛选项: (tier_en, 中文标签);空串表示"全部" ──
@@ -100,7 +101,7 @@ class WorldstatePage(PageBase):
 
         # ── 标题 ──
         title = QLabel("一线战报 · 虚空裂缝")
-        title.setFont(QFont("Iceberg", _fs("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, _fs("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         root.addWidget(title)
 

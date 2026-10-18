@@ -34,6 +34,7 @@ from core.pages.base_page import PageBase
 from core.widgets.button import CyberButton
 from core.widgets.card import CyberCard
 from core.widgets.image_crop_dialog import CyberImageCropDialog
+from core.fonts import FONT_DISPLAY
 
 
 class _NoWheelFilter(QObject):
@@ -92,7 +93,7 @@ class ThemePage(PageBase):
 
         # ── 标题 ──
         title = QLabel(self._copy("theme.title", "外观与主题"))
-        title.setFont(QFont("Iceberg", self._font_size("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, self._font_size("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         layout.addWidget(title)
 

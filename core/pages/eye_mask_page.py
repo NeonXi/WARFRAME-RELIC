@@ -50,6 +50,7 @@ from core.widgets.card import CyberCard
 from core.widgets.eye_mask_overlay import EyeMaskManager, DEFAULT_OPACITY
 from core.widgets.eye_mask_toggle_button import EyeMaskToggleButton
 from core.widgets.screen_select_button import ScreenSelectButton
+from core.fonts import FONT_DISPLAY
 
 
 # ══════════════════════════════════════════════
@@ -365,7 +366,7 @@ class EyeMaskPage(PageBase):
 
         # ── 标题 ──
         title = QLabel("护眼遮罩")
-        title.setFont(QFont("Iceberg", self._font_size("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, self._font_size("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         layout.addWidget(title)
 

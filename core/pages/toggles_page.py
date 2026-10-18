@@ -45,6 +45,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from core.fonts import FONT_DISPLAY
 from core.pages.base_page import PageBase
 from core.widgets.button import CyberButton
 from core.widgets.card import CyberCard
@@ -354,7 +355,7 @@ class TogglesPage(PageBase):
 
         # ── 标题 ──
         title = QLabel(self._copy("toggles.title", "功能控制面板"))
-        title.setFont(QFont("Iceberg", self._font_size("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, self._font_size("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         layout.addWidget(title)
 

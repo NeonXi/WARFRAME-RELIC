@@ -47,6 +47,7 @@ from core.constants import (
     PANEL_BG,
 )
 from data.ui_strings import S
+from core.fonts import FONT_FALLBACK
 
 
 def _hex_to_rgb(hex_color) -> tuple:
@@ -501,7 +502,7 @@ class Overlay(QWidget):
         if self._annotations and not active:
             self._annotations = []
         if active:
-            painter.setFont(QFont("Microsoft YaHei", 12))
+            painter.setFont(QFont(FONT_FALLBACK, 12))
             for a in active:
                 fm = painter.fontMetrics()
                 line_height = fm.height() + 4  # 行高（含行间距）
@@ -552,7 +553,7 @@ class Overlay(QWidget):
 
     def _setup_label(self):
         self.label = QLabel("", self)
-        self.label.setFont(QFont("Microsoft YaHei", 14))
+        self.label.setFont(QFont(FONT_FALLBACK, 14))
         self.label.setStyleSheet(f"color: {CYBER_YELLOW}; background: transparent;")
 
     # ========== 显示信息 ==========

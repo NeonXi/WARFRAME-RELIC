@@ -62,6 +62,7 @@ from core.trigger_config import (
     MOUSE_CLICK_BUTTONS, MOUSE_CLICK_VALUES,
     format_trigger_summary,
 )
+from core.fonts import FONT_DISPLAY
 
 
 
@@ -126,7 +127,7 @@ class TriggersPage(PageBase):
 
         # ── 标题 ──
         title = QLabel(_cp("triggers.title", "Trigger Config"))
-        title.setFont(QFont("Iceberg", _fs("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, _fs("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         layout.addWidget(title)
 

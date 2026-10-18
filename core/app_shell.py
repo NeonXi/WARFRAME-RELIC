@@ -52,6 +52,7 @@ from PySide6.QtGui import QFont, QPainter
 from core.tokens.manager import TokenManager
 from core.widgets.base import CyberWidgetMixin
 from core.theme_manager import ThemeManager
+from core.fonts import FONT_UI
 
 
 # ══════════════════════════════════════════════
@@ -557,7 +558,7 @@ class AppShell(QMainWindow):
         # 品牌标题
         brand_title = QLabel("WF RELIC")
         font_size = self._tm.space("font.lg", 16)
-        title_font = QFont("Alibaba PuHuiTi 3", font_size, QFont.Weight.Normal)
+        title_font = QFont(FONT_UI, font_size, QFont.Weight.Normal)
         brand_title.setFont(title_font)
         accent_color = self._tm.get("alias.accent.primary")
         brand_title.setStyleSheet(f"""

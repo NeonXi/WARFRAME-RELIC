@@ -40,6 +40,7 @@ from core.logging_utils import log as _dbg
 # ── DB 路径(给 component 翻译用;打包/开发环境自适应,见 core.paths) ──
 # 注意: 实际数据在 warframe.db(139MB),warframe_items.db 是 0 字节的旧文件
 from core.paths import ensure_user_file
+from core.fonts import FONT_DISPLAY
 DB_PATH = ensure_user_file("warframe.db")
 
 # ── 搜索 debounce ──
@@ -219,7 +220,7 @@ class PricesPage(PageBase):
 
         # ── 标题 ──
         title = QLabel(_cp("prices.title", "市场价格监控"))
-        title.setFont(QFont("Iceberg", _fs("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, _fs("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         root.addWidget(title)
 

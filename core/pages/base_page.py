@@ -41,6 +41,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from core.tokens.manager import TokenManager
+from core.fonts import FONT_FALLBACK
 
 
 class PageBase(QWidget):
@@ -274,14 +275,14 @@ class PageBase(QWidget):
         title = QLabel(f"[ {self.page_id} ]")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font_size = TokenManager.instance().space("font.xl", 20)
-        title_font = QFont("Microsoft YaHei", font_size, QFont.Weight.Bold)
+        title_font = QFont(FONT_FALLBACK, font_size, QFont.Weight.Bold)
         title.setFont(title_font)
         self._style(title, color="alias.text.primary")
 
         subtitle = QLabel("Coming Soon...")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub_font_size = TokenManager.instance().space("font.md", 14)
-        sub_font = QFont("Microsoft YaHei", sub_font_size)
+        sub_font = QFont(FONT_FALLBACK, sub_font_size)
         sub_font.setItalic(True)
         subtitle.setFont(sub_font)
         self._style(subtitle, color="alias.text.tertiary")

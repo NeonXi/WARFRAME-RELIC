@@ -72,6 +72,7 @@ from core.state.pixel_font import (
 )
 # splash_screen 的兼容层,内部会调 state.reload + 刷新 _PIXEL_FONT 引用
 from core.widgets.splash_screen import reload_pixel_font
+from core.fonts import FONT_DISPLAY
 
 # JSON 文件路径(用于保存成功提示)
 _PIXEL_FONT_JSON_PATH = _get_json_path()
@@ -374,7 +375,7 @@ class LetterPickerDialog(QDialog):
         for i, ch in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
             btn = QPushButton(ch)
             btn.setFixedSize(48, 48)
-            btn.setFont(QFont("Iceberg", 18, QFont.Weight.Bold))
+            btn.setFont(QFont(FONT_DISPLAY, 18, QFont.Weight.Bold))
             btn.setStyleSheet(self._letter_style(active=False))
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setToolTip(f"选择字母 {ch}(可重复)")

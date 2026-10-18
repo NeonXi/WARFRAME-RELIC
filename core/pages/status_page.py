@@ -39,6 +39,7 @@ from core.widgets.button import CyberButton
 from core.widgets.log_viewer import CyberLogViewer
 from core.widgets.manual_update_dialog import ManualUpdateDialog
 from core.widgets.stat_card import StatCard, ChamferedFrame
+from core.fonts import FONT_ACCENT, FONT_DISPLAY
 
 
 # 注意: 原 _ChamferedFrame / _StatCard 内嵌类已迁移到 core/widgets/stat_card.py
@@ -81,7 +82,7 @@ class StatusPage(PageBase):
 
         # ── 标题 ──
         title = QLabel(self._copy("status.title", "数据库概览"))
-        title.setFont(QFont("Iceberg", self._font_size("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, self._font_size("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"), transparent=True)
         layout.addWidget(title)
 
@@ -119,7 +120,7 @@ class StatusPage(PageBase):
 
             val = QLabel(default_val)
             val.setObjectName(f"statVal_{key}")
-            val.setFont(QFont("Monoton", 22))
+            val.setFont(QFont(FONT_ACCENT, 22))
             # 动态 color 来自 stats_config 循环变量(已解析的 hex 字面量),走 _style 的字面量通道
             self._style(val, color=color, transparent=True)
             cl.addWidget(val)

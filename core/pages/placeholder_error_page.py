@@ -21,6 +21,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 
 from core.pages.base_page import PageBase
+from core.fonts import FONT_DISPLAY
 
 
 class PlaceholderErrorPage(PageBase):
@@ -50,7 +51,7 @@ class PlaceholderErrorPage(PageBase):
 
         # ── 标题:页面 ID ──
         title = QLabel(f"⚠ 页面 '{self._nav_id}' 初始化失败")
-        title_font = QFont("Iceberg", self._font_size("lg", 18), QFont.Weight.Bold)
+        title_font = QFont(FONT_DISPLAY, self._font_size("lg", 18), QFont.Weight.Bold)
         title.setFont(title_font)
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._style(title, color="alias.semantic.danger")

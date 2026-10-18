@@ -107,6 +107,7 @@ from core.services.cd_assist_service import (
     SKILL_STEP,
 )
 from core.widgets.cd_assist_overlay import CdAssistManager
+from core.fonts import FONT_DISPLAY
 
 
 class _NoWheelSlider(QSlider):
@@ -741,7 +742,7 @@ class CdAssistPage(PageBase):
         # ★ 用 self._copy 立即解析(不能读 self.page_title,因为 build_content
         #   在 super().__init__() 里被调,此时 self.page_title 还没赋值,会是 "")
         title = QLabel(self._copy("nav.cd_assist", "CD 辅助显示"))
-        title.setFont(QFont("Iceberg", self._font_size("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, self._font_size("lg_xl", 18)))
         self._style(title, color="accent.primary", padding=("4px", "0"))
         layout.addWidget(title)
 

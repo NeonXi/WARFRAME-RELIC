@@ -52,6 +52,7 @@ from core.state.pixel_font import (
     reload as _reload_pixel_font,
 )
 from core.widgets.base import CyberWidgetMixin
+from core.fonts import FONT_DISPLAY
 
 
 # 进程内当前字型(从 state 层单例获取,不要直接修改)
@@ -449,7 +450,7 @@ class CyberSplashScreen(QWidget, CyberWidgetMixin):
         accent = self.token_color("semantic.warning")
         accent.setAlphaF(0.6)
         painter.setPen(accent)
-        font = QFont("Iceberg", 11)
+        font = QFont(FONT_DISPLAY, 11)
         painter.setFont(font)
 
         text = "WARFRAME RELIC — SYSTEM INITIALIZING"

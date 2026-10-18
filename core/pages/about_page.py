@@ -30,6 +30,7 @@ from PySide6.QtGui import QFont, QDesktopServices
 from core.pages.base_page import PageBase
 from core.widgets.button import CyberButton
 from core.widgets.card import CyberCard
+from core.fonts import FONT_ACCENT, FONT_DISPLAY
 
 
 # ── 链接常量 ──
@@ -127,13 +128,13 @@ class AboutPage(PageBase):
         text_secondary = self._color("text.secondary")
 
         title = QLabel("WARFRAME RELIC")
-        title.setFont(QFont("Monoton", 28))
+        title.setFont(QFont(FONT_ACCENT, 28))
         self._style(title, color="accent.primary", padding=("8px", "0", "0", "0"))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
         subtitle = QLabel("遗物数据查询工具 · Cyberpunk UI")
-        subtitle.setFont(QFont("Iceberg", 13))
+        subtitle.setFont(QFont(FONT_DISPLAY, 13))
         self._style(subtitle, color="text.tertiary", padding=("0", "0", "4px", "0"))
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(subtitle)

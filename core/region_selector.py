@@ -48,6 +48,7 @@ from core.constants import (
     OVERLAY_SELECTION_OVERLAY, OVERLAY_BG_COLOR,
 )
 from data.ui_strings import S
+from core.fonts import FONT_FALLBACK
 
 # ========== Win32 辅助 ==========
 _VK_LBUTTON = 0x01
@@ -342,7 +343,7 @@ class RegionSelector:
             _bg = OVERLAY_BG_COLOR
             painter.fillRect(0, 0, self._parent.width(), 36, QColor(*_bg) if isinstance(_bg, (list, tuple)) else QColor(str(_bg)))
             painter.setPen(QColor(str(CYBER_YELLOW)))
-            painter.setFont(QFont("Microsoft YaHei", 12))
+            painter.setFont(QFont(FONT_FALLBACK, 12))
             painter.drawText(20, 24, self._status_text)
 
         if not self._current_pos:
@@ -374,7 +375,7 @@ class RegionSelector:
 
         # 尺寸文字
         painter.setPen(QColor(str(CYBER_CYAN)))
-        painter.setFont(QFont("Microsoft YaHei", 11))
+        painter.setFont(QFont(FONT_FALLBACK, 11))
         painter.drawText(x + 5, y - 8, f"{w} × {h}")
 
     @staticmethod

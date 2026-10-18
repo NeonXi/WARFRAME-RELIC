@@ -33,6 +33,7 @@ from PySide6.QtGui import (
     QPainter, QColor, QPen, QFont,
     QGuiApplication, QCursor,
 )
+from core.fonts import FONT_FALLBACK
 
 
 class CrosshairPicker(QWidget):
@@ -166,7 +167,7 @@ class CrosshairPicker(QWidget):
 
         # ── 5. 坐标文字框(自动避边) ──
         painter.setPen(self._COORD_TEXT_COLOR)
-        painter.setFont(QFont("Microsoft YaHei", 11))
+        painter.setFont(QFont(FONT_FALLBACK, 11))
         coord_text = f"X: {self._mouse_pos.x()}  Y: {self._mouse_pos.y()}"
         fm = painter.fontMetrics()
         tw = fm.boundingRect(coord_text).width() + 16

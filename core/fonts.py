@@ -13,9 +13,10 @@
     from core.fonts import FontManager
     FontManager.register_all()   # 启动时调用一次
 
-    # 之后直接用字体名创建 QFont
+    # 之后直接用字体常量创建 QFont（禁止再写字面量）
     from PySide6.QtGui import QFont
-    font = QFont("Iceberg", 12)
+    from core.fonts import FONT_DISPLAY
+    font = QFont(FONT_DISPLAY, 12)
 
 ## AI 硬约束 — 修改本文件前必读
 归属层:    [L0/L1] (core/ 根目录,跨层桥接/全局管理器)
@@ -49,6 +50,19 @@ FONTS = {
     "Monoton-Regular.ttf":                  "Monoton",
     "AlibabaPuHuiTi-3-45-Light.ttf":        "Alibaba PuHuiTi 3",
 }
+
+# ══════════════════════════════════════════════
+#  字体族常量 —— 全项目唯一来源
+#
+#  代码里禁止再写字面量 QFont("Iceberg") / QFont("Consolas")，
+#  统一使用以下常量：换字体、补字重、加回退只需改这里。
+#  QSS 里的 font-family 栈(含 fallback 顺序)是另一回事，仍按上下文书写。
+# ══════════════════════════════════════════════
+FONT_DISPLAY = "Iceberg"            # 标题 / 强调（内嵌字体）
+FONT_ACCENT = "Monoton"             # 数字 / 大字号装饰（内嵌字体）
+FONT_UI = "Alibaba PuHuiTi 3"       # 正文（内嵌字体）
+FONT_FALLBACK = "Microsoft YaHei"   # 内嵌字体不可用时的系统回退
+FONT_MONO = "Consolas"              # 等宽：激活码 / 日志 / 坐标
 
 # 字体目录(assets 随包分发;打包/开发环境自适应,见 core.paths)
 _FONTS_DIR = str(_resource_root() / "assets" / "fonts")

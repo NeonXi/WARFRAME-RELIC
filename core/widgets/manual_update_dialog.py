@@ -40,6 +40,7 @@ from PySide6.QtCore import Qt
 from core.widgets.base import CyberWidgetMixin
 from core.widgets.button import CyberButton
 from core.tokens.manager import TokenManager
+from core.fonts import FONT_DISPLAY, FONT_MONO
 
 
 class _CopyableLabel(QLabel):
@@ -103,7 +104,7 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
         layout.setSpacing(self.space("spacing.lg", 16))
 
         self._title = QLabel("手动更新数据 — 教程")
-        self._title.setFont(QFont("Iceberg", 15))
+        self._title.setFont(QFont(FONT_DISPLAY, 15))
         layout.addWidget(self._title)
 
         # ── 说明文字 ──
@@ -133,7 +134,7 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
             self._tree_view = QPlainTextEdit()
             self._tree_view.setReadOnly(True)
             self._tree_view.setPlainText(dir_tree)
-            self._tree_view.setFont(QFont("Consolas", 10))
+            self._tree_view.setFont(QFont(FONT_MONO, 10))
             self._tree_view.setFixedHeight(200)
             layout.addWidget(self._tree_view)
 

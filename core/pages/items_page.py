@@ -47,6 +47,7 @@ from core.widgets.card import CyberCard
 from core.tokens.manager import TokenManager
 from core.services.item_service import ItemService
 from core.services.localization_service import translate_location
+from core.fonts import FONT_DISPLAY
 
 
 class ItemsPage(PageBase):
@@ -107,7 +108,7 @@ class ItemsPage(PageBase):
 
         # ── 标题 ──
         title = QLabel(self._copy("items.title", "物品检索"))
-        title.setFont(QFont("Iceberg", self._font_size("lg_xl", 18)))
+        title.setFont(QFont(FONT_DISPLAY, self._font_size("lg_xl", 18)))
         self._style(
             title,
             color="accent.primary",

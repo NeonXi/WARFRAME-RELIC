@@ -62,6 +62,7 @@ from __future__ import annotations
 
 import logging
 from typing import Optional, TYPE_CHECKING
+from core.fonts import FONT_DISPLAY
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget
@@ -892,7 +893,7 @@ class CyberWidgetMixin:
             font_size = tm.space("nav.font_size", 13)
             from PySide6.QtGui import QFont, QFontMetrics
             # 导航标签字体：Iceberg（英文），中文 fallback 到 YaHei UI
-            font = QFont("Iceberg", font_size, QFont.Weight.Bold)
+            font = QFont(FONT_DISPLAY, font_size, QFont.Weight.Bold)
             painter.setFont(font)
 
             fm = QFontMetrics(font)

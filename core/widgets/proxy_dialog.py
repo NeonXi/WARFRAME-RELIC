@@ -39,6 +39,7 @@ from core.proxy_config import (
     get_config_path, get_repo_defs,
     test_repo_mirror, update_test_result, clear_test_results,
 )
+from core.fonts import FONT_DISPLAY
 
 
 class _ProxyTestWorker(QObject):
@@ -253,7 +254,7 @@ class CyberProxyDialog(QDialog, CyberWidgetMixin):
 
         # 标题
         self._title = QLabel(self.copy("proxy.title", "GitHub 代理镜像列表"))
-        self._title.setFont(QFont("Iceberg", self.space("font.lg", 14)))
+        self._title.setFont(QFont(FONT_DISPLAY, self.space("font.lg", 14)))
         self._title.setStyleSheet(f"color: {accent.name()}; background: transparent; border: none;")
         layout.addWidget(self._title)
 

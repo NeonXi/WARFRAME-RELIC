@@ -44,6 +44,15 @@ crash_log.txt
 debug.log
 launch_log.txt
 startup_log.txt
+app_out.log
+app_err.log
+gamelog/
+
+# WorkBuddy 项目记忆（本地数据，不入库）
+.workbuddy-ai/
+
+# 个人指令笔记
+指令笔记本.txt
 
 # Database temp files
 *.db.new
