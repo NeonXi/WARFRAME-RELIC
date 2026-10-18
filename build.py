@@ -6,17 +6,19 @@
 必读: .trae/documents/打包EXE方案.md §4.4
 
 用法:
-    python build.py              # 完整构建 + 自检 + 冒烟
+    python build.py              # 完整构建 + 自检 + 冒烟(实时输出构建过程)
     python build.py --zip        # 构建完成后生成发行 ZIP(dist/*.zip)
     python build.py --no-smoke   # 跳过冒烟测试
     python build.py --no-clean   # 复用 PyInstaller 缓存(增量构建,更快)
+    python build.py --quiet      # 不流式打印 PyInstaller 输出(只看阶段结果)
 
 设计要点:
     1. hiddenimports 自动扫描 core/ 与 data/ 全部本地模块 —— 新增文件零维护;
        覆盖 app_shell 字符串懒加载页面(core.pages.xxx:WorldstatePage)这类
        PyInstaller 静态分析看不到的模块。
-    2. datas 白名单显式化 —— data/ 中的旧管线遗留(all.json / dict.*.json)
-       与运行期缓存(wm_items_cache.json)不进包,省 ~14MB。
+    2. datas 白名单显式化 —— data/ 中的旧管线遗留(all.json / dict.*.json)、运行期缓存
+       (wm_items_cache / worldstate_cache) 与用户状态(hotkeys / triggers / ui_prefs 等)
+       不进包: 既省 ~14MB, 也避免把开发者的个人配置当成"首启模板"发给用户。
     3. --windowed:不显示 CMD 窗口(用户决策,方案 §8.1)。
     4. UPX 关闭,降低杀软误报。
     5. 入口 dev.py:frozen 分支自动跳过提权/装依赖,直接运行 Qt 应用。
@@ -40,13 +42,39 @@ BUILD_DIR = PROJECT / "build"
 APP_DIR = DIST / APP_NAME            # dist/WARFRAME-RELIC/
 INTERNAL = APP_DIR / "_internal"     # dist/WARFRAME-RELIC/_internal/
 
-# data/ 顶层不进包的 json:旧管线遗留 + 运行期缓存(首启自动生成)
+# data/ 顶层不进包的 json：旧管线遗留 + 运行期缓存 + 用户运行状态
+#
+# ★ 用户状态文件绝不能进包：ensure_user_file() 会把包内同名文件当"首启模板"
+#   复制给每个用户，等于把开发者的快捷键/触发器/窗口位置发给所有人。
+#   这些文件缺失时各 loader 都有代码内默认值（DEFAULT_* / {} / (0,0)），
+#   所以排除后首启行为是安全的。
 _DATA_JSON_EXCLUDE = {
-    "all.json",            # 6MB 旧管线遗留(运行时只读 external/ 下的同名文件)
-    "dict.en.json",        # 3.8MB 旧管线遗留
-    "dict.zh.json",        # 3.8MB 旧管线遗留
-    "wm_items_cache.json", # 价格查询缓存,冷启动后自动重建
-    "sites.json",          # 用户网站收藏(默认项内置在代码,缺省自动回退)
+    # 旧管线遗留（运行时只读 external/ 下的同名文件）
+    "all.json",             # 6MB
+    "dict.en.json",         # 3.8MB
+    "dict.zh.json",         # 3.8MB
+    # 运行期缓存（首次查询/拉取后自动生成）
+    "wm_items_cache.json",
+    "worldstate_cache.json",
+    # 用户运行状态
+    "sites.json",           # 网站收藏（默认项内置在代码）
+    "hotkeys.json",         # 快捷键（DEFAULT_HOTKEYS）
+    "feature_toggles.json", # 功能开关（DEFAULT_FEATURE_TOGGLES）
+    "triggers.json",        # 辅助触发器（DEFAULT_TRIGGERS）
+    "ui_prefs.json",        # 透明度/背景/导航顺序/主题（各 load_* 默认值）
+    "cd_assist_pos.json",   # CD 悬浮层位置（默认 0,0）
+    "window_geometry.json", # 窗口几何（当前无读取方，历史遗留）
+    "item_region.json",     # OCR 物品区域（默认空槽位）
+    "background_config.json",  # 背景图配置（ui_prefs 内已有）
+    "language_preset.json", # 语言预设选择（默认 normal）
+}
+
+# 仅用于"泄漏检查"：这些是用户状态，若出现在包内说明排除清单失效
+_USER_STATE_FILES = {
+    "sites.json", "hotkeys.json", "feature_toggles.json", "triggers.json",
+    "ui_prefs.json", "cd_assist_pos.json", "window_geometry.json",
+    "item_region.json", "background_config.json", "language_preset.json",
+    "wm_items_cache.json", "worldstate_cache.json",
 }
 
 # ── 日志 ──────────────────────────────────────────────────────────────
@@ -61,6 +89,20 @@ def _ok(msg: str) -> None:
 
 def _fail(msg: str) -> None:
     print(f"[build]  FAIL {msg}", flush=True)
+
+
+def _phase(step: int, total: int, title: str) -> None:
+    """打印阶段标题，便于在长构建日志里定位进度。"""
+    print(f"\n[build] ── [{step}/{total}] {title} " + "─" * 30, flush=True)
+
+
+def _safe_print(line: str) -> None:
+    """控制台编码不兼容时降级输出，避免 GBK 终端被个别字符打断。"""
+    try:
+        print(line, flush=True)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "utf-8"
+        print(line.encode(enc, "replace").decode(enc, "replace"), flush=True)
 
 
 # ── 1. hiddenimports 自动扫描 ─────────────────────────────────────────
@@ -119,6 +161,8 @@ _REQUIRED_PACKAGES: list[tuple[str, str]] = [
     ("cv2", "opencv-python"),
     ("rapidocr_onnxruntime", "rapidocr-onnxruntime"),
     ("cryptography", "cryptography"),
+    ("dxcam", "dxcam"),
+    ("pypinyin", "pypinyin"),
 ]
 
 
@@ -146,11 +190,53 @@ def preflight_check() -> None:
     sys.exit(1)
 
 
-def run_build(clean: bool) -> None:
+def _run_pyinstaller(cmd: list[str], log_file: Path, stream: bool) -> int:
+    """执行 PyInstaller：始终写日志文件，可选实时回显到控制台。
+
+    Args:
+        cmd: 完整命令行
+        log_file: 日志落盘路径
+        stream: True=逐行打印到控制台(前缀: | 普通, ~ 警告, ! 错误)
+
+    Returns:
+        进程退出码
+    """
+    with open(log_file, "w", encoding="utf-8") as f:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=str(PROJECT),
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,          # 行缓冲：保证日志实时刷出
+        )
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            f.write(line)
+            f.flush()
+            if not stream:
+                continue
+            text = line.rstrip()
+            if not text:
+                continue
+            if text.startswith("ERROR") or "Traceback" in text:
+                _safe_print(f"  ! {text}")
+            elif text.startswith("WARNING"):
+                _safe_print(f"  ~ {text}")
+            else:
+                _safe_print(f"  | {text}")
+        return proc.wait()
+
+
+def run_build(clean: bool, stream: bool = True) -> None:
     mods = collect_local_modules()
     datas = collect_datas()
+    data_mb = sum(Path(s).stat().st_size for s, _ in datas) / 1024 / 1024
     _log(f"hiddenimports: {len(mods)} 个本地模块(自动扫描)")
-    _log(f"datas: {len(datas)} 个文件(显式清单)")
+    _log(f"datas: {len(datas)} 个文件 / {data_mb:.0f} MB(显式清单)")
+    _log(f"构建模式: {'全量(--clean)' if clean else '增量(复用缓存)'}")
 
     cmd = [
         sys.executable, "-m", "PyInstaller",
@@ -183,16 +269,15 @@ def run_build(clean: bool) -> None:
         cmd += ["--add-data", f"{src};{dst}"]
     cmd.append(str(ENTRY))
 
-    _log("PyInstaller 运行中(完整输出见 build/pyinstaller.log)...")
     t0 = time.time()
     BUILD_DIR.mkdir(exist_ok=True)
     log_file = BUILD_DIR / "pyinstaller.log"
-    with open(log_file, "w", encoding="utf-8") as f:
-        proc = subprocess.run(
-            cmd, stdout=f, stderr=subprocess.STDOUT, cwd=str(PROJECT),
-        )
-    if proc.returncode != 0:
-        _fail(f"PyInstaller 失败(exit={proc.returncode}),日志尾部:")
+    _log(f"PyInstaller 运行中，完整日志: {log_file}")
+    if stream:
+        _log("实时输出（前缀: | 普通  ~ 警告  ! 错误）")
+    returncode = _run_pyinstaller(cmd, log_file, stream)
+    if returncode != 0:
+        _fail(f"PyInstaller 失败(exit={returncode}),日志尾部:")
         tail = log_file.read_text(encoding="utf-8", errors="replace")
         for line in tail.splitlines()[-30:]:
             print("    " + line, flush=True)
@@ -221,6 +306,16 @@ def self_check() -> tuple[list[str], int]:
 
 def _dir_size_mb(p: Path) -> float:
     return sum(f.stat().st_size for f in p.rglob("*") if f.is_file()) / 1024 / 1024
+
+
+def check_no_user_state() -> list[str]:
+    """检查用户状态文件是否泄漏进包(正常应为空)。
+
+    这些文件会被 ``ensure_user_file()`` 当作"首启模板"复制给每个用户,
+    一旦进包, 新用户会继承开发者的快捷键 / 触发器 / 窗口位置 / 导航顺序。
+    """
+    data_in_pkg = INTERNAL / "data"
+    return sorted(n for n in _USER_STATE_FILES if (data_in_pkg / n).exists())
 
 
 # ── 5. 冒烟测试 ──────────────────────────────────────────────────────
@@ -300,30 +395,52 @@ def main() -> None:
     ap.add_argument("--zip", action="store_true", help="构建后生成发行 ZIP")
     ap.add_argument("--no-smoke", action="store_true", help="跳过冒烟测试")
     ap.add_argument("--no-clean", action="store_true", help="复用 PyInstaller 缓存")
+    ap.add_argument("--quiet", action="store_true",
+                    help="不流式打印 PyInstaller 输出(只看阶段结果;日志仍写 build/pyinstaller.log)")
     args = ap.parse_args()
 
     if not ENTRY.exists():
         _fail(f"入口不存在: {ENTRY}")
         sys.exit(1)
 
+    # 阶段数随开关变化,先算总数再逐个推进 —— 长构建日志里可定位进度
+    phase_titles = ["依赖预检", "PyInstaller 构建", "构建后自检"]
+    if not args.no_smoke:
+        phase_titles.append("冒烟测试")
+    if args.zip:
+        phase_titles.append("发行 ZIP")
+
     _log("=" * 50)
     _log("WARFRAME-RELIC 打包开始(onedir + windowed)")
     _log("=" * 50)
 
+    _phase(1, len(phase_titles), phase_titles[0])
     preflight_check()
-    run_build(clean=not args.no_clean)
 
-    missing, total = self_check()
+    _phase(2, len(phase_titles), phase_titles[1])
+    run_build(clean=not args.no_clean, stream=not args.quiet)
+
+    _phase(3, len(phase_titles), phase_titles[2])
+    missing, check_total = self_check()
     if missing:
-        _fail(f"自检缺项 {len(missing)}/{total}:")
+        _fail(f"自检缺项 {len(missing)}/{check_total}:")
         for m in missing:
             print("    - " + m, flush=True)
         sys.exit(1)
-    _ok(f"自检通过({total} 项关键资源齐全)")
+    _ok(f"自检通过({check_total} 项关键资源齐全)")
+
+    leaked = check_no_user_state()
+    if leaked:
+        _fail(f"用户状态文件被打进包 {len(leaked)} 个(应从 datas 排除):")
+        for n in leaked:
+            print("    - " + n, flush=True)
+        sys.exit(1)
+    _ok("用户状态文件未进包(不会把开发者配置发给用户)")
 
     _ok(f"产物: {APP_DIR}  ({_dir_size_mb(APP_DIR):.0f} MB)")
 
     if not args.no_smoke:
+        _phase(4, len(phase_titles), phase_titles[3])
         if smoke():
             _ok("冒烟测试通过(6 秒未闪退)")
         else:
@@ -331,6 +448,7 @@ def main() -> None:
             sys.exit(1)
 
     if args.zip:
+        _phase(len(phase_titles), len(phase_titles), phase_titles[-1])
         z = make_zip()
         _ok(f"ZIP 完成: {z.name}  ({z.stat().st_size / 1024 / 1024:.0f} MB)")
 
