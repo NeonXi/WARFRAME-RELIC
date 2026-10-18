@@ -302,5 +302,6 @@ class WorldstateService(QObject):
                     {"saved_at": int(time.time()), "fissures": fissures},
                     f, ensure_ascii=False,
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            # 缓存写入失败不影响本次展示，但下次启动会失去"秒显"，需留痕
+            print(f"[Worldstate] 磁盘缓存写入失败: {e}", flush=True)

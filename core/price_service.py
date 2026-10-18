@@ -353,8 +353,9 @@ def _fetch_price_from_api(en_name: str, timeout: float = REALTIME_TIMEOUT, slug:
                 volume_48h = sum(h.get('volume', 0) for h in hours_48)
             if days_90:
                 avg_price_90d = days_90[-1].get('wa_price')
-        except Exception:
-            pass
+        except Exception as e:
+            # 统计接口失败不影响主价格（已从订单算出），但缺 48h/90d 指标需留痕
+            print(f"[price_service] 统计数据获取失败: {slug} - {e}", flush=True)
 
         return {
             'slug': slug,

@@ -829,8 +829,9 @@ class ThemePage(PageBase):
                 self._imm_color_black_btn.variant = (
                     "solid" if mode == "black" else "outlined"
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            # 同步失败会导致部分控件显示与配置不一致，必须可见
+            print(f"[ThemePage] 同步沉浸设置到 UI 失败: {e}", flush=True)
 
     def _on_opacity_changed(self, value: int) -> None:
         """滑块拖动:实时调主窗口透明度 + 落盘到 ui_prefs.json。
@@ -850,8 +851,9 @@ class ThemePage(PageBase):
         try:
             from core.services.ui_prefs import save_window_opacity
             save_window_opacity(value)
-        except Exception:
-            pass  # 写盘失败不阻塞 UI 调整
+        except Exception as e:
+            # 写盘失败不阻塞 UI 调整，但要让用户知道设置没能持久化
+            print(f"[ThemePage] 保存窗口透明度失败: {e}", flush=True)
 
     def _preview_splash(self) -> None:
         """预览开启动画。"""

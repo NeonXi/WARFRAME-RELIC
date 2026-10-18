@@ -417,8 +417,9 @@ class CdAssistManager(QObject):
         for ov in self._overlays.values():
             try:
                 ov.set_offset(x, y)
-            except Exception:
-                pass
+            except Exception as e:
+                # 单个 overlay 失败不应中断其它屏，但静默会导致"某块屏位置不对"
+                _dbg("ovl", f"设置位置偏移失败: {e}", "WARN")
 
     # ── 显隐控制(由 service 驱动) ──
 

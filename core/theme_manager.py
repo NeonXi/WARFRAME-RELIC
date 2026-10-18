@@ -86,8 +86,9 @@ class ThemeManager(QObject):
             preset = "cyberpunk"
             try:
                 tm.load_preset(preset)
-            except Exception:
-                pass
+            except Exception as e:
+                # 连内置默认预设都加载失败：主题系统基本不可用，必须可见
+                print(f"[ThemeManager] 回退默认预设失败: {e}", flush=True)
 
         print(f"[ThemeManager] 启动主题: {preset}", flush=True)
         return preset
