@@ -6,10 +6,13 @@
 禁止依赖:  PySide6 / core.widgets / core.pages / core.state / 任何 IO
 
 存在理由:
-  任务类型 / 裂缝纪元 / 派系这三张表原本在 `worldstate_service` 与
-  `log_parser_service` 各维护一份,靠注释「与 xxx 保持一致」人肉同步。
-  2026-10-19 审计时已发现漂移(log_parser 多出 MT_RAILJACK),
-  故收敛为单一事实源: **新增/修改术语只改本文件**。
+  任务类型 / 裂缝纪元这两张表原本在 `worldstate_service` 与已删除的
+  `log_parser_service` 各维护一份,靠注释「与 xxx 保持一致」人肉同步,
+  2026-10-19 审计时已发现漂移,故收敛为单一事实源:
+  **新增/修改术语只改本文件**。
+
+  日志分析功能已整体移除,因此派系中文表与"纪元→中文"派生表一并删除;
+  如需恢复,从 git 历史取回即可。
 
 约定:
   - 中文名优先使用游戏内官方译名
@@ -48,7 +51,7 @@ MISSION_TYPE_ZH: dict[str, str] = {
 }
 
 # ── 裂缝纪元: VoidT1~T6 → (英文, 中文) ──
-# 需要英文名(如排序/筛选)用本表;只需要中文用下面的 VOID_TIER_ZH
+# 消费方按需取 v[0] 或 v[1]，不额外派生只含中文的字典
 VOID_TIER: dict[str, tuple[str, str]] = {
     "VoidT1": ("Lith", "古纪"),
     "VoidT2": ("Meso", "前纪"),
@@ -56,21 +59,4 @@ VOID_TIER: dict[str, tuple[str, str]] = {
     "VoidT4": ("Axi", "后纪"),
     "VoidT5": ("Requiem", "安魂"),
     "VoidT6": ("Omnia", "全能"),
-}
-
-# ── 裂缝纪元: VoidT1~T6 → 中文(由 VOID_TIER 派生,避免二次维护) ──
-VOID_TIER_ZH: dict[str, str] = {k: zh for k, (_en, zh) in VOID_TIER.items()}
-
-# ── 派系: 日志/世界状态里的英文键 → 中文 ──
-# 注意: Grineer/Corpus/Infested/Sentient/Narmer 在中文客户端仍显示英文,
-# 这里保留原文,只有确有官方中文译名的才翻译。
-ENEMY_FACTION_ZH: dict[str, str] = {
-    "Grineer": "Grineer",
-    "Corpus": "Corpus",
-    "Infested": "Infested",
-    "Orokin": "堕落者",
-    "Sentient": "Sentient",
-    "Crossfire": "交战",
-    "Narmer": "Narmer",
-    "Murmur": "低语者",
 }

@@ -249,16 +249,48 @@ _tc("bg.base") or "#0F0F19"     # token → theme_proxy → 字面量
   token 解析实测 `#00ffff` / `#08081a`
 - `pytest` **154 passed**；13 页启动正常
 
-#### P1-6 剩余 70 处 `except: pass` 需要分类处理
-**合理兜底（建议保留，补一行注释说明为什么可以吞）**：
-- `core/widgets/base.py`（5）— paintEvent 内 token 取色三级兜底，规范明确要求不能抛进绘制；
-- `core/trigger_manager.py`（5）— 钩子回调/ScrLK 轮询，异常绝不能冒泡回 Windows 消息循环；
-- `core/logging_utils.py`（3）— 日志自身写盘失败不能再抛；
-- `core/services/screenshot_pipeline.py`（2）— 退出清理。
+#### P1-6 ✅ 已完成（2026-10-19）`except: pass` 分类处理
 
-**应改为记录日志**：
-- `core/price_service.py`（3）、`core/services/db_builder.py`（2）、`core/pages/theme_page.py`（2）、
-  `core/widgets/cd_assist_overlay.py`（2）、`core/services/cd_hotkey_hook.py`（2）。
+**判定原则**（比"一律加日志"更重要）：
+
+> 预期内的缺失 → 静默；预期外的失败 → 留痕。
+
+- 预期内：可选数据不存在（DB 无该条目、配置文件缺失）、非 Windows 环境、
+  退出期清理（close/unlink/unhook）、绘制与钩子回调的异常隔离
+- 预期外：网络响应解析、写盘、主题加载、UI 状态同步 —— 这些静默会变成
+  "功能莫名失效且无从排查"
+
+**本轮补日志 6 处**
+
+| 文件 | 位置 | 失败后果 |
+|---|---|---|
+| `price_service.py:356` | 统计接口解析 | 缺 48h/90d 指标，价格仍可用 |
+| `theme_page.py:832` | 沉浸设置同步到 UI | 控件显示与配置不一致 |
+| `theme_page.py:853` | 保存窗口透明度 | 设置不持久化 |
+| `theme_manager.py:89` | 回退默认预设 | 主题系统基本不可用 |
+| `worldstate_service.py:305` | 磁盘缓存写入 | 下次启动失去"秒显" |
+| `cd_assist_overlay.py:420` | 单屏位置偏移 | 某块屏位置不对 |
+
+**复核后改判为"保留"的**（原计划要改，读上下文后推翻）：
+- `db_builder.py`（2）— `except OSError` 包住临时库 `unlink()`，是**定向清理**，
+  失败无副作用（下次构建会覆盖），加日志只会制造噪音
+- `cd_hotkey_hook.py`（2）— `UnhookWindowsHookEx` 退出期兜底，同类
+
+**保留的 52 处分布（按原因归类）**
+
+| 原因 | 代表文件 | 处数 |
+|---|---|---|
+| 绘制/取色兜底（规范要求不能抛进 paintEvent） | `widgets/base.py`、`immersive.py`、`pixel_font_editor.py` | 7 |
+| 低层钩子回调（异常不能回 Windows 消息循环） | `trigger_manager.py` | 5 |
+| 日志自身写盘失败 | `logging_utils.py` | 3 |
+| 退出期资源清理（close/unlink/unhook） | `screenshot_pipeline`、`db_connections`、`license_service`、`cd_hotkey_hook` 等 | 10 |
+| 可选数据缺失（DB 无条目 / 配置缺字段） | `item_name`、`matcher`、`hotkey_config`、`proxy_config`、`pixel_font` | 9 |
+| 平台/环境差异（非 Windows、无 ctypes） | `cd_assist_overlay`、`eye_mask_overlay`、`region_selector` | 4 |
+| 信号/订阅者隔离 | `_event_emitter`、`worldstate_service._emit_safely` | 2 |
+| 其它 UI 状态兜底 | 各页面 | 12 |
+
+**验证**：`except: pass` **58 → 52**（新增 6 处日志）；`compileall` 通过；
+`pytest` **154 passed**；13 页启动正常。
 
 ### P2 — 可维护性
 
@@ -273,11 +305,29 @@ _tc("bg.base") or "#0F0F19"     # token → theme_proxy → 字面量
 
 ## 四、建议执行顺序
 
-1. **P0-1**（item_service 去重 + 日志）—— 影响面大但可用前后 JSON 对比验证，收益最高。
-2. **P1-1**（游戏词表去重）—— 纯常量搬家，零风险。
-3. **P1-3**（尺寸收敛）✅ 已完成；**P1-4**（字体名硬编码）✅ 已完成。
-4. ~~**P0-2**（解析可取消）~~ —— 已完成，见 §三 P0-2。
-5. **P2**（解析器规则表化）—— 建议在有真实 EE.log 样本时再做，配套单测。
+1. **P0-1**（item_service 去重 + 日志）✅ 已完成
+2. **P1-1**（游戏词表去重）✅ 已完成
+3. **P1-3**（尺寸收敛）✅ 已完成；**P1-4**（字体名硬编码）✅ 已完成
+4. **P0-2**（解析可取消）✅ 已完成
+5. ~~**P2**（解析器规则表化）~~ —— 日志分析功能已整体移除，本项不再适用
 
-> 说明：`pytest` 目前未安装在 venv 中，`tests/` 下 120 个用例跑不起来。
-> 建议先 `pip install pytest`，否则上述重构都只能靠手工冒烟验证。
+> 测试环境：venv 已安装 pytest（2026-10-19），`pytest -q` 全绿。
+
+---
+
+## 五、后续变更（审计之后）
+
+### 2026-10-19 日志分析功能整体移除
+
+按用户要求删除整个「日志分析」功能：
+
+- 删除文件：`core/pages/log_analysis_page.py`、`core/services/log_parser_service.py`、
+  `tests/test_log_parser.py`
+- 移除导航：`app_shell.NAV_ITEMS` 与 `_PAGE_CLASS_MAP` 中的 `log_analysis` 项（13 → 12 页）
+- 词表清理：`core/services/game_vocab.py` 删除仅该功能使用的
+  `VOID_TIER_ZH` / `ENEMY_FACTION_ZH`，保留 `worldstate_service` 仍在用的
+  `MISSION_TYPE_ZH` / `VOID_TIER`
+- 未动用户数据：`data/ui_prefs.json` 的 `nav_order` 里仍有 `log_analysis`，
+  `load_nav_order()` 会按设计丢弃未知 id 并补全缺失项，无需手工改
+
+本文档 P0-2 / P1-6 中涉及该功能的记录保留为历史（对应提交 `b0b8b21`~`d0de2ea`）。
