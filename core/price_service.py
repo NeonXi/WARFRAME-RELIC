@@ -56,6 +56,7 @@ from core.constants import (
     COLOR_AVAILABLE, COLOR_GOLD, COLOR_UNKNOWN, COLOR_COPPER,
     CYBER_YELLOW,
 )
+from core.paths import ensure_user_file as _ensure_user_file
 
 
 # ============================================================
@@ -195,7 +196,9 @@ def _name_to_slug(en_name: str) -> str:
 
 def _get_slug(en_name: str) -> Optional[str]:
     """从 warframe.db market_items 表获取 slug，或从名称构造。"""
-    warframe_db = os.path.join(os.path.dirname(__file__), '..', 'data', 'warframe.db')
+    # 路径统一走 core.paths：打包后 __file__ 指向 _internal 只读目录，
+    # 直接拼接会读到旧库（用户更新过的数据在 user_data_dir）。
+    warframe_db = str(_ensure_user_file("warframe.db"))
     if os.path.exists(warframe_db):
         try:
             conn = sqlite3.connect(warframe_db, check_same_thread=False)

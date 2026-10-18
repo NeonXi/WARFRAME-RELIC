@@ -445,7 +445,7 @@ class AppShell(QMainWindow):
             from PySide6.QtGui import QGuiApplication
             from core.services.cd_assist_service import CdAssistService
             from core.widgets.cd_assist_overlay import CdAssistManager
-            from core.services.cd_debug_log import log as _dbg
+            from core.logging_utils import log as _dbg
 
             _dbg("shell", "=== _start_cd_assist_hook() 开始 ===")
             svc = CdAssistService.instance()
@@ -828,7 +828,7 @@ class AppShell(QMainWindow):
 
     def _switch_to(self, nav_id: str):
         """切换到指定页面。"""
-        from core.services.cd_debug_log import log as _dbg
+        from core.logging_utils import log as _dbg
 
         # ★ 授权门控唯一硬守卫：锁定态任何来源的跳转都强制落到验证页
         # （导航按钮已视觉锁定+拦截点击，这里兜底代码调用等其他入口）

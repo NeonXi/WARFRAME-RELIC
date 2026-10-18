@@ -136,8 +136,9 @@ class ItemService:
                 k = row[0].replace(' ', '').lower()
                 zh = row[1]
                 cls._zh_cache[k] = zh
-        except Exception:
-            pass
+        except Exception as e:
+            # 翻译缓存构建失败会导致中文名缺失，必须留痕（缓存可能只建了一半）
+            logger.warning("构建中文翻译缓存失败: %s", e, exc_info=True)
 
     def _translate_item(self, name: str) -> str:
         """在内存缓存中查找单个物品名的中文翻译。
@@ -692,8 +693,9 @@ class ItemService:
                         updated_at = value
                     elif key == "source":
                         source = value
-            except Exception:
-                pass
+            except Exception as e:
+                # db_meta 缺失只会让"数据版本"信息为空，不影响查询；但需可见
+                logger.warning("读取 db_meta 失败: %s", e, exc_info=True)
 
             weapon_cats = {"Primary", "Secondary", "Melee", "Arch-Gun", "Arch-Melee"}
             weapon_total = sum(categories.get(c, 0) for c in weapon_cats)
@@ -886,207 +888,218 @@ class ItemService:
                     params.append(f"{k} (%")
                 return tuple(params)
 
+            def _collect(label: str, sql: str, params: tuple, mapper) -> None:
+                """执行一条来源查询并把 mapper 结果追加到 sources。
+
+                单张表查询失败（schema 漂移/列缺失）不应让整个「掉落来源」
+                功能瘫痪，但**必须留痕**：否则用户只会看到某个来源静默消失，
+                排查时无从下手（开发规范 §7：禁止静默吞错）。
+
+                Args:
+                    label: 日志定位用的来源名（表名）
+                    sql: 已拼好条件的 SQL
+                    params: SQL 参数
+                    mapper: row -> dict | None；返回 None 表示丢弃该行
+                """
+                try:
+                    rows = conn.execute(sql, params).fetchall()
+                    for row in rows:
+                        item = mapper(row)
+                        if item:
+                            sources.append(item)
+                except Exception as e:
+                    logger.warning(
+                        "掉落来源查询失败 [%s] item=%r: %s", label, item_name, e,
+                        exc_info=True,
+                    )
+
+            def _collect_by(
+                label: str,
+                unique_col: str,
+                name_col: str,
+                sql_template: str,
+                mapper,
+            ) -> None:
+                """按「unique_name 精确优先，否则名称模糊」执行一条来源查询。
+
+                Args:
+                    label: 日志定位用的来源名（表名）
+                    unique_col: 精确匹配用的 unique_name 列（可带表别名）
+                    name_col: 模糊匹配用的名称列（可带表别名）
+                    sql_template: 含 ``{cond}`` 占位符的 SQL
+                    mapper: row -> dict | None
+                """
+                if matched_unique:
+                    cond, params = _match_unique(unique_col), _unique_params()
+                else:
+                    cond, params = _match_name(name_col), _name_params()
+                _collect(label, sql_template.format(cond=cond), params, mapper)
+
             # 1) 物品掉落（item_drops，按 unique_name + drop_type 双重匹配）
             if matched_unique:
-                try:
-                    cond = f"{_match_unique('unique_name')} AND ({_match_drop_type('drop_type')})"
-                    params = _unique_params() + _drop_type_params()
-                    for row in conn.execute(f"""
-                        SELECT drop_type, location, rarity, chance
-                        FROM item_drops WHERE {cond}
-                    """, params).fetchall():
-                        loc = f"{row['drop_type']} | {row['location']}" if row['location'] else row['drop_type'] or '?'
-                        sources.append({
-                            'location': loc,
-                            'rarity': row['rarity'] or '',
-                            'chance': row['chance'] or 100,
-                            'source_type': 'itemDrops',
-                        })
-                except Exception:
-                    pass
+                cond = f"{_match_unique('unique_name')} AND ({_match_drop_type('drop_type')})"
+                params = _unique_params() + _drop_type_params()
+
+                def _map_item_drop(row):
+                    loc = (
+                        f"{row['drop_type']} | {row['location']}"
+                        if row['location'] else row['drop_type'] or '?'
+                    )
+                    return {
+                        'location': loc,
+                        'rarity': row['rarity'] or '',
+                        'chance': row['chance'] or 100,
+                        'source_type': 'itemDrops',
+                    }
+
+                _collect("item_drops", f"""
+                    SELECT drop_type, location, rarity, chance
+                    FROM item_drops WHERE {cond}
+                """, params, _map_item_drop)
 
             # 2) 遗物奖励
-            try:
-                if matched_unique:
-                    cond = _match_unique('rr.item_unique')
-                    params = _unique_params()
-                else:
-                    cond = _match_name('rr.item_name')
-                    params = _name_params()
-                for row in conn.execute(f"""
+            def _map_relic_reward(row):
+                return {
+                    'location': f"{row['tier'] or ''} {row['relic_name'] or ''}",
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 0,
+                    'source_type': 'relics',
+                }
+
+            _collect_by(
+                "relic_rewards", 'rr.item_unique', 'rr.item_name', """
                     SELECT r.tier, r.relic_name, rr.item_name,
                            rr.rarity, rr.chance
                     FROM relic_rewards rr
                     JOIN relics r ON rr.relic_id = r.id
                     WHERE {cond}
-                """, params).fetchall():
-                    tier = row['tier'] or ''
-                    rname = row['relic_name'] or ''
-                    sources.append({
-                        'location': f"{tier} {rname}",
-                        'rarity': row['rarity'] or '',
-                        'chance': row['chance'] or 0,
-                        'source_type': 'relics',
-                    })
-            except Exception:
-                pass
+                """, _map_relic_reward,
+            )
 
             # 3) 任务奖励
-            try:
-                if matched_unique:
-                    cond = _match_unique('mr.item_unique')
-                    params = _unique_params()
-                else:
-                    cond = _match_name('mr.item_name')
-                    params = _name_params()
-                for row in conn.execute(f"""
+            def _map_mission_reward(row):
+                return {
+                    'location': f"{row['planet']} - {row['node_name']}",
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 0,
+                    'rotation': row['rotation'] or '',
+                    'source_type': 'missionRewards',
+                }
+
+            _collect_by(
+                "mission_rewards", 'mr.item_unique', 'mr.item_name', """
                     SELECT p.name AS planet, mn.node_name,
                            mr.item_name, mr.rarity, mr.chance, mr.rotation
                     FROM mission_rewards mr
                     JOIN mission_nodes mn ON mr.node_id = mn.id
                     JOIN planets p ON mn.planet_id = p.id
                     WHERE {cond}
-                """, params).fetchall():
-                    sources.append({
-                        'location': f"{row['planet']} - {row['node_name']}",
-                        'rarity': row['rarity'] or '',
-                        'chance': row['chance'] or 0,
-                        'rotation': row['rotation'] or '',
-                        'source_type': 'missionRewards',
-                    })
-            except Exception:
-                pass
+                """, _map_mission_reward,
+            )
 
             # 4) 赏金奖励
-            try:
-                if matched_unique:
-                    cond = _match_unique('item_unique')
-                    params = _unique_params()
-                else:
-                    cond = _match_name('item_name')
-                    params = _name_params()
-                for row in conn.execute(f"""
+            def _map_bounty_reward(row):
+                return {
+                    'location': f"{row['source']} Lv{row['bounty_level'] or '?'}",
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 0,
+                    'rotation': row['rotation'] or '',
+                    'source_type': row['source'] or 'bountyRewards',
+                }
+
+            _collect_by(
+                "bounty_rewards", 'item_unique', 'item_name', """
                     SELECT source, bounty_level, item_name,
                            rarity, chance, rotation
                     FROM bounty_rewards
                     WHERE {cond}
-                """, params).fetchall():
-                    level = row['bounty_level'] or '?'
-                    sources.append({
-                        'location': f"{row['source']} Lv{level}",
-                        'rarity': row['rarity'] or '',
-                        'chance': row['chance'] or 0,
-                        'rotation': row['rotation'] or '',
-                        'source_type': row['source'] or 'bountyRewards',
-                    })
-            except Exception:
-                pass
+                """, _map_bounty_reward,
+            )
 
             # 5) 突击奖励
-            try:
-                if matched_unique:
-                    cond = _match_unique('item_unique')
-                    params = _unique_params()
-                else:
-                    cond = _match_name('item_name')
-                    params = _name_params()
-                for row in conn.execute(f"""
+            def _map_sortie_reward(row):
+                return {
+                    'location': '突击奖励',
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 0,
+                    'source_type': 'sortieRewards',
+                }
+
+            _collect_by(
+                "sortie_rewards", 'item_unique', 'item_name', """
                     SELECT item_name, rarity, chance FROM sortie_rewards
                     WHERE {cond}
-                """, params).fetchall():
-                    sources.append({
-                        'location': '突击奖励',
-                        'rarity': row['rarity'] or '',
-                        'chance': row['chance'] or 0,
-                        'source_type': 'sortieRewards',
-                    })
-            except Exception:
-                pass
+                """, _map_sortie_reward,
+            )
 
             # 6) 集团奖励
-            try:
-                if matched_unique:
-                    cond = _match_unique('item_unique')
-                    params = _unique_params()
-                else:
-                    cond = _match_name('item_name')
-                    params = _name_params()
-                for row in conn.execute(f"""
+            def _map_syndicate_reward(row):
+                return {
+                    'location': f"购买: {row['syndicate_name']}",
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 100,
+                    'source_type': 'syndicates',
+                }
+
+            _collect_by(
+                "syndicate_rewards", 'item_unique', 'item_name', """
                     SELECT syndicate_name, item_name, rarity, chance
                     FROM syndicate_rewards WHERE {cond}
-                """, params).fetchall():
-                    sources.append({
-                        'location': f"购买: {row['syndicate_name']}",
-                        'rarity': row['rarity'] or '',
-                        'chance': row['chance'] or 100,
-                        'source_type': 'syndicates',
-                    })
-            except Exception:
-                pass
+                """, _map_syndicate_reward,
+            )
 
             # 7) 蓝图掉落（mod_drops / enemy_mod_tables 已移除：item_drops 已包含综合概率）
-            try:
-                if matched_unique:
-                    cond = _match_unique('blueprint_unique')
-                    params = _unique_params()
-                else:
-                    cond = _match_name('blueprint_name')
-                    params = _name_params()
-                for row in conn.execute(f"""
+            def _map_blueprint_drop(row):
+                return {
+                    'location': f"敌人: {row['enemy_name']}",
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 0,
+                    'source_type': 'blueprintLocations',
+                }
+
+            _collect_by(
+                "blueprint_drops", 'blueprint_unique', 'blueprint_name', """
                     SELECT blueprint_name, enemy_name, rarity, chance
                     FROM blueprint_drops WHERE {cond}
-                """, params).fetchall():
-                    sources.append({
-                        'location': f"敌人: {row['enemy_name']}",
-                        'rarity': row['rarity'] or '',
-                        'chance': row['chance'] or 0,
-                        'source_type': 'blueprintLocations',
-                    })
-            except Exception:
-                pass
+                """, _map_blueprint_drop,
+            )
 
             # 10) 敌人蓝图表
-            try:
-                if matched_unique:
-                    cond = _match_unique('blueprint_unique')
-                    params = _unique_params()
-                else:
-                    cond = _match_name('blueprint_name')
-                    params = _name_params()
-                for row in conn.execute(f"""
+            def _map_enemy_blueprint(row):
+                return {
+                    'location': f"敌人掉落表: {row['enemy_name']}",
+                    'rarity': row['rarity'] or '',
+                    'chance': row['chance'] or 0,
+                    'source_type': 'blueprintLocations',
+                }
+
+            _collect_by(
+                "enemy_bp_tables", 'blueprint_unique', 'blueprint_name', """
                     SELECT blueprint_name, enemy_name, rarity, chance
                     FROM enemy_bp_tables WHERE {cond}
-                """, params).fetchall():
-                    sources.append({
-                        'location': f"敌人掉落表: {row['enemy_name']}",
+                """, _map_enemy_blueprint,
+            )
+
+            # 11) 临场/钥匙奖励（两张表结构一致，共用同一个 mapper 工厂）
+            def _make_simple_mapper(location: str, source_type: str):
+                def _map(row):
+                    return {
+                        'location': location,
                         'rarity': row['rarity'] or '',
                         'chance': row['chance'] or 0,
-                        'source_type': 'blueprintLocations',
-                    })
-            except Exception:
-                pass
+                        'source_type': source_type,
+                    }
+                return _map
 
-            # 11) 临场/钥匙奖励
-            for tname, src_type in [('transient_rewards', 'transientRewards'), ('key_rewards', 'keyRewards')]:
-                try:
-                    if matched_unique:
-                        cond = _match_unique('item_unique')
-                        params = _unique_params()
-                    else:
-                        cond = _match_name('item_name')
-                        params = _name_params()
-                    for row in conn.execute(f"""
-                        SELECT item_name, rarity, chance FROM {tname} WHERE {cond}
-                    """, params).fetchall():
-                        label = '临场奖励' if src_type == 'transientRewards' else '钥匙奖励'
-                        sources.append({
-                            'location': label,
-                            'rarity': row['rarity'] or '',
-                            'chance': row['chance'] or 0,
-                            'source_type': src_type,
-                        })
-                except Exception:
-                    pass
+            for tname, src_type, location in (
+                ('transient_rewards', 'transientRewards', '临场奖励'),
+                ('key_rewards', 'keyRewards', '钥匙奖励'),
+            ):
+                _collect_by(
+                    tname, 'item_unique', 'item_name',
+                    f"SELECT item_name, rarity, chance FROM {tname} WHERE {{cond}}",
+                    _make_simple_mapper(location, src_type),
+                )
 
             # 去重（同一来源+稀有度只保留最高概率） + 排序
             deduped = {}
@@ -1220,8 +1233,9 @@ class ItemService:
                 ).fetchone()
                 if row and row["vaulted"]:
                     return [], 0  # 已入库遗物不显示掉落途径
-            except Exception:
-                pass
+            except Exception as e:
+                # 查不到就当作"未入库"继续展示掉落途径；表缺失需可见
+                logger.warning("查询遗物入库状态失败: %s", e, exc_info=True)
 
             results = []
             try:
@@ -1240,8 +1254,9 @@ class ItemService:
                         'rotation': row['rotation'] or '',
                         'chance': row['chance'] or 0,
                     })
-            except Exception:
-                pass
+            except Exception as e:
+                # 单条途径查询失败不应中断整个遗物详情，但必须可见
+                logger.warning("查询遗物掉落途径失败: %s", e, exc_info=True)
 
             # 去重（相同 planet+node+rotation）
             deduped = {}

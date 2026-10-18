@@ -329,7 +329,12 @@ class LicensePage(PageBase):
         original = self._copy("license.btn_copy", "复制")
         copied = self._copy("license.copied", "已复制")
         btn.setText(copied)
-        QTimer.singleShot(1500, lambda: btn.setText(original))
+        # 定时器以按钮为 parent：按钮销毁时定时器随之销毁，避免回调
+        # 触碰已释放的 C++ 对象（RuntimeError: Internal C++ object already deleted）
+        timer = QTimer(btn)
+        timer.setSingleShot(True)
+        timer.timeout.connect(lambda: btn.setText(original))
+        timer.start(1500)
 
     # ══════════════════════════════════
     #  视图刷新

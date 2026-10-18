@@ -34,7 +34,7 @@ from core.state.price_query_state import PriceQueryState, TopStatus
 from core.services.wm_items_repository import WmItemsRepository
 from core.services.search_coordinator import SearchCoordinator
 from core.services.price_fetcher import PriceFetcher
-from core.services.cd_debug_log import log as _dbg
+from core.logging_utils import log as _dbg
 
 
 # ── DB 路径(给 component 翻译用;打包/开发环境自适应,见 core.paths) ──

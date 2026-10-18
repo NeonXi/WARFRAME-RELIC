@@ -1,7 +1,7 @@
 """
 [L-Recognizer] BaseOCR — 统一 OCR 管线基类
 
-提取三个识别器(RelicNameRecognizer / ItemNameRecognizer / ModNameRecognizer)
+提取两个识别器(RelicNameRecognizer / ItemNameRecognizer)
 的公共样板代码:
   - RapidOCR 初始化
   - 图片上采样
@@ -13,7 +13,7 @@
 子类只需实现 _build_lines() 返回 [(text, box), ...]，即可复用完整管线。
 
 依赖: numpy + opencv-python + rapidocr-onnxruntime（可选）
-被谁用: relic_name / item_name / mod_name 三个具体识别器
+被谁用: relic_name / item_name 两个具体识别器
 
 ## AI 硬约束 — 修改本文件前必读
 归属层:    [L-Recognizer] (core/recognizers/)

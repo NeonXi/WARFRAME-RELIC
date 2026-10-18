@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QObject, Signal, QTimer
 from PySide6.QtGui import QPainter, QColor, QPaintEvent, QGuiApplication, QFont
 
-from core.services.cd_debug_log import log as _dbg
+from core.logging_utils import log as _dbg
 from core.tokens.manager import TokenManager
 
 

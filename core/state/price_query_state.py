@@ -196,7 +196,7 @@ class PriceQueryState(QObject):
         old = self._top_status
         self._top_status = status
         self.top_status_changed.emit(status.value)
-        from core.services.cd_debug_log import log as _dbg
+        from core.logging_utils import log as _dbg
         _dbg("state", f"top_status: {old.value} → {status.value}")
 
     # ══════════════════════════════════════════════════════
@@ -214,7 +214,7 @@ class PriceQueryState(QObject):
         """更新全物品列表缓存(只读)。"""
         self._items = list(items)
         self._items_loaded_at = time.time()
-        from core.services.cd_debug_log import log as _dbg
+        from core.logging_utils import log as _dbg
         _dbg("state", f"set_items: 缓存 {len(self._items)} 个物品")
 
     def clear_items(self) -> None:
@@ -270,7 +270,7 @@ class PriceQueryState(QObject):
           - 成功则填充 self._items + 设顶层状态为 READY(免得用户进页等加载)
           - 即使软过期也加载(让 UI 立即有内容,后台再静默刷新)
         """
-        from core.services.cd_debug_log import log as _dbg
+        from core.logging_utils import log as _dbg
         try:
             if not CACHE_FILE.exists():
                 _dbg("state", "_load_items_from_disk: 缓存文件不存在, 跳过")
@@ -323,7 +323,7 @@ class PriceQueryState(QObject):
         应该在 HTTP 拉取成功后的后台线程里调(避免阻塞 UI)。
         失败不抛异常,只记日志(下次启动还是用旧缓存或网络重拉)。
         """
-        from core.services.cd_debug_log import log as _dbg
+        from core.logging_utils import log as _dbg
         if not self._items:
             return
         try:
@@ -392,7 +392,7 @@ class PriceQueryState(QObject):
         self._search_status = status
         if keyword:
             self._current_keyword = keyword
-        from core.services.cd_debug_log import log as _dbg
+        from core.logging_utils import log as _dbg
         _dbg("state", f"search_status: {old.value} → {status.value} (kw={keyword!r})")
 
     def get_last_results(self) -> list[dict]:
@@ -418,7 +418,7 @@ class PriceQueryState(QObject):
         self._query_status = status
         if slug:
             self._current_query_slug = slug
-        from core.services.cd_debug_log import log as _dbg
+        from core.logging_utils import log as _dbg
         _dbg("state", f"query_status: {old.value} → {status.value} (slug={slug!r})")
 
     def get_last_query_result(self) -> dict | None:

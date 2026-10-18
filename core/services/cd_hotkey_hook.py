@@ -41,7 +41,7 @@ from typing import Dict
 
 from PySide6.QtCore import QObject, Signal
 
-from core.services.cd_debug_log import log as _dbg
+from core.logging_utils import log as _dbg
 
 
 # ── Win32 常量 ──

@@ -25,8 +25,9 @@ See Also:
 必读规范:  .trae/rules/开发规范.md §6.1
 
 本文件相关红线:
-- 禁止 import PySide6 → Token 不能依赖 UI
-- 禁止返回 Qt 对象 → 只能返回 str / int / dict
+- **模块顶层**禁止 import PySide6 → Token 必须能在无 Qt 的进程(单测/构建脚本)里导入
+- 唯一例外:`get_qcolor()` 在函数内惰性导入 `QColor`(全项目仅此一处 Qt 触点)
+- 类型注解可用 `TYPE_CHECKING` 导入 QColor(运行期不执行,不引入 Qt 依赖)
 - 禁止在 Token 里持有 widget 引用
 - 禁止在 Token 中做 IO(读文件应该 lazy)
 
@@ -36,7 +37,11 @@ OPTIONS: 有疑义先读 .trae/rules/开发规范.md §6.1。
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    # 仅供类型检查器/IDE 使用：运行期不会执行，因此不构成对 Qt 的依赖
+    from PySide6.QtGui import QColor
 
 try:
     import yaml
@@ -220,17 +225,23 @@ class TokenManager:
         self._ensure_loaded()
         return self._resolver.resolve_color(key)
 
-    def get_qcolor(self, key: str):
+    def get_qcolor(self, key: str) -> "QColor":
         """获取颜色 token 并返回 QColor 对象。
 
-        注意：此方法依赖 PySide6，仅在 GUI 环境中可用。
-        在非 GUI 环境（如纯单元测试）中调用会抛出 ImportError。
+        ★ 分层例外（开发规范 §6.1）：
+        本模块**顶层**不得 import PySide6 —— Token 层必须能在无 Qt 的进程里
+        被导入（单元测试/构建脚本）。QColor 转换是全项目唯一的 Qt 触点，
+        因此只允许在函数内惰性导入，且仅限本方法。
+        该不变量由 tests/test_layer_rules.py 自动守卫。
 
         Args:
             key: 颜色 token 路径
 
         Returns:
             QColor 实例
+
+        Raises:
+            ImportError: 非 GUI 环境（未安装 PySide6）调用时
         """
         from PySide6.QtGui import QColor
         r, g, b = self.get_color(key)

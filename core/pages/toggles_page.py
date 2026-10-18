@@ -240,27 +240,54 @@ class TogglesPage(PageBase):
     #  即时保存 + 通知引擎
     # ════════════════════════════════════
 
+    @staticmethod
+    def _safe_apply(action: str, fn) -> bool:
+        """执行「配置已落盘 → 通知运行时生效」的副作用调用。
+
+        运行时同步属于尽力而为：失败不阻断 UI（配置已保存），但**必须留日志**。
+        否则用户会遇到「开关显示已保存、实际不生效」且无任何线索可查
+        （开发规范 §7 禁区：静默吞错）。
+
+        Args:
+            action: 人类可读的动作名，用于失败日志定位
+            fn: 无参可调用对象
+
+        Returns:
+            True=同步成功；False=同步失败（已记录堆栈）
+        """
+        try:
+            fn()
+            return True
+        except Exception as e:
+            print(
+                f"[TogglesPage] {action} 失败（配置已保存，运行时未同步）: {e}",
+                flush=True,
+            )
+            import traceback
+            traceback.print_exc()
+            return False
+
     def _apply_toggles(self) -> None:
         """保存功能开关并通知管线服务。"""
         if not self._save_toggles():
             return
-        try:
-            shell = self._get_shell()
-            if shell and shell.pipeline:
-                shell.pipeline.update_feature_toggles(self._toggles_data)
-        except Exception:
-            pass
+        shell = self._get_shell()
+        if shell and shell.pipeline:
+            self._safe_apply(
+                "同步功能开关到截图管线",
+                lambda: shell.pipeline.update_feature_toggles(self._toggles_data),
+            )
 
     def _apply_hotkeys(self) -> None:
         """保存快捷键并通知管线重注册，随后刷新占用诊断状态。"""
         if not self._save_hotkeys():
             return
-        try:
-            shell = self._get_shell()
-            if shell and shell.pipeline:
-                shell.pipeline.reregister_hotkeys()
-        except Exception:
-            pass
+        shell = self._get_shell()
+        if shell and shell.pipeline:
+            self._safe_apply(
+                "重注册全局快捷键",
+                shell.pipeline.reregister_hotkeys,
+            )
         # 以重注册的真实结果刷新状态灯（被占用/冲突即使保存也如实标红）
         self._refresh_hotkey_status()
 
@@ -284,18 +311,18 @@ class TogglesPage(PageBase):
         if not self._save_hotkey_enabled():
             return
         # 1. 全局注册类快捷键：重注册（内部会跳过 disabled 的 action）
-        try:
-            shell = self._get_shell()
-            if shell and shell.pipeline:
-                shell.pipeline.reregister_hotkeys()
-        except Exception:
-            pass
+        shell = self._get_shell()
+        if shell and shell.pipeline:
+            self._safe_apply(
+                "按启用状态重注册全局快捷键",
+                shell.pipeline.reregister_hotkeys,
+            )
         # 2. CD 辅助快捷键：重建钩子映射
-        try:
+        def _rebuild_cd_mapping() -> None:
             from core.services.cd_assist_service import CdAssistService
             CdAssistService.instance().rebuild_hotkey_mapping()
-        except Exception:
-            pass
+
+        self._safe_apply("重建 CD 辅助快捷键映射", _rebuild_cd_mapping)
         # 3. 刷新状态灯（disabled 的项会显示灰色「已禁用」）
         self._refresh_hotkey_status()
 
@@ -303,13 +330,13 @@ class TogglesPage(PageBase):
         """保存触发器状态并通知引擎热重载。"""
         if not self._save_triggers():
             return
-        try:
-            shell = self._get_shell()
-            if shell and hasattr(shell, 'trigger_manager') and shell.trigger_manager:
+        shell = self._get_shell()
+        if shell and getattr(shell, "trigger_manager", None):
+            def _reload_triggers() -> None:
                 shell.trigger_manager.reload()
                 print("[TogglesPage] 触发器引擎已重载", flush=True)
-        except Exception:
-            pass
+
+            self._safe_apply("重载触发器引擎", _reload_triggers)
 
     # ════════════════════════════════════
     #  UI 构建
@@ -1054,10 +1081,12 @@ class TogglesPage(PageBase):
         clayout.addWidget(goto_btn)
 
         # ④ 跟随 service 状态变化(让两个开关双向同步)
-        try:
-            service.enabled_changed.connect(self._on_service_enabled_changed_sync)
-        except Exception:
-            pass
+        self._safe_apply(
+            "订阅 CD 辅助状态变化",
+            lambda: service.enabled_changed.connect(
+                self._on_service_enabled_changed_sync
+            ),
+        )
 
         parent_layout.addWidget(card)
 
@@ -1073,12 +1102,15 @@ class TogglesPage(PageBase):
         """service 状态变化 → 同步本页 UI(不会再次触发 set_enabled,因 setChecked 不发 toggled)。"""
         if not hasattr(self, '_cd_assist_toggle') or self._cd_assist_toggle is None:
             return
+        # 必须 try/finally：若 setChecked 抛异常而没恢复 blockSignals，
+        # 这个开关会永久失去响应（用户表现为「点了没反应」）。
         try:
             self._cd_assist_toggle.blockSignals(True)
             self._cd_assist_toggle.setChecked(on)
+        except Exception as e:
+            print(f"[TogglesPage] 同步 CD 辅助开关状态失败: {e}", flush=True)
+        finally:
             self._cd_assist_toggle.blockSignals(False)
-        except Exception:
-            pass
 
     # ════════════════════════════════════
     #  操作回调
@@ -1134,20 +1166,17 @@ class TogglesPage(PageBase):
         return None
 
     def _pause_hotkeys(self):
-        """暂停所有全局热键（进入捕获模式时调用）。"""
-        try:
-            shell = self._get_shell()
-            if shell and shell.pipeline and shell.pipeline._hotkey_mgr:
-                shell.pipeline._hotkey_mgr.clear()
-        except Exception:
-            pass
+        """暂停所有全局热键（进入捕获模式时调用）。
+
+        通过 pipeline 的公开接口操作，不再直接摸 _hotkey_mgr 私有属性。
+        """
+        shell = self._get_shell()
+        if shell and shell.pipeline:
+            self._safe_apply("暂停全局热键", shell.pipeline.suspend_hotkeys)
 
     def _resume_hotkeys(self):
         """恢复全局热键（退出捕获模式时调用），并刷新诊断状态。"""
-        try:
-            shell = self._get_shell()
-            if shell and shell.pipeline and shell.pipeline._hotkey_mgr:
-                shell.pipeline._hotkey_mgr.register_initial()
-        except Exception:
-            pass
+        shell = self._get_shell()
+        if shell and shell.pipeline:
+            self._safe_apply("恢复全局热键", shell.pipeline.resume_hotkeys)
         self._refresh_hotkey_status()

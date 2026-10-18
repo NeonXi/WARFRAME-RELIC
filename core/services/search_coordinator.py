@@ -9,7 +9,7 @@
   core.services.item_service (ItemService 单例)
   core.services.wm_items_repository (WmItemsRepository 单例)
   core.state.price_query_state (PriceQueryState, TopStatus, SearchSubStatus)
-  core.services.cd_debug_log
+  core.logging_utils (调试日志)
   Python 标准库 (threading, re, pathlib)
        ↓ 禁止依赖
   PySide6.QtWidgets / QtGui
@@ -57,7 +57,7 @@ from core.services.wm_items_repository import WmItemsRepository
 from core.state.price_query_state import (
     PriceQueryState, TopStatus, SearchSubStatus,
 )
-from core.services.cd_debug_log import log as _dbg
+from core.logging_utils import log as _dbg
 
 
 if TYPE_CHECKING:

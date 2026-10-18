@@ -41,62 +41,28 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from core import paths
+from core.services.game_vocab import ENEMY_FACTION_ZH as _ENEMY_MAP
+from core.services.game_vocab import MISSION_TYPE_ZH as _MISSION_MAP
+from core.services.game_vocab import VOID_TIER_ZH as _TIER_MAP
 
 _logger = logging.getLogger("core.services.log_parser")
 
+# 每解析 N 行检查一次取消标志：25MB 日志约 20 万行，100 次 is_set() 的开销可忽略
+_CANCEL_CHECK_EVERY = 2000
 
-# ── 任务类型中文映射(与 worldstate_service._MISSION_MAP 保持一致) ──
-_MISSION_MAP: dict[str, str] = {
-    "MT_DEFENSE": "防御",
-    "MT_MOBILE_DEFENSE": "移动防御",
-    "MT_RESCUE": "救援",
-    "MT_SURVIVAL": "生存",
-    "MT_INTEL": "间谍",
-    "MT_EXTERMINATION": "歼灭",
-    "MT_EXTERMINATE": "歼灭",
-    "MT_CAPTURE": "捕获",
-    "MT_EXCAVATE": "挖掘",
-    "MT_DISRUPTION": "中断",
-    "MT_INTERCEPTION": "拦截",
-    "MT_ASSASSINATION": "刺杀",
-    "MT_HIVE": "巢袭",
-    "MT_SABOTAGE": "破坏",
-    "MT_ARENA": "竞技场",
-    "MT_LANDSCAPE": "自由探索",
-    "MT_RUSH": "追击",
-    "MT_ALCHEMY": "炼金",
-    "MT_CORRUPTION": "腐化",
-    "MT_TERRITORY": "拦截",
-    "MT_VOID_CASCADE": "虚空覆涌",
-    "MT_ASSAULT": "强袭",
-    "MT_ARTIFACT": "特殊任务",
-    "MT_RAILJACK": "九重天",
-}
 
-# ── 裂缝纪元映射 ──
-_TIER_MAP: dict[str, str] = {
-    "VoidT1": "古纪",
-    "VoidT2": "前纪",
-    "VoidT3": "中纪",
-    "VoidT4": "后纪",
-    "VoidT5": "安魂",
-    "VoidT6": "全能",
-}
+class ParseCancelled(Exception):
+    """解析被调用方主动取消（程序退出 / 用户中止）。
 
-# ── 派系中文映射 ──
-_ENEMY_MAP: dict[str, str] = {
-    "Grineer": "Grineer",
-    "Corpus": "Corpus",
-    "Infested": "Infested",
-    "Orokin": "堕落者",
-    "Sentient": "Sentient",
-    "Crossfire": "交战",
-    "Narmer": "Narmer",
-    "Murmur": "低语者",
-}
+    与「解析失败」语义不同：调用方应静默收尾，而不是提示"文件格式错误"。
+    """
+
+
+# 任务类型 / 裂缝纪元 / 派系词表统一定义在 core/services/game_vocab.py
+# (原先是本文件与 worldstate_service 各存一份,已漂移,2026-10-19 收敛)
 
 
 @dataclass
@@ -201,14 +167,24 @@ class LogParserService:
     _node_table: dict[str, dict] = {}
 
     @classmethod
-    def parse(cls, log_path: str) -> Optional[LogAnalysisResult]:
+    def parse(
+        cls,
+        log_path: str,
+        should_cancel: Optional[Callable[[], bool]] = None,
+    ) -> Optional[LogAnalysisResult]:
         """解析日志文件,返回结构化结果。
 
         Args:
             log_path: EE.log 的绝对路径
+            should_cancel: 可选取消回调，每解析 ``_CANCEL_CHECK_EVERY`` 行调用一次；
+                返回 True 时立即中止并抛 ``ParseCancelled``。
+                用于程序退出时让后台线程尽快收尾（25MB 日志解析需数秒）。
 
         Returns:
             LogAnalysisResult(成功) / None(文件不存在或解析失败)
+
+        Raises:
+            ParseCancelled: ``should_cancel`` 返回 True 时主动中止
         """
         import time
 
@@ -219,7 +195,11 @@ class LogParserService:
 
         start = time.time()
         try:
-            missions = cls._parse_missions(path)
+            missions = cls._parse_missions(path, should_cancel)
+        except ParseCancelled:
+            # 取消不是错误：交回调用方静默收尾，不要被下面的通用 except 吞掉
+            _logger.info("日志解析已取消: %s", log_path)
+            raise
         except Exception as e:
             _logger.exception("解析日志失败: %s", e)
             return None
@@ -233,13 +213,19 @@ class LogParserService:
     # ══════════════════════════════════
 
     @classmethod
-    def _parse_missions(cls, path: Path) -> list[MissionRecord]:
+    def _parse_missions(
+        cls, path: Path, should_cancel: Optional[Callable[[], bool]] = None
+    ) -> list[MissionRecord]:
         """逐行扫描日志,提取任务记录。
 
         任务边界:
           - 开始: OnStateStarted, mission type=MT_XXX
           - 结束: 下一个 OpenLevel - PlayerShip(回轨道站)
                   或下一个 OnStateStarted(新任务开始,上一个无明确结束)
+
+        Args:
+            path: 日志文件路径
+            should_cancel: 每 ``_CANCEL_CHECK_EVERY`` 行调用一次；True 则抛 ParseCancelled
         """
         missions: list[MissionRecord] = []
         current: Optional[MissionRecord] = None
@@ -255,7 +241,15 @@ class LogParserService:
         pending_squad_mastery: dict[int, str] = {}  # slot -> 段位范围下限
 
         with path.open("r", encoding="utf-8", errors="replace") as f:
-            for line in f:
+            for line_no, line in enumerate(f, 1):
+                # 周期性检查取消标志：让 25MB 日志在程序退出时能秒级收尾
+                if (
+                    should_cancel is not None
+                    and line_no % _CANCEL_CHECK_EVERY == 0
+                    and should_cancel()
+                ):
+                    raise ParseCancelled()
+
                 m = cls._RE_LINE.match(line)
                 if m:
                     ts = float(m.group(1))

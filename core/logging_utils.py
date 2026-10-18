@@ -1,5 +1,14 @@
 """
-[L-Service] core.services.cd_debug_log — CD 辅助调试日志工具
+[L0] core.logging_utils — 全局调试日志工具(跨层共享)
+
+归属层: [L0] core/ 根目录(混合层) — 全局管理器/基础设施
+允许依赖: Python 标准库 + core.paths
+禁止依赖: PySide6 / core.services / core.widgets / core.pages / core.state
+
+迁移说明(2026-10-19): 原名 core/services/cd_debug_log.py。
+它被 state/widgets/services 三层的模块共用,放在 services/ 会让
+State/Widget 反向依赖 Service(违反开发规范 §2 分层铁律),
+故上移到 core/ 根目录作为纯基础设施。
 
 依赖: Python 标准库
 禁止: PySide6 (除 Signal)

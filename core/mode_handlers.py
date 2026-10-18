@@ -10,7 +10,7 @@
 
 依赖: Python 标准库 + data/ 模块 + core.constants + core.annotation(纯数据类)
 禁止: PySide6 / QtWidgets / QtGui (Signal 除外)
-被谁用: core.services.screenshot_pipeline.py (作为回调), core.services.recognition_pipeline_service.py
+被谁用: core.services.screenshot_pipeline.py (作为回调)
 
 ## AI 硬约束 — 修改本文件前必读
 归属层:    [L-Service] (core/ 根目录,跨层桥接/全局管理器)

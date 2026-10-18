@@ -28,6 +28,8 @@ from PySide6.QtCore import QObject, QTimer, Signal
 
 from core.paths import resource_dir as _resource_dir
 from core.paths import user_data_dir as _user_data_dir
+from core.services.game_vocab import MISSION_TYPE_ZH as _MISSION_MAP
+from core.services.game_vocab import VOID_TIER as _TIER_MAP
 
 # ── 常量 ──
 
@@ -45,14 +47,7 @@ _CACHE_FILE = _user_data_dir() / "worldstate_cache.json"
 AUTO_REFRESH_MS = 60_000
 
 # ── 裂缝纪元修饰符: VoidT1~T6 → (英文, 中文) ──
-_TIER_MAP: dict[str, tuple[str, str]] = {
-    "VoidT1": ("Lith", "古纪"),
-    "VoidT2": ("Meso", "前纪"),
-    "VoidT3": ("Neo", "中纪"),
-    "VoidT4": ("Axi", "后纪"),
-    "VoidT5": ("Requiem", "安魂"),
-    "VoidT6": ("Omnia", "全能"),
-}
+# 定义在 core/services/game_vocab.py(单一事实源),此处仅按原名引用
 
 # 裂缝列表排序用的纪元顺序: 古 前 中 后 安魂 全能
 _TIER_ORDER: dict[str, int] = {
@@ -85,31 +80,7 @@ _PLANET_MAP: dict[str, str] = {
 }
 
 # ── 任务类型: MT_XXX → 中文(未列出的回落英文原名) ──
-_MISSION_MAP: dict[str, str] = {
-    "MT_DEFENSE": "防御",
-    "MT_MOBILE_DEFENSE": "移动防御",
-    "MT_RESCUE": "救援",
-    "MT_SURVIVAL": "生存",
-    "MT_INTEL": "间谍",
-    "MT_EXTERMINATION": "歼灭",
-    "MT_EXTERMINATE": "歼灭",
-    "MT_CAPTURE": "捕获",
-    "MT_EXCAVATE": "挖掘",
-    "MT_DISRUPTION": "中断",
-    "MT_INTERCEPTION": "拦截",
-    "MT_ASSASSINATION": "刺杀",
-    "MT_HIVE": "巢袭",
-    "MT_SABOTAGE": "破坏",
-    "MT_ARENA": "竞技场",
-    "MT_LANDSCAPE": "自由探索",
-    "MT_RUSH": "追击",
-    "MT_ALCHEMY": "炼金",
-    "MT_CORRUPTION": "腐化",
-    "MT_TERRITORY": "拦截",
-    "MT_VOID_CASCADE": "虚空覆涌",
-    "MT_ASSAULT": "强袭",
-    "MT_ARTIFACT": "特殊任务",
-}
+# 定义在 core/services/game_vocab.py(单一事实源),此处仅按原名引用
 
 
 class WorldstateService(QObject):
@@ -210,12 +181,28 @@ class WorldstateService(QObject):
             fissures = self._parse_fissures(data)
             self._fissures = fissures
             self._save_disk_cache(fissures)
-            self.fissures_changed.emit(fissures)
+            self._emit_safely(self.fissures_changed, fissures)
         except Exception as e:
-            self.load_failed.emit(f"{type(e).__name__}: {e}")
+            self._emit_safely(self.load_failed, f"{type(e).__name__}: {e}")
         finally:
             with self._worker_lock:
                 self._worker_running = False
+
+    @staticmethod
+    def _emit_safely(signal, *args) -> None:
+        """向可能已被回收的 QObject 发信号。
+
+        本服务的拉取线程是 daemon：程序退出/测试 teardown 时，单例 QObject
+        可能先于线程被回收，此时 PySide6 抛 ``RuntimeError: Signal source has
+        been deleted``。这属于关闭期的正常竞态，不应让 traceback 冒泡到
+        threading 的默认异常钩子（会污染控制台与测试输出）。
+        注意：只吞 RuntimeError，其它异常照常暴露。
+        """
+        try:
+            signal.emit(*args)
+        except RuntimeError:
+            # 对象已销毁 —— 关闭期竞态，无需也无法再通知订阅者
+            pass
 
     def _parse_fissures(self, data: dict) -> list[dict]:
         """把 ActiveMissions 原始数据解析为 UI 友好的 dict 列表。"""

@@ -69,7 +69,7 @@ from core.services.http_client import (
 from core.state.price_query_state import (
     PriceQueryState, QuerySubStatus,
 )
-from core.services.cd_debug_log import log as _dbg
+from core.logging_utils import log as _dbg
 
 
 # ════════════════════════════════════════════════════════════════════════

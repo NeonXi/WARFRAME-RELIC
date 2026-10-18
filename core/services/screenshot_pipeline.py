@@ -738,6 +738,21 @@ class ScreenshotPipelineService:
         """紧急重置快捷键。"""
         self._hotkey_mgr.force_reset()
 
+    def suspend_hotkeys(self) -> None:
+        """临时注销全部全局热键（供改键捕获期间调用）。
+
+        改键时若本软件的热键仍处于注册状态，用户按下的组合键会被
+        RegisterHotKey 抢走，输入框收不到按键。捕获结束必须调用
+        resume_hotkeys() 恢复，否则热键会一直失效。
+        """
+        if self._hotkey_mgr:
+            self._hotkey_mgr.clear()
+
+    def resume_hotkeys(self) -> None:
+        """按磁盘配置恢复全局热键注册（与 suspend_hotkeys 成对使用）。"""
+        if self._hotkey_mgr:
+            self._hotkey_mgr.register_initial()
+
     # ════════════════════════════════════
     #  快捷键占用诊断（UI 状态灯/重新检测/改键预检）
     # ════════════════════════════════════

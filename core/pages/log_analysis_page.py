@@ -25,33 +25,65 @@
 from __future__ import annotations
 
 import os
+import threading
 from pathlib import Path
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QFrame, QFileDialog, QScrollArea,
 )
-from PySide6.QtCore import Qt, QThread, Signal as QtSignal
+from PySide6.QtCore import Qt, QThread, QCoreApplication, Signal as QtSignal
 from PySide6.QtGui import QFont
 
 from core.pages.base_page import PageBase
 from core.widgets.card import CyberCard
 from core.widgets.button import CyberButton
-from core.services.log_parser_service import LogParserService, LogAnalysisResult
+from core.services.log_parser_service import (
+    LogParserService, LogAnalysisResult, ParseCancelled,
+)
 
 
 # ── 日志解析工作线程(避免 25MB 日志阻塞 UI) ──
 class _ParseWorker(QThread):
-    """后台解析日志线程,完成后通过信号返回结果。"""
-    finished = QtSignal(object)  # LogAnalysisResult | None
+    """后台解析日志线程。
+
+    信号:
+        parse_finished(object): 解析完成（LogAnalysisResult | None）
+        cancelled():            被主动取消（程序退出时）
+
+    注意：**不覆写 QThread 内置的 finished 信号**。重名会遮蔽 Qt 自己
+    "线程已结束" 的信号，让「线程结束」与「拿到结果」两件事语义混淆。
+    """
+    parse_finished = QtSignal(object)
+    cancelled = QtSignal()
 
     def __init__(self, log_path: str, parent=None):
         super().__init__(parent)
         self._log_path = log_path
+        self._cancel_event = threading.Event()
+        # 应用退出时先置取消标志，让 run() 在检查点尽快返回；
+        # worker 销毁时 Qt 会自动断开该连接。
+        app = QCoreApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self.cancel)
+
+    def cancel(self) -> None:
+        """请求中止解析（线程安全，可从主线程调用）。"""
+        self._cancel_event.set()
 
     def run(self):
-        result = LogParserService.parse(self._log_path)
-        self.finished.emit(result)
+        try:
+            result = LogParserService.parse(
+                self._log_path,
+                should_cancel=self._cancel_event.is_set,
+            )
+        except ParseCancelled:
+            self.cancelled.emit()
+            return
+        except Exception:
+            # parse() 内部已记录堆栈；这里兜底，避免异常冒泡到 Qt 线程边界
+            result = None
+        self.parse_finished.emit(result)
 
 
 class LogAnalysisPage(PageBase):
@@ -208,13 +240,30 @@ class LogAnalysisPage(PageBase):
             self._start_parse(self._default_log_path)
 
     def _start_parse(self, log_path: str):
-        """启动后台解析线程。"""
-        if self._worker and self._worker.isRunning():
+        """启动后台解析线程。
+
+        worker 以本页为 parent：页面销毁时 Qt 一并回收，避免悬空线程对象；
+        结束回调里显式置空引用，否则下次 isRunning() 会访问已释放对象。
+        """
+        if self._worker is not None and self._worker.isRunning():
             return
         self._status_label.setText("正在解析日志,请稍候...")
-        self._worker = _ParseWorker(log_path)
-        self._worker.finished.connect(self._on_parse_finished)
+        self._worker = _ParseWorker(log_path, self)
+        self._worker.parse_finished.connect(self._on_parse_finished)
+        self._worker.parse_finished.connect(self._on_worker_finished)
+        self._worker.cancelled.connect(self._on_parse_cancelled)
+        self._worker.cancelled.connect(self._on_worker_finished)
         self._worker.start()
+
+    def _on_parse_cancelled(self):
+        """解析被主动取消（通常是程序退出）：不提示失败。"""
+        self._status_label.setText("解析已取消")
+
+    def _on_worker_finished(self, _result=None):
+        """线程结束后释放 worker 引用（对象本身由 deleteLater 回收）。"""
+        worker, self._worker = self._worker, None
+        if worker is not None:
+            worker.deleteLater()
 
     def _on_parse_finished(self, result: LogAnalysisResult | None):
         """解析完成回调。"""

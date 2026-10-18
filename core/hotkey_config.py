@@ -8,7 +8,7 @@
 - 维护热键 UI 标签(HOTKEY_LABELS)
 
 依赖: Python 标准库
-被谁用: core.hotkey_manager / core.pages.hotkeys_page / core.pages.toggles_page
+被谁用: core.hotkey_manager / core.pages.toggles_page
 
 注意: 本模块是纯数据层,无 Qt 依赖
 
