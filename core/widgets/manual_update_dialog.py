@@ -100,7 +100,7 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 16, 20, 16)
-        layout.setSpacing(14)
+        layout.setSpacing(self.space("spacing.lg", 16))
 
         self._title = QLabel("手动更新数据 — 教程")
         self._title.setFont(QFont("Iceberg", 15))
@@ -268,8 +268,8 @@ class ManualUpdateDialog(CyberWidgetMixin, QDialog):
         """)
 
         cl = QVBoxLayout(card)
-        cl.setContentsMargins(14, 10, 14, 10)
-        cl.setSpacing(6)
+        cl.setContentsMargins(16, 12, 16, 12)
+        cl.setSpacing(self.space("spacing.sm", 8))
 
         # 仓库名 + 描述
         header = QHBoxLayout()

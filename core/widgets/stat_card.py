@@ -101,7 +101,7 @@ class StatCard(CyberWidgetMixin, QFrame):
         # accent_color 是动态传入的(每个卡片可能用不同主题色),
         # 不能 token 化,这是设计上的合法硬编码
         self._accent_color = accent_color
-        self.setFixedHeight(90)
+        self.setFixedHeight(92)
         self.setStyleSheet("QFrame { border: none; background: transparent; }")
 
     def paintEvent(self, event: QPaintEvent) -> None:

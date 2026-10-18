@@ -307,7 +307,7 @@ class CyberProxyDialog(QDialog, CyberWidgetMixin):
         self._test_progress = QProgressBar()
         self._test_progress.setRange(0, 100)
         self._test_progress.setValue(0)
-        self._test_progress.setFixedHeight(18)
+        self._test_progress.setFixedHeight(20)
         self._test_progress.setFormat("  %p%  %v/%m")
         self._test_progress.hide()
         self._test_progress.setStyleSheet(f"""
@@ -343,7 +343,7 @@ class CyberProxyDialog(QDialog, CyberWidgetMixin):
 
         # 按钮行
         btn_row = QHBoxLayout()
-        btn_row.setSpacing(10)
+        btn_row.setSpacing(self.space("spacing.md", 12))
 
         self._btn_reset = CyberButton(self.copy("proxy.btn_reset_default", "恢复默认"), variant="ghost")
         self._btn_reset.setToolTip(self.copy("proxy.tip_reset_default", "恢复为程序内置的默认代理镜像列表"))

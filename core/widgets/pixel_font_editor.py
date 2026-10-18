@@ -162,7 +162,7 @@ class _GridCell(QFrame):
         self.row = row
         self.col = col
         self._on = False
-        self.setFixedSize(22, 22)
+        self.setFixedSize(24, 24)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     @property
@@ -370,7 +370,7 @@ class LetterPickerDialog(QDialog):
         layout.addWidget(step1)
 
         grid = QGridLayout()
-        grid.setSpacing(6)
+        grid.setSpacing(8)
         for i, ch in enumerate("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
             btn = QPushButton(ch)
             btn.setFixedSize(48, 48)
@@ -639,7 +639,7 @@ class PixelFontEditorPanel(QFrame):
         char_row = QHBoxLayout()
         char_row.setSpacing(4)
         self._char_btn_layout = QHBoxLayout()
-        self._char_btn_layout.setSpacing(3)
+        self._char_btn_layout.setSpacing(4)
         char_row.addLayout(self._char_btn_layout)
 
         btn_add = CyberButton("+", variant="ghost")
@@ -668,13 +668,13 @@ class PixelFontEditorPanel(QFrame):
         grid_frame = QFrame()
         grid_frame.setStyleSheet(self._frame_style())
         grid_outer = QVBoxLayout(grid_frame)
-        grid_outer.setContentsMargins(2, 2, 2, 2)
+        grid_outer.setContentsMargins(4, 4, 4, 4)
         grid_outer.setSpacing(0)
 
         self._grid_container = _GridContainer()
         self._grid_layout = QGridLayout(self._grid_container)
         self._grid_layout.setSpacing(1)
-        self._grid_layout.setContentsMargins(2, 2, 2, 2)
+        self._grid_layout.setContentsMargins(4, 4, 4, 4)
         grid_outer.addWidget(self._grid_container)
         layout.addWidget(grid_frame)
 
@@ -714,7 +714,7 @@ class PixelFontEditorPanel(QFrame):
         preview_group.setStyleSheet(self._frame_style())
         preview_outer = QVBoxLayout(preview_group)
         preview_outer.setContentsMargins(4, 4, 4, 4)
-        preview_outer.setSpacing(2)
+        preview_outer.setSpacing(4)
         preview_title = QLabel("预览(开屏动画当前字符组合)")
         preview_title.setStyleSheet(
             f"color: {_tc('text.disabled')};"

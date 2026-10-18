@@ -116,7 +116,7 @@ class AboutPage(PageBase):
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(20, 16, 20, 20)
-        layout.setSpacing(14)
+        layout.setSpacing(self._spacing("lg", 16))
         layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
         # ══════════════════════════════════
@@ -144,7 +144,7 @@ class AboutPage(PageBase):
         author_card = CyberCard(title="作者信息", clickable=False)
         author_layout = author_card.content_layout()
         author_layout.setContentsMargins(24, 28, 24, 20)
-        author_layout.setSpacing(10)
+        author_layout.setSpacing(self._spacing("md", 12))
 
         # 作者名
         author_name = QLabel("WARFRAME-RELIC Team")
@@ -194,7 +194,7 @@ class AboutPage(PageBase):
         # ══════════════════════════════════
         ver_card = CyberCard(title="版本信息", clickable=False)
         ver_layout = ver_card.content_layout()
-        ver_layout.setContentsMargins(24, 28, 24, 18)
+        ver_layout.setContentsMargins(24, 28, 24, 20)
         ver_layout.setSpacing(8)
 
         ver_layout.addLayout(
@@ -213,8 +213,8 @@ class AboutPage(PageBase):
         # ══════════════════════════════════
         proj_card = CyberCard(title="项目说明", clickable=False)
         proj_layout = proj_card.content_layout()
-        proj_layout.setContentsMargins(24, 28, 24, 18)
-        proj_layout.setSpacing(10)
+        proj_layout.setContentsMargins(24, 28, 24, 20)
+        proj_layout.setSpacing(self._spacing("md", 12))
 
         desc = QLabel(
             "WARFRAME RELIC 是一款面向 Warframe 玩家的遗物数据查询工具。\n\n"
@@ -242,8 +242,8 @@ class AboutPage(PageBase):
         # ══════════════════════════════════
         tech_card = CyberCard(title="技术栈", clickable=False)
         tech_layout = tech_card.content_layout()
-        tech_layout.setContentsMargins(24, 28, 24, 18)
-        tech_layout.setSpacing(6)
+        tech_layout.setContentsMargins(24, 28, 24, 20)
+        tech_layout.setSpacing(self._spacing("sm", 8))
 
         accent_secondary = self._color("accent.secondary")
 

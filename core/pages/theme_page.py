@@ -205,7 +205,7 @@ class ThemePage(PageBase):
         bg_card = CyberCard(title=self._copy("theme.card_background", "背景图片"))
         bg_layout = bg_card.content_layout()
         bg_layout.setContentsMargins(16, 16, 16, 16)
-        bg_layout.setSpacing(10)
+        bg_layout.setSpacing(self._spacing("md", 12))
 
         # 第一行:选择 / 清除 按钮 + 当前文件名
         btn_row = QHBoxLayout()
@@ -355,7 +355,7 @@ class ThemePage(PageBase):
 
         # 开启动画开关
         splash_row = QHBoxLayout()
-        splash_row.setSpacing(10)
+        splash_row.setSpacing(self._spacing("md", 12))
 
         splash_cb = QCheckBox(self._copy("theme.label_splash", "显示开启动画 (像素 RELIC)"))
         splash_cb.setChecked(True)

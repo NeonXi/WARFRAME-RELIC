@@ -137,7 +137,7 @@ class LogAnalysisPage(PageBase):
         self._latest_card = CyberCard(title="最近一场战斗")
         self._latest_layout = self._latest_card.content_layout()
         self._latest_layout.setContentsMargins(24, 20, 24, 20)
-        self._latest_layout.setSpacing(10)
+        self._latest_layout.setSpacing(self._spacing("md", 12))
         layout.addWidget(self._latest_card)
 
         # ── 完成任务记录列表 ──
@@ -155,7 +155,7 @@ class LogAnalysisPage(PageBase):
         card = CyberCard()
         layout = card.content_layout()
         layout.setContentsMargins(20, 16, 20, 16)
-        layout.setSpacing(10)
+        layout.setSpacing(self._spacing("md", 12))
 
         # 标题
         title = QLabel("游戏日志分析")
@@ -165,7 +165,7 @@ class LogAnalysisPage(PageBase):
 
         # 文件路径 + 按钮行
         row = QHBoxLayout()
-        row.setSpacing(10)
+        row.setSpacing(self._spacing("md", 12))
 
         self._path_label = QLabel(self._current_log_path)
         self._style(self._path_label, color="text.secondary")
@@ -194,11 +194,11 @@ class LogAnalysisPage(PageBase):
         card = CyberCard(title="完成任务记录")
         layout = card.content_layout()
         layout.setContentsMargins(20, 16, 20, 16)
-        layout.setSpacing(6)
+        layout.setSpacing(self._spacing("sm", 8))
 
         self._mission_list = QFrame()
         self._mission_list_layout = QVBoxLayout(self._mission_list)
-        self._mission_list_layout.setSpacing(2)
+        self._mission_list_layout.setSpacing(self._spacing("xs", 4))
         self._mission_list_layout.setContentsMargins(0, 0, 0, 0)
 
         scroll = QScrollArea()
@@ -398,7 +398,7 @@ class LogAnalysisPage(PageBase):
         w = QWidget()
         h = QHBoxLayout(w)
         h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(6)
+        h.setSpacing(self._spacing("sm", 8))
         lbl = QLabel(f"{label}:")
         self._style(lbl, color="text.tertiary", font_size="sm")
         val = QLabel(value)
@@ -431,7 +431,7 @@ class LogAnalysisPage(PageBase):
         # ── 时长(时间) ──
         dur_lbl = QLabel(f"{m.duration_min:g} 分钟")
         self._style(dur_lbl, color="text.primary", font_size="sm")
-        dur_lbl.setFixedWidth(90)
+        dur_lbl.setFixedWidth(92)
         row_lay.addWidget(dur_lbl)
 
         # ── 人员(队员) ──

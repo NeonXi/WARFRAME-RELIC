@@ -601,7 +601,7 @@ class TogglesPage(PageBase):
             row.addWidget(dot)
 
         reset_btn = CyberButton(text=self._copy("common.reset", "重置"), variant="ghost")
-        reset_btn.setFixedWidth(50)
+        reset_btn.setFixedWidth(52)
         reset_btn.clicked.connect(lambda checked, k=action_key, dv=default_val: self._reset_hotkey(k, dv))
         row.addWidget(reset_btn)
 
@@ -960,7 +960,7 @@ class TogglesPage(PageBase):
     def _build_trigger_toggle_row(self, trigger: dict, idx: int) -> QHBoxLayout:
         """构建一行辅助触发器开关：[切角按钮] 名称 + 摘要 [状态点]。"""
         row = QHBoxLayout()
-        row.setSpacing(10)
+        row.setSpacing(self._spacing("md", 12))
 
         name = trigger.get("name", "")
         enabled = bool(trigger.get("enabled", False))

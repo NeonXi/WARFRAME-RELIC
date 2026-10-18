@@ -418,7 +418,7 @@ class TriggersPage(PageBase):
         actions_container.setStyleSheet("background-color: transparent;")
         actions_layout = QVBoxLayout(actions_container)
         actions_layout.setContentsMargins(0, 0, 0, 0)
-        actions_layout.setSpacing(6)
+        actions_layout.setSpacing(self._spacing("sm", 8))
         cl.addWidget(actions_container)
 
         action_widgets_list: list[dict] = []
@@ -547,7 +547,7 @@ class TriggersPage(PageBase):
         _cp = self._copy
 
         row = QHBoxLayout()
-        row.setSpacing(6)
+        row.setSpacing(self._spacing("sm", 8))
 
         # ── 动作类型下拉 ──
         type_combo = CyberComboBox()
@@ -588,7 +588,7 @@ class TriggersPage(PageBase):
 
         # ── 删除按钮（红色 danger 样式）──
         btn_del_act = CyberButton(text="✕", variant="semantic.danger")
-        btn_del_act.setFixedSize(30, _h)
+        btn_del_act.setFixedSize(32, _h)
 
         # 先全部加入布局（确保 setVisible 在 addWidget 之后生效）
         row.addWidget(type_combo)

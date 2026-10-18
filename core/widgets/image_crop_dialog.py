@@ -526,7 +526,7 @@ class CyberImageCropDialog(CyberWidgetMixin, QDialog):
         # ── 底部控制栏 ──
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(10)
+        layout.setSpacing(self.space("spacing.md", 12))
         layout.addWidget(self._canvas)
 
         bottom = QHBoxLayout()

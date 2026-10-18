@@ -150,7 +150,7 @@ class StatusPage(PageBase):
 
         # 第二行：手动操作（左教程 / 右构建，各占一半）
         manual_row = QHBoxLayout()
-        manual_row.setSpacing(10)
+        manual_row.setSpacing(self._spacing("md", 12))
 
         btn_tutorial = CyberButton(text="手动更新教程", variant="outlined")
         btn_tutorial.setToolTip("查看手动更新的详细步骤和下载链接")
@@ -166,7 +166,7 @@ class StatusPage(PageBase):
 
         # 辅助按钮行
         sub_row = QHBoxLayout()
-        sub_row.setSpacing(10)
+        sub_row.setSpacing(self._spacing("md", 12))
 
         btn_mirror = CyberButton(text=self._copy("status.btn_mirror", "镜像设置"), variant="outlined")
         btn_mirror.setToolTip(self._copy("status.tip_mirror", "配置 GitHub 代理镜像列表，解决国内访问问题"))
@@ -212,7 +212,7 @@ class StatusPage(PageBase):
         self._progress_bar.setMaximum(100)
         self._progress_bar.setValue(0)
         self._progress_bar.setVisible(False)  # 默认隐藏
-        self._progress_bar.setFixedHeight(22)
+        self._progress_bar.setFixedHeight(24)
         # 复杂 QSS(多选择器 + 渐变)走 raw 通道;callable 形式支持主题切换重放
         def _pb_qss():
             ac = self._color("accent.primary")
@@ -248,7 +248,7 @@ class StatusPage(PageBase):
         """构建数据库状态卡片。"""
         card = ChamferedFrame(corner_size=8)
         card.setObjectName("dbStatusCard")
-        card.setFixedHeight(70)
+        card.setFixedHeight(72)
 
         layout = QHBoxLayout(card)
         layout.setContentsMargins(20, 12, 20, 12)
