@@ -117,6 +117,29 @@ def _tc(key: str) -> str:
 
 _TM = TokenManager.instance()
 
+# token 与 theme_proxy 都不可用（理论上仅出现在启动极早期/无主题单测）时的兜底色。
+# 用 Qt 全局色枚举而不是 hex 字面量，保持本文件零颜色字面量。
+_FALLBACK_QCOLOR: dict[str, QColor] = {
+    "bg.base": QColor(Qt.GlobalColor.black),
+    "bg.raised": QColor(Qt.GlobalColor.darkGray),
+    "accent.secondary": QColor(Qt.GlobalColor.cyan),
+    "border.subtle": QColor(Qt.GlobalColor.darkGray),
+}
+
+
+def _tc_color(key: str) -> QColor:
+    """token → theme_proxy → Qt 全局色，保证返回合法的 QColor。
+
+    调用方不再需要写 `_tc(key) or "#XXXXXX"` 这类字面量兜底：
+    空串/非法值统一在这里落到 Qt 全局色（黑/深灰/青）。
+    """
+    raw = _tc(key)
+    if raw:
+        color = QColor(raw)
+        if color.isValid():
+            return color
+    return _FALLBACK_QCOLOR.get(key, QColor(Qt.GlobalColor.black))
+
 
 def _card_bg_resolved() -> QColor:
     """编辑器框体底色: components.card.bg + 沉浸覆写/折减(与 CyberCard 一致)。
@@ -133,7 +156,7 @@ def _card_bg_resolved() -> QColor:
         if not c.isValid():
             raise ValueError
     except Exception:
-        c = QColor(_tc("bg.base") or "#0F0F19")
+        c = _tc_color("bg.base")
     if _TM.current_preset == "glassmorphism":
         return immersive.resolve_current_alpha(c)
     return immersive.resolve_qcolor(c, 0.85)
@@ -179,13 +202,11 @@ class _GridCell(QFrame):
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        on_color = QColor(_tc("accent.secondary") or "#00C8FF")
+        on_color = _tc_color("accent.secondary")
         # 灭格:半透明底色(随沉浸强度折减),与卡片框体融合
         from core.widgets import immersive
-        off_color = immersive.resolve_qcolor(
-            QColor(_tc("bg.raised") or "#1E1E2D"), 0.55
-        )
-        border_color = QColor(_tc("border.subtle") or "#3C3C50")
+        off_color = immersive.resolve_qcolor(_tc_color("bg.raised"), 0.55)
+        border_color = _tc_color("border.subtle")
         painter.fillRect(self.rect(), on_color if self._on else off_color)
         painter.setPen(QPen(border_color, 1))
         painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
@@ -275,7 +296,7 @@ class _PreviewLabel(QLabel):
             self._draw_text(
                 painter, self._text,
                 x=0, y=0, w=self.width(), h=self.height(),
-                color=QColor(_tc("accent.secondary") or "#00C8FF"),
+                color=_tc_color("accent.secondary"),
             )
 
         super().paintEvent(event)

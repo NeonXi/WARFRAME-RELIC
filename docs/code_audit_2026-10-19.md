@@ -225,9 +225,29 @@ theme_page 2、toggles_page 2、proxy_dialog 2、image_crop_dialog 1、stat_card
 
 **收益**：以后换标题字体、补字重、调整回退顺序，只改 `core/fonts.py` 一处。
 
-#### P1-5 `pixel_font_editor.py` 硬编码颜色 5 处
-- `#0F0F19`、`#00C8FF`、`#1E1E2D`、`#3C3C50` 等直接写在绘制代码里，切换主题不会跟随。
-- 建议：改走 `self.token_color("...")`；缺失的语义色补进两个预设 YAML。
+#### P1-5 ✅ 已完成（2026-10-19）`pixel_font_editor.py` 颜色字面量
+
+**复核结论（修正审计初判）**：这 5 处并不是设计色，而是**三级兜底的最后一层**：
+
+```python
+_tc("bg.base") or "#0F0F19"     # token → theme_proxy → 字面量
+```
+
+正常运行时永远走 token，字面量只在「主题完全未加载」时生效——所以
+「切换主题不跟随」的担忧不成立。但它确实违反「零颜色字面量」的硬约束，
+且同样的兜底逻辑被复制了 5 遍。
+
+**做法**：新增 `_tc_color(key) -> QColor`
+- token 命中且合法 → 直接返回
+- 否则落到 `Qt.GlobalColor` 枚举（black / darkGray / cyan）——
+  用 Qt 枚举而不是新造 hex，避免把颜色又写回代码
+- 5 个调用点去掉 `or "#..."`，本文件 hex 字面量归零
+
+**验证**
+- 颜色字面量：**5 → 0**（仅剩 `rgba(r,g,b,a)` 的格式化函数，源数据来自 QColor）
+- 离屏 `grab()` 强制走 `paintEvent`（含 `_GridCell` / `_PreviewLabel`）正常，
+  token 解析实测 `#00ffff` / `#08081a`
+- `pytest` **154 passed**；13 页启动正常
 
 #### P1-6 剩余 70 处 `except: pass` 需要分类处理
 **合理兜底（建议保留，补一行注释说明为什么可以吞）**：
