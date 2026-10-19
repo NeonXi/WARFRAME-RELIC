@@ -112,7 +112,10 @@ class CyberComboBox(CyberWidgetMixin, QComboBox):
         else:
             # 赛博朋克风格：纯色填充 + 边框
             if state == "focused":
+                # token_color 内部对缺失 key 只打 warning 不抛异常，
+                # 因此先用 token() 探测存在性，真正缺失时走 fallback 避免噪音
                 try:
+                    self.token("semantic.state.focused.bg")
                     base_c = self.token_color("semantic.state.focused.bg")
                 except Exception:
                     base_c = self.token_color("components.input.bg")

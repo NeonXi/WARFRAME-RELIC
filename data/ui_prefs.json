@@ -1,18 +1,32 @@
 {
   "window_opacity": 100,
   "background": {
-    "source": "src_1790072853184.jpg",
+    "source": "src_1792365492898.jpg",
     "crop": [
       0,
       0,
-      1667,
+      1602,
       1080
     ],
-    "opacity": 83,
+    "opacity": 35,
     "blur": 0,
     "immersive": true,
-    "immersive_strength": 25,
+    "immersive_strength": 35,
     "immersive_color": "black"
   },
-  "theme_preset": "cyberpunk"
+  "theme_preset": "cyberpunk",
+  "nav_order": [
+    "toggles",
+    "worldstate",
+    "db_overview",
+    "items",
+    "triggers",
+    "cd_assist",
+    "prices",
+    "eye_mask",
+    "sites",
+    "world_clock",
+    "theme",
+    "about"
+  ]
 }

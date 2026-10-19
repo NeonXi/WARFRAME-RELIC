@@ -1,1 +1,13 @@
-{}
+{
+  "bring_to_front": "alt+ctrl+space",
+  "enabled": {
+    "select": true,
+    "fullscreen": true,
+    "eye_mask": true,
+    "bring_to_front": true,
+    "cd_1": true,
+    "cd_2": true,
+    "cd_3": true,
+    "cd_4": true
+  }
+}

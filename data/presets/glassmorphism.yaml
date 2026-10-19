@@ -115,6 +115,16 @@ alias:
     danger:  "@brand.red"           # #FF8A80
     warning: "@brand.orange"        # #FFB74D
     info:    "@brand.cyan"          # #00E5FF
+    state:
+      hover:
+        bg: "rgba(255, 255, 255, 0.12)"
+      focused:
+        bg: "rgba(255, 255, 255, 0.18)"
+      pressed:
+        bg: "rgba(255, 255, 255, 0.08)"
+      disabled:
+        bg: "rgba(255, 255, 255, 0.04)"
+        text: "@text.disabled"
 
   # 中性色梯度（文字与边框）
   text:
@@ -595,6 +605,7 @@ copy:
     about: "关于作者"
     sites: "常用网站"
     world_clock: "世界时钟"
+    riven_calc: "紫卡数值计算器"
     license: "加密验证"
 
   # ---- 数据总览页 ----
@@ -891,6 +902,20 @@ copy:
     err_name_empty: "请填写显示名称"
     err_bad_timezone: "请选择有效时区"
     err_duplicate: "该时区的时钟已在列表中"
+
+  # ---- 紫卡数值计算器 ----
+  riven_calc:
+    desc: "选择武器类型，填写倾向值并切换布局，即可查看各词条在对应布局下的最低值与最高值。"
+    formula: "公式：最终数值 = 基础数值 × 倾向值 × 修正系数 × 浮动系数（0.9 ~ 1.1）"
+    weapon_label: "武器类型"
+    disposition_label: "倾向值"
+    disposition_ph: "例如 1.35"
+    layout_label: "词条布局"
+    positive_title: "正面词条"
+    negative_title: "负面词条"
+    col_name: "词条名称"
+    col_min: "最低值"
+    col_max: "最高值"
 
   # ---- 加密验证页（离线机器绑定授权）----
   license:
