@@ -58,6 +58,7 @@ _DATA_JSON_EXCLUDE = {
     "worldstate_cache.json",
     # 用户运行状态
     "sites.json",           # 网站收藏（默认项内置在代码）
+    "world_clock.json",     # 世界时钟列表（默认仅北京，内置在代码）
     "hotkeys.json",         # 快捷键（DEFAULT_HOTKEYS）
     "feature_toggles.json", # 功能开关（DEFAULT_FEATURE_TOGGLES）
     "triggers.json",        # 辅助触发器（DEFAULT_TRIGGERS）
@@ -75,6 +76,7 @@ _USER_STATE_FILES = {
     "ui_prefs.json", "cd_assist_pos.json", "window_geometry.json",
     "item_region.json", "background_config.json", "language_preset.json",
     "wm_items_cache.json", "worldstate_cache.json",
+    "world_clock.json",
 }
 
 # ── 日志 ──────────────────────────────────────────────────────────────

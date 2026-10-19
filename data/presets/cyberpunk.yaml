@@ -525,6 +525,7 @@ copy:
     reset: "紧急重置"
     about: "关于作者"
     sites: "常用网站"
+    world_clock: "世界时钟"
     license: "加密验证"
 
   # ---- 数据总览页 ----
@@ -803,6 +804,29 @@ copy:
     err_url_empty: "请填写网址"
     err_bad_url: "网址无效，请输入可访问的 http/https 网址"
     err_dup_url: "该网址已在收藏列表中"
+
+  # ---- 世界时钟页 ----
+  world_clock:
+    desc: "北京时间默认展示，可添加世界上其他地区的时钟；时间自动处理夏令时。"
+    local_ref: "本地 {time} · {utc}"
+    add_btn: "+ 添加城市"
+    reset_btn: "恢复默认"
+    reset_tip: "只保留默认的北京时间"
+    reset_confirm: "将清空你添加的所有时钟，只保留默认的北京时间。确定继续？"
+    delete_btn: "删 除"
+    confirm_delete: "确认删除？"
+    empty_hint: "还没有任何时钟，点击右上角「添加城市」开始。"
+    dlg_title: "添加世界时钟"
+    dlg_name_label: "显示名称"
+    dlg_name_ph: "例如：北京 / 家里时间 / 队友时区"
+    dlg_tz_label: "时区"
+    dlg_tz_hint: "时区来自 IANA 数据库，自动处理夏令时"
+    dlg_preview: "当前时间：{time}（{utc}）"
+    dlg_ok: "添 加"
+    dlg_cancel: "取 消"
+    err_name_empty: "请填写显示名称"
+    err_bad_timezone: "请选择有效时区"
+    err_duplicate: "该时区的时钟已在列表中"
 
   # ---- 加密验证页（离线机器绑定授权）----
   license:
