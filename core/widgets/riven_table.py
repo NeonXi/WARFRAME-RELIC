@@ -250,7 +250,8 @@ class CyberRivenResultTable(CyberWidgetMixin, QTableWidget):
         self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setAlternatingRowColors(True)
+        # 行背景统一（不使用交替行底色），只靠置顶高亮区分行
+        self.setAlternatingRowColors(False)
         # 表格内部纵向滚动（超出可视行数时出现），表头因此保持冻结
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -537,13 +538,10 @@ class CyberRivenResultTable(CyberWidgetMixin, QTableWidget):
         text = self.token_color("text.primary")
         header_bg = self.token_color("alias.bg.raised")
         header_text = self.token_color("accent.primary")
-        alt = self.token_color("surface.overlay")
         hover = self.token_color("semantic.state.hover.bg")
 
         bg_alpha = QColor(bg)
-        alt_alpha = QColor(alt)
         bg_alpha.setAlphaF(0.55)
-        alt_alpha.setAlphaF(0.35)
 
         self.setStyleSheet(f"""
             QTableWidget {{
@@ -566,9 +564,6 @@ class CyberRivenResultTable(CyberWidgetMixin, QTableWidget):
             }}
             QTableWidget::item:hover {{
                 background-color: {hover.name(QColor.NameFormat.HexArgb)};
-            }}
-            QTableWidget::item:alternate {{
-                background-color: {alt_alpha.name(QColor.NameFormat.HexArgb)};
             }}
         """)
 

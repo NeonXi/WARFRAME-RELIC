@@ -58,7 +58,51 @@ class TestDataLoading:
 
     def test_attributes_count(self):
         data = rs.load_data()
-        assert len(data["attributes"]) == 32
+        # 32 原始词条 → 冰火毒电合并、冲击穿刺切割合并、新增异常状态伤害，
+        # 再把手枪专属的「冲击伤害」单独拆出 → 29 条
+        assert len(data["attributes"]) == 29
+
+    def test_merged_attributes(self):
+        """冰火毒电 → 属性伤害；切割/穿刺 → 物理伤害（冲击对手枪单独保留）。"""
+        names = {a["name"] for a in rs.load_data()["attributes"]}
+        for merged in (
+            "冰冻伤害", "毒素伤害", "电击伤害", "火焰伤害",
+            "切割伤害", "穿刺伤害",
+        ):
+            assert merged not in names, f"应已合并：{merged}"
+        assert "属性伤害" in names
+        assert "物理伤害" in names
+        assert "冲击伤害" in names  # 手枪专属，单独保留
+
+    def test_pistol_only_impact(self):
+        """「冲击伤害」只对手枪有值（1.188），其余武器类型为空。"""
+        by_name = {a["name"]: a for a in rs.load_data()["attributes"]}
+        values = by_name["冲击伤害"]["values"]
+        assert values["手枪"] == 1.188
+        for other in ("步枪", "霰弹枪", "空战", "近战"):
+            assert values[other] is None
+
+    def test_pistol_compute_has_impact_row(self):
+        pistol = {r["name"] for r in rs.compute("手枪", 1.0, "3正")["positive"]}
+        rifle = {r["name"] for r in rs.compute("步枪", 1.0, "3正")["positive"]}
+        assert "冲击伤害" in pistol
+        assert "冲击伤害" not in rifle
+
+    def test_merged_attribute_values(self):
+        by_name = {a["name"]: a for a in rs.load_data()["attributes"]}
+        assert by_name["属性伤害"]["values"] == {
+            "步枪": 0.9, "霰弹枪": 0.9, "手枪": 0.9, "空战": 1.197, "近战": 0.9,
+        }
+        # 物理伤害取切割/穿刺的 1.1997（手枪的 1.188 冲击已单列为独立词条）
+        assert by_name["物理伤害"]["values"]["手枪"] == 1.1997
+        assert by_name["物理伤害"]["values"]["空战"] == 0.9
+
+    def test_status_damage_uses_proc_chance_base(self):
+        """新增「异常状态伤害」，基础数值与触发几率一致。"""
+        by_name = {a["name"]: a for a in rs.load_data()["attributes"]}
+        assert "异常状态伤害" in by_name
+        assert by_name["异常状态伤害"]["unit"] == "%"
+        assert by_name["异常状态伤害"]["values"] == by_name["触发几率"]["values"]
 
 
 class TestComputePositive:
