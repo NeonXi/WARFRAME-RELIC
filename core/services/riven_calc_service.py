@@ -110,8 +110,13 @@ def list_layouts() -> list[str]:
 
 
 def get_layout(layout: str) -> Optional[dict]:
-    """返回某布局的系数 dict {"pos": float, "neg": float}，未知布局返回 None。"""
-    return load_data()["layouts"].get(layout)
+    """返回某布局的系数 dict {"pos": float, "neg": float}，未知布局返回 None。
+
+    返回的是浅拷贝：内部 _data_cache 是模块级共享对象，直接返回引用
+    会让调用方有机会改坏缓存（如误写 layout["pos"] = 0）。
+    """
+    layout_def = load_data()["layouts"].get(layout)
+    return dict(layout_def) if layout_def is not None else None
 
 
 def float_range() -> tuple[float, float]:

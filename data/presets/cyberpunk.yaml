@@ -849,9 +849,19 @@ copy:
     layout_label: "词条布局"
     positive_title: "正面词条"
     negative_title: "负面词条"
+    data_error: "紫卡数据文件缺失或损坏（riven_base.json），请从安装包恢复该文件。"
+    wiki_label: "倾向反查"
+    wiki_ph: "输入武器名（中文/英文/拼音）"
+    wiki_hint: "支持中文、英文或拼音搜索；选择或回车后在浏览器中打开该武器页面，查看 Disposition（倾向值）"
+    wiki_no_match: "未找到匹配的武器，请从候选列表中选择"
     col_name: "词条名称"
     col_min: "最低值"
     col_max: "最高值"
+    col_mine: "我的数值"
+    col_pos: "浮动位置"
+    mine_tip: "双击输入你洗出的数值（可带 % 号）"
+    clear_inputs: "清空输入"
+    clear_tip: "清空所有已输入的「我的数值」"
 
   # ---- 加密验证页（离线机器绑定授权）----
   license:
